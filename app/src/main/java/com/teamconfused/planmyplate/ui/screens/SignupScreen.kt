@@ -98,7 +98,7 @@ fun SignupScreen(
                 color = MaterialTheme.colorScheme.onBackground
             )
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             // Full Name
             InputLabel(text = "Full Name")
@@ -120,8 +120,6 @@ fun SignupScreen(
                 )
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
-
             // Email Address
             InputLabel(text = "Email Address")
             OutlinedTextField(
@@ -141,8 +139,6 @@ fun SignupScreen(
                     imeAction = ImeAction.Next
                 )
             )
-
-            Spacer(modifier = Modifier.height(12.dp))
 
             // Password
             InputLabel(text = "Password")
@@ -175,8 +171,6 @@ fun SignupScreen(
                 singleLine = true
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
-
             // Terms
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -196,12 +190,11 @@ fun SignupScreen(
                 Text(
                     text = uiState.termsError,
                     color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(start = 12.dp)
+                    style = MaterialTheme.typography.bodySmall
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             // Create Account Button
             Button(

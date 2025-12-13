@@ -1,0 +1,340 @@
+package com.teamconfused.planmyplate.ui.screens
+
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.teamconfused.planmyplate.R
+import com.teamconfused.planmyplate.ui.viewmodels.PreferenceSelectionUiState
+
+@Composable
+fun PreferenceSelectionScreen(
+    uiState: PreferenceSelectionUiState,
+    onDietSelected: (String) -> Unit,
+    onAllergyToggled: (String) -> Unit,
+    onDislikeToggled: (String) -> Unit,
+    onServingsSelected: (Int) -> Unit,
+    onNextStep: () -> Unit,
+    onBackClick: () -> Unit
+) {
+    Scaffold(
+        topBar = {
+            PreferenceTopBar(
+                currentStep = uiState.currentStep,
+                totalSteps = 4,
+                onBackClick = onBackClick
+            )
+        },
+        bottomBar = {
+            Button(
+                onClick = onNextStep,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+                    .height(56.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                )
+            ) {
+                Text(
+                    text = "Continue",
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                )
+            }
+        },
+        containerColor = MaterialTheme.colorScheme.surface
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(horizontal = 16.dp)
+                .verticalScroll(rememberScrollState())
+        ) {
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text = getTitleForStep(uiState.currentStep),
+                style = MaterialTheme.typography.headlineMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 28.sp
+                )
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            when (uiState.currentStep) {
+                0 -> DietSelectionStep(
+                    selectedDiet = uiState.selectedDiet,
+                    onDietSelected = onDietSelected
+                )
+                1 -> MultiSelectStep(
+                    options = getAllergies(),
+                    selectedOptions = uiState.selectedAllergies,
+                    onOptionToggled = onAllergyToggled
+                )
+                2 -> MultiSelectStep(
+                    options = getDislikes(),
+                    selectedOptions = uiState.selectedDislikes,
+                    onOptionToggled = onDislikeToggled
+                )
+                3 -> ServingsSelectionStep(
+                    selectedServings = uiState.selectedServings,
+                    onServingsSelected = onServingsSelected
+                )
+            }
+            
+            // Add some extra space at bottom for scrolling above the button
+            Spacer(modifier = Modifier.height(80.dp))
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun PreferenceTopBar(
+    currentStep: Int,
+    totalSteps: Int,
+    onBackClick: () -> Unit
+) {
+    Column {
+        TopAppBar(
+            title = {},
+            navigationIcon = {
+                IconButton(onClick = onBackClick) {
+                    Icon(
+                        painter = painterResource(R.drawable.arrow_back_icon),
+                        contentDescription = "Back"
+                    )
+                }
+            }
+        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            repeat(totalSteps) { index ->
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(4.dp)
+                        .background(
+                            color = if (index <= currentStep) MaterialTheme.colorScheme.primary else Color.LightGray.copy(alpha = 0.5f),
+                            shape = RoundedCornerShape(2.dp)
+                        )
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun DietSelectionStep(
+    selectedDiet: String?,
+    onDietSelected: (String) -> Unit
+) {
+    val diets = listOf(
+        "Classic", "Low Carb", "Keto", "Flexitarian", 
+        "Paleo", "Vegetarian", "Pescatarian", "Vegan"
+    )
+
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        diets.forEach { diet ->
+            SelectionButton(
+                text = diet,
+                isSelected = diet == selectedDiet,
+                onClick = { onDietSelected(diet) }
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun MultiSelectStep(
+    options: List<String>,
+    selectedOptions: Set<String>,
+    onOptionToggled: (String) -> Unit
+) {
+    FlowRow(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        options.forEach { option ->
+            SelectionChip(
+                text = option,
+                isSelected = selectedOptions.contains(option),
+                onClick = { onOptionToggled(option) }
+            )
+        }
+    }
+}
+
+@Composable
+fun ServingsSelectionStep(
+    selectedServings: Int?,
+    onServingsSelected: (Int) -> Unit
+) {
+    val servingOptions = listOf(
+        ServingOption(2, "for two, or one with leftovers"),
+        ServingOption(4, "for four, or two-three with leftovers"),
+        ServingOption(6, "for a family of 5+")
+    )
+
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        servingOptions.forEach { option ->
+            ServingCard(
+                option = option,
+                isSelected = option.count == selectedServings,
+                onClick = { onServingsSelected(option.count) }
+            )
+        }
+    }
+}
+
+@Composable
+fun SelectionButton(
+    text: String,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(12.dp),
+        border = if (!isSelected) BorderStroke(1.dp, Color.LightGray) else null,
+        color = if (isSelected) MaterialTheme.colorScheme.primary else Color.White,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Box(
+            modifier = Modifier.padding(vertical = 16.dp, horizontal = 20.dp),
+            contentAlignment = Alignment.CenterStart
+        ) {
+            Text(
+                text = text,
+                style = MaterialTheme.typography.bodyLarge.copy(
+                    fontWeight = FontWeight.Medium,
+                    color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else Color.Black
+                )
+            )
+        }
+    }
+}
+
+@Composable
+fun SelectionChip(
+    text: String,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(12.dp),
+        border = if (!isSelected) BorderStroke(1.dp, Color.LightGray) else null,
+        color = if (isSelected) MaterialTheme.colorScheme.primary else Color.White,
+    ) {
+        Box(
+            modifier = Modifier.padding(vertical = 12.dp, horizontal = 20.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = text,
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontWeight = FontWeight.Medium,
+                    color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else Color.Black
+                )
+            )
+        }
+    }
+}
+
+@Composable
+fun ServingCard(
+    option: ServingOption,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(12.dp),
+        border = if (!isSelected) BorderStroke(1.dp, Color.LightGray) else null,
+        color = if (isSelected) MaterialTheme.colorScheme.primary else Color.White,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier.padding(20.dp)
+        ) {
+            Text(
+                text = "${option.count} servings",
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else Color.Black
+                )
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = option.description,
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f) else Color.Gray
+                )
+            )
+        }
+    }
+}
+
+private fun getTitleForStep(step: Int): String {
+    return when (step) {
+        0 -> "Pick your diet"
+        1 -> "Any allergies?"
+        2 -> "How about dislikes?"
+        3 -> "How many servings per meal?"
+        else -> ""
+    }
+}
+
+private fun getAllergies() = listOf(
+    "Gluten", "Peanut", "Tree Nut", "Soy", 
+    "Sesame", "Mustard", "Sulfite", "Nightshade"
+)
+
+private fun getDislikes() = listOf(
+    "Avocado", "Beets", "Bell Peppers", "Brussels Sprouts",
+    "Cauliflower", "Eggplant", "Mushrooms", "Olives",
+    "Quinoa", "Tofu", "Turnips"
+)
+
+data class ServingOption(val count: Int, val description: String)

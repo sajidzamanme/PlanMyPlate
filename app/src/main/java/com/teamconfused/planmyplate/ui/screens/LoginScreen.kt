@@ -95,7 +95,7 @@ fun LoginScreen(
                 color = MaterialTheme.colorScheme.onBackground
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             // Email Address
             InputLabel(text = "Email Address")
@@ -116,8 +116,6 @@ fun LoginScreen(
                     imeAction = ImeAction.Next
                 )
             )
-
-            Spacer(modifier = Modifier.height(16.dp))
 
             // Password
             InputLabel(text = "Password")
@@ -167,7 +165,7 @@ fun LoginScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             // Login Button
             Button(
@@ -180,7 +178,7 @@ fun LoginScreen(
                 Text("Login", fontSize = 16.sp)
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
             // OR Divider
             Row(
@@ -197,7 +195,7 @@ fun LoginScreen(
                 HorizontalDivider(modifier = Modifier.weight(1f), color = Color.LightGray)
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
             // Google Button
             OutlinedButton(
@@ -211,7 +209,7 @@ fun LoginScreen(
                 Text("Sign In with Google", color = Color.Black)
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             // Facebook Button
             Button(

@@ -12,10 +12,14 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.teamconfused.planmyplate.ui.screens.ForgotPasswordScreen
 import com.teamconfused.planmyplate.ui.screens.LoginScreen
+import com.teamconfused.planmyplate.ui.screens.PreferenceSelectionScreen
 import com.teamconfused.planmyplate.ui.screens.SignupScreen
 import com.teamconfused.planmyplate.ui.screens.WelcomeScreen
+import com.teamconfused.planmyplate.ui.viewmodels.ForgotPasswordViewModel
 import com.teamconfused.planmyplate.ui.viewmodels.LoginViewModel
+import com.teamconfused.planmyplate.ui.viewmodels.PreferenceSelectionViewModel
 import com.teamconfused.planmyplate.ui.viewmodels.SignupViewModel
 
 @Composable
@@ -41,7 +45,7 @@ fun NavGraph(navController: NavHostController) {
                 onPasswordChange = viewModel::onPasswordChange,
                 onLoginClick = {
                     viewModel.onLoginClick {
-                        navController.navigate(Screen.Home) {
+                        navController.navigate(Screen.PreferenceSelection) {
                             popUpTo(Screen.Welcome) { inclusive = true }
                         }
                     }
@@ -51,7 +55,8 @@ fun NavGraph(navController: NavHostController) {
                         popUpTo(Screen.Welcome) { inclusive = false }
                     }
                 },
-                onBackClick = { navController.popBackStack() }
+                onBackClick = { navController.popBackStack() },
+                onForgotPasswordClick = { navController.navigate(Screen.ForgotPassword) }
             )
         }
 
@@ -79,13 +84,60 @@ fun NavGraph(navController: NavHostController) {
                 },
                 onSignupClick = {
                     viewModel.onSignupClick {
-                        // Navigate to Home or onboarding flow after successful signup
-                        navController.navigate(Screen.Home) {
+                        // Navigate to PreferenceSelection flow after successful signup
+                        navController.navigate(Screen.PreferenceSelection) {
                             popUpTo(Screen.Welcome) { inclusive = true }
                         }
                     }
                 },
                 onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        composable<Screen.ForgotPassword> {
+            val viewModel: ForgotPasswordViewModel = viewModel()
+            val uiState by viewModel.uiState.collectAsState()
+
+            ForgotPasswordScreen(
+                uiState = uiState,
+                onEmailChange = viewModel::onEmailChange,
+                onCodeChange = viewModel::onCodeChange,
+                onNewPasswordChange = viewModel::onNewPasswordChange,
+                onConfirmPasswordChange = viewModel::onConfirmPasswordChange,
+                onSendCodeClick = viewModel::onSendCodeClick,
+                onVerifyCodeClick = viewModel::onVerifyCodeClick,
+                onResetPasswordClick = viewModel::onResetPasswordClick,
+                onLoginClick = {
+                    navController.navigate(Screen.Login) {
+                         popUpTo(Screen.Welcome) { inclusive = false }
+                    }
+                },
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        composable<Screen.PreferenceSelection> {
+            val viewModel: PreferenceSelectionViewModel = viewModel()
+            val uiState by viewModel.uiState.collectAsState()
+
+            PreferenceSelectionScreen(
+                uiState = uiState,
+                onDietSelected = viewModel::onDietSelected,
+                onAllergyToggled = viewModel::onAllergyToggled,
+                onDislikeToggled = viewModel::onDislikeToggled,
+                onServingsSelected = viewModel::onServingsSelected,
+                onNextStep = {
+                    viewModel.onNextStep {
+                        navController.navigate(Screen.Home) {
+                            popUpTo(Screen.PreferenceSelection) { inclusive = true }
+                        }
+                    }
+                },
+                onBackClick = {
+                    viewModel.onPreviousStep {
+                        navController.popBackStack()
+                    }
+                }
             )
         }
     }

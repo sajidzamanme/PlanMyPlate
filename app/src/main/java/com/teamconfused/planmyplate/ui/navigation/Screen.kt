@@ -15,4 +15,10 @@ sealed class Screen {
 
     @Serializable
     data object Signup : Screen()
+
+    @Serializable
+    data object ForgotPassword : Screen()
+
+    @Serializable
+    data object PreferenceSelection : Screen()
 }
