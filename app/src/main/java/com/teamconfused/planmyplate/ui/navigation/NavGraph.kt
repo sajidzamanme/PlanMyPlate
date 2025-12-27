@@ -126,6 +126,7 @@ fun NavGraph(navController: NavHostController) {
                 onAllergyToggled = viewModel::onAllergyToggled,
                 onDislikeToggled = viewModel::onDislikeToggled,
                 onServingsSelected = viewModel::onServingsSelected,
+                onBudgetSelected = viewModel::onBudgetSelected,
                 onNextStep = {
                     viewModel.onNextStep {
                         navController.navigate(Screen.Home) {

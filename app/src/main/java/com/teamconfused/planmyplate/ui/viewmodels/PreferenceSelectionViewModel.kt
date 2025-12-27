@@ -11,7 +11,8 @@ data class PreferenceSelectionUiState(
     val selectedDiet: String? = null,
     val selectedAllergies: Set<String> = emptySet(),
     val selectedDislikes: Set<String> = emptySet(),
-    val selectedServings: Int? = null
+    val selectedServings: Int? = null,
+    val selectedBudget: Float = 50F
 )
 
 class PreferenceSelectionViewModel : ViewModel() {
@@ -48,9 +49,13 @@ class PreferenceSelectionViewModel : ViewModel() {
         _uiState.update { it.copy(selectedServings = servings) }
     }
 
+    fun onBudgetSelected(budget: Float) {
+        _uiState.update { it.copy(selectedBudget = budget) }
+    }
+
     fun onNextStep(onComplete: () -> Unit) {
         _uiState.update {
-            if (it.currentStep < 3) {
+            if (it.currentStep < 4) {
                 it.copy(currentStep = it.currentStep + 1)
             } else {
                 onComplete()

@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -23,6 +24,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -30,12 +33,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.lerp
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.teamconfused.planmyplate.R
+import com.teamconfused.planmyplate.ui.theme.PlanMyPlateTheme
 import com.teamconfused.planmyplate.ui.viewmodels.PreferenceSelectionUiState
+import kotlin.math.roundToInt
 
 @Composable
 fun PreferenceSelectionScreen(
@@ -44,6 +51,7 @@ fun PreferenceSelectionScreen(
     onAllergyToggled: (String) -> Unit,
     onDislikeToggled: (String) -> Unit,
     onServingsSelected: (Int) -> Unit,
+    onBudgetSelected: (Float) -> Unit,
     onNextStep: () -> Unit,
     onBackClick: () -> Unit
 ) {
@@ -51,7 +59,7 @@ fun PreferenceSelectionScreen(
         topBar = {
             PreferenceTopBar(
                 currentStep = uiState.currentStep,
-                totalSteps = 4,
+                totalSteps = 5,
                 onBackClick = onBackClick
             )
         },
@@ -114,6 +122,10 @@ fun PreferenceSelectionScreen(
                     selectedServings = uiState.selectedServings,
                     onServingsSelected = onServingsSelected
                 )
+                4 -> BudgetSelectionStep(
+                    selectedBudget = uiState.selectedBudget,
+                    onBudgetSelected = onBudgetSelected
+                )
             }
             
             // Add some extra space at bottom for scrolling above the button
@@ -153,7 +165,9 @@ fun PreferenceTopBar(
                         .weight(1f)
                         .height(4.dp)
                         .background(
-                            color = if (index <= currentStep) MaterialTheme.colorScheme.primary else Color.LightGray.copy(alpha = 0.5f),
+                            color = if (index <= currentStep) MaterialTheme.colorScheme.primary else Color.LightGray.copy(
+                                alpha = 0.5f
+                            ),
                             shape = RoundedCornerShape(2.dp)
                         )
                 )
@@ -228,6 +242,103 @@ fun ServingsSelectionStep(
 }
 
 @Composable
+fun BudgetSelectionStep(
+    selectedBudget: Float,
+    onBudgetSelected: (Float) -> Unit
+) {
+    val valueRange = 50f..1000f
+    val fraction = (selectedBudget - valueRange.start) /
+            (valueRange.endInclusive - valueRange.start)
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp)
+        ) {
+
+            Slider(
+                value = selectedBudget,
+                onValueChange = {
+                    val snapped = (it / 50f).roundToInt() * 50f
+                    onBudgetSelected(snapped.coerceIn(valueRange))
+                },
+                valueRange = valueRange,
+                steps = 0,
+                colors = SliderDefaults.colors(
+                    activeTrackColor = MaterialTheme.colorScheme.primary,
+                    inactiveTrackColor = MaterialTheme.colorScheme.surfaceVariant,
+                    thumbColor = MaterialTheme.colorScheme.primary
+                ),
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .offset(
+                        x = androidx.compose.ui.unit.lerp(
+                            start = 0.dp,
+                            stop = 280.dp, // approx slider width minus padding
+                            fraction = fraction.coerceIn(0f, 1f)
+                        ),
+                        y = 44.dp
+                    )
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    tonalElevation = 2.dp,
+                    color = MaterialTheme.colorScheme.primaryContainer
+                ) {
+                    Text(
+                        text = "৳${selectedBudget.toInt()}",
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                        style = MaterialTheme.typography.labelMedium.copy(
+                            fontWeight = FontWeight.Bold
+                        ),
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(28.dp))
+        Text(
+            text = "Drag to adjust your budget",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+@Preview(showBackground = true, showSystemUi = true)
+@Composable
+fun PreferenceSelection_BudgetStep_Preview() {
+    PlanMyPlateTheme {
+        PreferenceSelectionScreen(
+            uiState = PreferenceSelectionUiState(
+                currentStep = 4,
+                selectedDiet = "Classic",
+                selectedAllergies = emptySet(),
+                selectedDislikes = emptySet(),
+                selectedServings = 2
+            ),
+            onDietSelected = {},
+            onAllergyToggled = {},
+            onDislikeToggled = {},
+            onServingsSelected = {},
+            onBudgetSelected = {},
+            onNextStep = {},
+            onBackClick = {}
+        )
+    }
+}
+
+@Composable
 fun SelectionButton(
     text: String,
     isSelected: Boolean,
@@ -236,8 +347,8 @@ fun SelectionButton(
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(12.dp),
-        border = if (!isSelected) BorderStroke(1.dp, Color.LightGray) else null,
-        color = if (isSelected) MaterialTheme.colorScheme.primary else Color.White,
+        border = if (!isSelected) BorderStroke(1.dp, Color.LightGray) else BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary),
+        color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else Color.White,
         modifier = Modifier.fillMaxWidth()
     ) {
         Box(
@@ -264,8 +375,8 @@ fun SelectionChip(
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(12.dp),
-        border = if (!isSelected) BorderStroke(1.dp, Color.LightGray) else null,
-        color = if (isSelected) MaterialTheme.colorScheme.primary else Color.White,
+        border = if (!isSelected) BorderStroke(1.dp, Color.LightGray) else BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary),
+        color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else Color.White,
     ) {
         Box(
             modifier = Modifier.padding(vertical = 12.dp, horizontal = 20.dp),
@@ -291,8 +402,8 @@ fun ServingCard(
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(12.dp),
-        border = if (!isSelected) BorderStroke(1.dp, Color.LightGray) else null,
-        color = if (isSelected) MaterialTheme.colorScheme.primary else Color.White,
+        border = if (!isSelected) BorderStroke(1.dp, Color.LightGray) else BorderStroke(1.6.dp, MaterialTheme.colorScheme.primary),
+        color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else Color.White,
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(
@@ -322,6 +433,7 @@ private fun getTitleForStep(step: Int): String {
         1 -> "Any allergies?"
         2 -> "How about dislikes?"
         3 -> "How many servings per meal?"
+        4 -> "Daily Budget?"
         else -> ""
     }
 }
