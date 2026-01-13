@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.teamconfused.planmyplate.model.SigninRequest
 import com.teamconfused.planmyplate.network.RetrofitClient
+import com.teamconfused.planmyplate.util.SessionManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,7 +20,7 @@ data class LoginUiState(
     val errorMessage: String? = null
 )
 
-class LoginViewModel : ViewModel() {
+class LoginViewModel(private val sessionManager: SessionManager) : ViewModel() {
     private val _uiState = MutableStateFlow(LoginUiState())
     val uiState: StateFlow<LoginUiState> = _uiState.asStateFlow()
 
@@ -57,7 +58,12 @@ class LoginViewModel : ViewModel() {
                         password = currentState.password
                     )
                     val response = RetrofitClient.authService.signin(request)
-                    // You might want to save the token from response.token here
+                    val userId = response.getEffectiveUserId()
+                    if (userId != null) {
+                        sessionManager.saveUserId(userId)
+                    } else {
+                        android.util.Log.e("LoginViewModel", "Login successful but no userId found in response: $response")
+                    }
                     _uiState.update { it.copy(isLoading = false) }
                     onLoginSuccess()
                 } catch (e: Exception) {

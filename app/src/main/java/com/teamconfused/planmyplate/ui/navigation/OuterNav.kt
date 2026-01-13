@@ -16,9 +16,13 @@ import com.teamconfused.planmyplate.ui.viewmodels.ForgotPasswordViewModel
 import com.teamconfused.planmyplate.ui.viewmodels.LoginViewModel
 import com.teamconfused.planmyplate.ui.viewmodels.PreferenceSelectionViewModel
 import com.teamconfused.planmyplate.ui.viewmodels.SignupViewModel
+import com.teamconfused.planmyplate.ui.viewmodels.ViewModelFactory
+import com.teamconfused.planmyplate.util.SessionManager
 
 @Composable
-fun NavGraph(navController: NavHostController) {
+fun NavGraph(navController: NavHostController, sessionManager: SessionManager) {
+    val factory = ViewModelFactory(sessionManager)
+    
     NavHost(
         navController = navController,
         startDestination = Screen.Welcome
@@ -31,7 +35,7 @@ fun NavGraph(navController: NavHostController) {
         }
 
         composable<Screen.Login> {
-            val viewModel: LoginViewModel = viewModel()
+            val viewModel: LoginViewModel = viewModel(factory = factory)
             val uiState by viewModel.uiState.collectAsState()
 
             LoginScreen(
@@ -60,7 +64,7 @@ fun NavGraph(navController: NavHostController) {
         }
 
         composable<Screen.Signup> {
-            val viewModel: SignupViewModel = viewModel()
+            val viewModel: SignupViewModel = viewModel(factory = factory)
             val uiState by viewModel.uiState.collectAsState()
 
             SignupScreen(
@@ -87,7 +91,7 @@ fun NavGraph(navController: NavHostController) {
         }
 
         composable<Screen.ForgotPassword> {
-            val viewModel: ForgotPasswordViewModel = viewModel()
+            val viewModel: ForgotPasswordViewModel = viewModel(factory = factory)
             val uiState by viewModel.uiState.collectAsState()
 
             ForgotPasswordScreen(
@@ -109,7 +113,7 @@ fun NavGraph(navController: NavHostController) {
         }
 
         composable<Screen.PreferenceSelection> {
-            val viewModel: PreferenceSelectionViewModel = viewModel()
+            val viewModel: PreferenceSelectionViewModel = viewModel(factory = factory)
             val uiState by viewModel.uiState.collectAsState()
 
             PreferenceSelectionScreen(

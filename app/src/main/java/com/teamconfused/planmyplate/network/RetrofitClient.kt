@@ -23,12 +23,17 @@ object RetrofitClient {
         .addInterceptor(logging)
         .build()
 
+    private val retrofit = Retrofit.Builder()
+        .baseUrl(BASE_URL)
+        .client(httpClient)
+        .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
+        .build()
+
     val authService: AuthService by lazy {
-        Retrofit.Builder()
-            .baseUrl(BASE_URL)
-            .client(httpClient)
-            .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
-            .build()
-            .create(AuthService::class.java)
+        retrofit.create(AuthService::class.java)
+    }
+
+    val userPreferencesService: UserPreferencesService by lazy {
+        retrofit.create(UserPreferencesService::class.java)
     }
 }
