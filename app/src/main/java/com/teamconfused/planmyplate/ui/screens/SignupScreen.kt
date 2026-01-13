@@ -10,11 +10,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -148,16 +150,6 @@ fun SignupScreen(
                 modifier = Modifier.fillMaxWidth(),
                 shape = MaterialTheme.shapes.large,
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                trailingIcon = {
-//                    val image = if (passwordVisible)
-//                        Icons.Filled.Visibility
-//                    else
-//                        Icons.Filled.VisibilityOff
-//
-//                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
-//                        Icon(imageVector = image, contentDescription = if (passwordVisible) "Hide password" else "Show password")
-//                    }
-                },
                 isError = uiState.passwordError != null,
                 supportingText = {
                     if (uiState.passwordError != null) {
@@ -203,9 +195,17 @@ fun SignupScreen(
                     .fillMaxWidth()
                     .height(56.dp),
                 shape = RoundedCornerShape(12.dp),
-                enabled = uiState.isTermsAccepted
+                enabled = uiState.isTermsAccepted && !uiState.isLoading
             ) {
-                Text("Create an Account", fontSize = 16.sp)
+                if (uiState.isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text("Create an Account", fontSize = 16.sp)
+                }
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -272,7 +272,7 @@ fun SignupScreen(
                         fontWeight = FontWeight.Bold,
                     ),
                     modifier = Modifier.clickable { onLoginClick() },
-                    color = Color.Black // Explicitly black or primary
+                    color = Color.Black
                 )
             }
 

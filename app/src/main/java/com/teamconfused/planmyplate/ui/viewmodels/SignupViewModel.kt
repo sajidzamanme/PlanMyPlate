@@ -1,10 +1,14 @@
 package com.teamconfused.planmyplate.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.teamconfused.planmyplate.model.SignupRequest
+import com.teamconfused.planmyplate.network.RetrofitClient
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 data class SignupUiState(
     val fullName: String = "",
@@ -14,7 +18,9 @@ data class SignupUiState(
     val fullNameError: String? = null,
     val emailError: String? = null,
     val passwordError: String? = null,
-    val termsError: String? = null
+    val termsError: String? = null,
+    val isLoading: Boolean = false,
+    val errorMessage: String? = null
 )
 
 class SignupViewModel : ViewModel() {
@@ -68,8 +74,27 @@ class SignupViewModel : ViewModel() {
         }
 
         if (isValid) {
-            // Perform signup logic here
-            onSignupSuccess()
+            viewModelScope.launch {
+                _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+                try {
+                    val request = SignupRequest(
+                        name = currentState.fullName,
+                        email = currentState.email,
+                        password = currentState.password
+                    )
+                    val response = RetrofitClient.authService.signup(request)
+                    // You might want to save the token here
+                    _uiState.update { it.copy(isLoading = false) }
+                    onSignupSuccess()
+                } catch (e: Exception) {
+                    _uiState.update { 
+                        it.copy(
+                            isLoading = false, 
+                            errorMessage = e.localizedMessage ?: "Signup failed. Please try again."
+                        ) 
+                    }
+                }
+            }
         }
     }
 }
