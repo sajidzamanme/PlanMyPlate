@@ -1,16 +1,22 @@
 package com.teamconfused.planmyplate.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.teamconfused.planmyplate.model.SigninRequest
+import com.teamconfused.planmyplate.network.RetrofitClient
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 data class LoginUiState(
     val email: String = "",
     val password: String = "",
     val emailError: String? = null,
-    val passwordError: String? = null
+    val passwordError: String? = null,
+    val isLoading: Boolean = false,
+    val errorMessage: String? = null
 )
 
 class LoginViewModel : ViewModel() {
@@ -43,8 +49,26 @@ class LoginViewModel : ViewModel() {
         }
 
         if (isValid) {
-            // Perform login logic here
-            onLoginSuccess()
+            viewModelScope.launch {
+                _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+                try {
+                    val request = SigninRequest(
+                        email = currentState.email,
+                        password = currentState.password
+                    )
+                    val response = RetrofitClient.authService.signin(request)
+                    // You might want to save the token from response.token here
+                    _uiState.update { it.copy(isLoading = false) }
+                    onLoginSuccess()
+                } catch (e: Exception) {
+                    _uiState.update { 
+                        it.copy(
+                            isLoading = false, 
+                            errorMessage = e.localizedMessage ?: "Login failed. Please try again."
+                        ) 
+                    }
+                }
+            }
         }
     }
 }

@@ -10,10 +10,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -131,16 +133,6 @@ fun LoginScreen(
                         Text(text = uiState.passwordError, color = MaterialTheme.colorScheme.error)
                     }
                 },
-                trailingIcon = {
-//                    val image = if (passwordVisible)
-//                        Icons.Filled.Visibility
-//                    else
-//                        Icons.Filled.VisibilityOff
-//
-//                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
-//                        Icon(imageVector = image, contentDescription = if (passwordVisible) "Hide password" else "Show password")
-//                    }
-                },
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Password,
                     imeAction = ImeAction.Done
@@ -173,9 +165,18 @@ fun LoginScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(12.dp),
+                enabled = !uiState.isLoading
             ) {
-                Text("Login", fontSize = 16.sp)
+                if (uiState.isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text("Login", fontSize = 16.sp)
+                }
             }
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -236,7 +237,7 @@ fun LoginScreen(
                     text = "Sign up",
                     style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
                     modifier = Modifier.clickable { onSignupClick() },
-                    color = Color.Black // Explicitly black or primary
+                    color = Color.Black
                 )
             }
             
