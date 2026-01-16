@@ -32,7 +32,7 @@ class LoginViewModel(private val sessionManager: SessionManager) : ViewModel() {
         _uiState.update { it.copy(password = password, passwordError = null) }
     }
 
-    fun onLoginClick(onLoginSuccess: () -> Unit) {
+    fun onLoginClick(onLoginSuccess: (hasPreferences: Boolean) -> Unit) {
         val currentState = _uiState.value
         var isValid = true
 
@@ -59,13 +59,25 @@ class LoginViewModel(private val sessionManager: SessionManager) : ViewModel() {
                     )
                     val response = RetrofitClient.authService.signin(request)
                     val userId = response.getEffectiveUserId()
+                    
+                    var hasPreferences = false
                     if (userId != null) {
                         sessionManager.saveUserId(userId)
+                        // Check if preferences are already set in the database
+                        try {
+                            val prefs = RetrofitClient.userPreferencesService.getPreferences(userId)
+                            // Basic check: if diet or servings are set, we assume preferences exist
+                            hasPreferences = prefs.diet != null || prefs.servings != null
+                        } catch (e: Exception) {
+                            // If it fails (e.g. 404), assume preferences are not set
+                            hasPreferences = false
+                        }
                     } else {
                         android.util.Log.e("LoginViewModel", "Login successful but no userId found in response: $response")
                     }
+                    
                     _uiState.update { it.copy(isLoading = false) }
-                    onLoginSuccess()
+                    onLoginSuccess(hasPreferences)
                 } catch (e: Exception) {
                     _uiState.update { 
                         it.copy(

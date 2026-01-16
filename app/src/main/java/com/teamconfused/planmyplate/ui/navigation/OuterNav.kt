@@ -23,9 +23,11 @@ import com.teamconfused.planmyplate.util.SessionManager
 fun NavGraph(navController: NavHostController, sessionManager: SessionManager) {
     val factory = ViewModelFactory(sessionManager)
     
+    val startDestination = if (sessionManager.isLoggedIn()) Screen.Main else Screen.Welcome
+
     NavHost(
         navController = navController,
-        startDestination = Screen.Welcome
+        startDestination = startDestination
     ) {
         composable<Screen.Welcome> {
             WelcomeScreen(
@@ -43,9 +45,15 @@ fun NavGraph(navController: NavHostController, sessionManager: SessionManager) {
                 onEmailChange = viewModel::onEmailChange,
                 onPasswordChange = viewModel::onPasswordChange,
                 onLoginClick = {
-                    viewModel.onLoginClick {
-                        navController.navigate(Screen.PreferenceSelection) {
-                            popUpTo(Screen.Welcome) { inclusive = true }
+                    viewModel.onLoginClick { hasPreferences ->
+                        if (hasPreferences) {
+                            navController.navigate(Screen.Main) {
+                                popUpTo(Screen.Welcome) { inclusive = true }
+                            }
+                        } else {
+                            navController.navigate(Screen.PreferenceSelection) {
+                                popUpTo(Screen.Welcome) { inclusive = true }
+                            }
                         }
                     }
                 },
@@ -60,7 +68,14 @@ fun NavGraph(navController: NavHostController, sessionManager: SessionManager) {
         }
 
         composable<Screen.Main> {
-            MainNav()
+            MainNav(
+                factory = factory,
+                onLogout = {
+                    navController.navigate(Screen.Welcome) {
+                        popUpTo(Screen.Main) { inclusive = true }
+                    }
+                }
+            )
         }
 
         composable<Screen.Signup> {

@@ -11,6 +11,7 @@ class ViewModelFactory(private val sessionManager: SessionManager) : ViewModelPr
             modelClass.isAssignableFrom(SignupViewModel::class.java) -> SignupViewModel(sessionManager) as T
             modelClass.isAssignableFrom(PreferenceSelectionViewModel::class.java) -> PreferenceSelectionViewModel(sessionManager) as T
             modelClass.isAssignableFrom(ForgotPasswordViewModel::class.java) -> ForgotPasswordViewModel() as T
+            modelClass.isAssignableFrom(SettingsViewModel::class.java) -> SettingsViewModel(sessionManager) as T
             else -> throw IllegalArgumentException("Unknown ViewModel class")
         }
     }

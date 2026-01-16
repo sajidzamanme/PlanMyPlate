@@ -15,14 +15,14 @@ private val DarkColorScheme = darkColorScheme(
     onPrimary = GreenOnPrimaryDark,
     primaryContainer = GreenPrimaryContainerDark,
     onPrimaryContainer = GreenOnPrimaryContainerDark,
-    secondary = OrangeSecondaryDark,
-    onSecondary = OrangeOnSecondaryDark,
-    secondaryContainer = OrangeSecondaryContainerDark,
-    onSecondaryContainer = OrangeOnSecondaryContainerDark,
-    tertiary = TealTertiaryDark,
-    onTertiary = TealOnTertiaryDark,
-    tertiaryContainer = TealTertiaryContainerDark,
-    onTertiaryContainer = TealOnTertiaryContainerDark
+    secondary = GreenSecondaryDark,
+    onSecondary = GreenOnSecondaryDark,
+    secondaryContainer = GreenSecondaryContainerDark,
+    onSecondaryContainer = GreenOnSecondaryContainerDark,
+    tertiary = GreenTertiaryDark,
+    onTertiary = GreenOnTertiaryDark,
+    tertiaryContainer = GreenTertiaryContainerDark,
+    onTertiaryContainer = GreenOnTertiaryContainerDark
 )
 
 private val LightColorScheme = lightColorScheme(
@@ -30,14 +30,14 @@ private val LightColorScheme = lightColorScheme(
     onPrimary = GreenOnPrimary,
     primaryContainer = GreenPrimaryContainer,
     onPrimaryContainer = GreenOnPrimaryContainer,
-    secondary = OrangeSecondary,
-    onSecondary = OrangeOnSecondary,
-    secondaryContainer = OrangeSecondaryContainer,
-    onSecondaryContainer = OrangeOnSecondaryContainer,
-    tertiary = TealTertiary,
-    onTertiary = TealOnTertiary,
-    tertiaryContainer = TealTertiaryContainer,
-    onTertiaryContainer = TealOnTertiaryContainer
+    secondary = GreenSecondary,
+    onSecondary = GreenOnSecondary,
+    secondaryContainer = GreenSecondaryContainer,
+    onSecondaryContainer = GreenOnSecondaryContainer,
+    tertiary = GreenTertiary,
+    onTertiary = GreenOnTertiary,
+    tertiaryContainer = GreenTertiaryContainer,
+    onTertiaryContainer = GreenOnTertiaryContainer
 )
 
 @Composable

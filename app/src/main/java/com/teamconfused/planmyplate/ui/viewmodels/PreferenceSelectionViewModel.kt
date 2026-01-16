@@ -108,6 +108,18 @@ class PreferenceSelectionViewModel(private val sessionManager: SessionManager) :
         }
     }
 
+    suspend fun isPreferencesSet(id: Int): Boolean {
+        return try {
+            val response = RetrofitClient.userPreferencesService.getPreferences(id)
+            // Check if the returned DTO has actual data.
+            // Adjust this condition based on how your backend indicates "no preferences"
+            response != null && (response.diet != null || response.servings != null)
+        } catch (e: Exception) {
+            // If 404 is thrown, it usually means preferences don't exist
+            false
+        }
+    }
+
     fun onPreviousStep(onBack: () -> Unit) {
         _uiState.update {
             if (it.currentStep > 0) {
