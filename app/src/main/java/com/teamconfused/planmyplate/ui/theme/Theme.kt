@@ -11,33 +11,45 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
-    primary = GreenPrimaryDark,
-    onPrimary = GreenOnPrimaryDark,
-    primaryContainer = GreenPrimaryContainerDark,
-    onPrimaryContainer = GreenOnPrimaryContainerDark,
-    secondary = GreenSecondaryDark,
-    onSecondary = GreenOnSecondaryDark,
-    secondaryContainer = GreenSecondaryContainerDark,
-    onSecondaryContainer = GreenOnSecondaryContainerDark,
-    tertiary = GreenTertiaryDark,
-    onTertiary = GreenOnTertiaryDark,
-    tertiaryContainer = GreenTertiaryContainerDark,
-    onTertiaryContainer = GreenOnTertiaryContainerDark
+    primary = PrimaryDark,
+    onPrimary = OnPrimaryDark,
+    primaryContainer = PrimaryContainerDark,
+    onPrimaryContainer = OnPrimaryContainerDark,
+    secondary = SecondaryDark,
+    onSecondary = OnSecondaryDark,
+    secondaryContainer = SecondaryContainerDark,
+    onSecondaryContainer = OnSecondaryContainerDark,
+    tertiary = TertiaryDark,
+    onTertiary = OnTertiaryDark,
+    tertiaryContainer = TertiaryContainerDark,
+    onTertiaryContainer = OnTertiaryContainerDark,
+    background = BackgroundDark,
+    onBackground = OnBackgroundDark,
+    surface = SurfaceDark,
+    onSurface = OnSurfaceDark,
+    surfaceVariant = SurfaceVariantDark,
+    onSurfaceVariant = OnSurfaceVariantDark
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = GreenPrimary,
-    onPrimary = GreenOnPrimary,
-    primaryContainer = GreenPrimaryContainer,
-    onPrimaryContainer = GreenOnPrimaryContainer,
-    secondary = GreenSecondary,
-    onSecondary = GreenOnSecondary,
-    secondaryContainer = GreenSecondaryContainer,
-    onSecondaryContainer = GreenOnSecondaryContainer,
-    tertiary = GreenTertiary,
-    onTertiary = GreenOnTertiary,
-    tertiaryContainer = GreenTertiaryContainer,
-    onTertiaryContainer = GreenOnTertiaryContainer
+    primary = Primary,
+    onPrimary = OnPrimary,
+    primaryContainer = PrimaryContainer,
+    onPrimaryContainer = OnPrimaryContainer,
+    secondary = Secondary,
+    onSecondary = OnSecondary,
+    secondaryContainer = SecondaryContainer,
+    onSecondaryContainer = OnSecondaryContainer,
+    tertiary = Tertiary,
+    onTertiary = OnTertiary,
+    tertiaryContainer = TertiaryContainer,
+    onTertiaryContainer = OnTertiaryContainer,
+    background = Background,
+    onBackground = OnBackground,
+    surface = Surface,
+    onSurface = OnSurface,
+    surfaceVariant = SurfaceVariant,
+    onSurfaceVariant = OnSurfaceVariant
 )
 
 @Composable

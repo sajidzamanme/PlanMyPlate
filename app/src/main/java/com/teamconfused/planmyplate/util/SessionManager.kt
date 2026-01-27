@@ -17,6 +17,14 @@ class SessionManager(context: Context) {
     fun isLoggedIn(): Boolean {
         return getUserId() != -1
     }
+    
+    fun setHasMealPlans(hasMealPlans: Boolean) {
+        prefs.edit().putBoolean("has_meal_plans", hasMealPlans).apply()
+    }
+    
+    fun hasMealPlans(): Boolean {
+        return prefs.getBoolean("has_meal_plans", false)
+    }
 
     fun clearSession() {
         prefs.edit().clear().apply()

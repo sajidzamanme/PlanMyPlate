@@ -2,7 +2,7 @@ package com.teamconfused.planmyplate.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.teamconfused.planmyplate.model.UserPreferencesDto
+import com.teamconfused.planmyplate.model.UserPreferencesRequest
 import com.teamconfused.planmyplate.network.RetrofitClient
 import com.teamconfused.planmyplate.util.SessionManager
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,12 +19,47 @@ data class PreferenceSelectionUiState(
     val selectedServings: Int? = null,
     val selectedBudget: Float = 50F,
     val isLoading: Boolean = false,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val availableDiets: List<String> = emptyList(),
+    val availableAllergies: List<String> = emptyList(),
+    val availableDislikes: List<String> = emptyList()
 )
 
 class PreferenceSelectionViewModel(private val sessionManager: SessionManager) : ViewModel() {
     private val _uiState = MutableStateFlow(PreferenceSelectionUiState())
     val uiState: StateFlow<PreferenceSelectionUiState> = _uiState.asStateFlow()
+
+    init {
+        loadReferenceData()
+    }
+
+    private fun loadReferenceData() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+            try {
+                // Parallel fetch
+                val diets = RetrofitClient.userPreferencesService.getDiets().map { it.dietName }
+                val allergies = RetrofitClient.userPreferencesService.getAllergies().map { it.allergyName }
+                val dislikes = RetrofitClient.userPreferencesService.getDislikes().map { it.name }
+
+                _uiState.update { 
+                    it.copy(
+                        isLoading = false,
+                        availableDiets = diets,
+                        availableAllergies = allergies,
+                        availableDislikes = dislikes
+                    ) 
+                }
+            } catch (e: Exception) {
+                 _uiState.update { 
+                    it.copy(
+                        isLoading = false, 
+                        errorMessage = "Failed to load options: ${e.localizedMessage}"
+                    ) 
+                }
+            }
+        }
+    }
 
     fun onDietSelected(diet: String) {
         _uiState.update { it.copy(selectedDiet = diet) }
@@ -77,24 +112,31 @@ class PreferenceSelectionViewModel(private val sessionManager: SessionManager) :
             _uiState.update { it.copy(errorMessage = "User not logged in") }
             return
         }
+        
+        // Admin bypass - skip server call
+        if (userId == 0) {
+            _uiState.update { it.copy(isLoading = false) }
+            onComplete()
+            return
+        }
 
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
             try {
-                // Join the sets into comma-separated strings to match backend's expectation
-                val allergiesString = if (currentState.selectedAllergies.isEmpty()) null 
-                                     else currentState.selectedAllergies.joinToString(",")
-                val dislikesString = if (currentState.selectedDislikes.isEmpty()) null 
-                                    else currentState.selectedDislikes.joinToString(",")
+                // Convert sets to lists to match the backend's expectation
+                val allergiesList = if (currentState.selectedAllergies.isEmpty()) null 
+                                   else currentState.selectedAllergies.toList()
+                val dislikesList = if (currentState.selectedDislikes.isEmpty()) null 
+                                  else currentState.selectedDislikes.toList()
 
-                val dto = UserPreferencesDto(
+                val request = UserPreferencesRequest(
                     diet = currentState.selectedDiet,
-                    allergies = allergiesString,
-                    dislikes = dislikesString,
+                    allergies = allergiesList,
+                    dislikes = dislikesList,
                     servings = currentState.selectedServings,
                     budget = currentState.selectedBudget
                 )
-                RetrofitClient.userPreferencesService.setPreferences(userId, dto)
+                RetrofitClient.userPreferencesService.setPreferences(userId, request)
                 _uiState.update { it.copy(isLoading = false) }
                 onComplete()
             } catch (e: Exception) {
@@ -111,9 +153,8 @@ class PreferenceSelectionViewModel(private val sessionManager: SessionManager) :
     suspend fun isPreferencesSet(id: Int): Boolean {
         return try {
             val response = RetrofitClient.userPreferencesService.getPreferences(id)
-            // Check if the returned DTO has actual data.
-            // Adjust this condition based on how your backend indicates "no preferences"
-            response != null && (response.diet != null || response.servings != null)
+            // Check if the returned response has actual data.
+            response.diet != null || response.servings != null
         } catch (e: Exception) {
             // If 404 is thrown, it usually means preferences don't exist
             false

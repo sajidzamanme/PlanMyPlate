@@ -75,6 +75,14 @@ class SignupViewModel(private val sessionManager: SessionManager) : ViewModel() 
         }
 
         if (isValid) {
+            // Admin bypass
+            if (currentState.fullName == "admin" && currentState.email == "admin@email.com" && currentState.password == "12345678") {
+                sessionManager.saveUserId(0)
+                _uiState.update { it.copy(isLoading = false) }
+                onSignupSuccess()
+                return
+            }
+            
             viewModelScope.launch {
                 _uiState.update { it.copy(isLoading = true, errorMessage = null) }
                 try {

@@ -101,16 +101,17 @@ fun PreferenceSelectionScreen(
 
             when (uiState.currentStep) {
                 0 -> DietSelectionStep(
+                    availableDiets = uiState.availableDiets,
                     selectedDiet = uiState.selectedDiet,
                     onDietSelected = onDietSelected
                 )
                 1 -> MultiSelectStep(
-                    options = getAllergies(),
+                    options = uiState.availableAllergies,
                     selectedOptions = uiState.selectedAllergies,
                     onOptionToggled = onAllergyToggled
                 )
                 2 -> MultiSelectStep(
-                    options = getDislikes(),
+                    options = uiState.availableDislikes,
                     selectedOptions = uiState.selectedDislikes,
                     onOptionToggled = onDislikeToggled
                 )
@@ -174,16 +175,14 @@ fun PreferenceTopBar(
 
 @Composable
 fun DietSelectionStep(
+    availableDiets: List<String>,
     selectedDiet: String?,
     onDietSelected: (String) -> Unit
 ) {
-    val diets = listOf(
-        "Classic", "Low Carb", "Keto", "Flexitarian", 
-        "Paleo", "Vegetarian", "Pescatarian", "Vegan"
-    )
+    // diets list removed, using availableDiets parameter
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        diets.forEach { diet ->
+        availableDiets.forEach { diet ->
             SelectionButton(
                 text = diet,
                 isSelected = diet == selectedDiet,
@@ -318,6 +317,9 @@ fun PreferenceSelection_BudgetStep_Preview() {
         PreferenceSelectionScreen(
             uiState = PreferenceSelectionUiState(
                 currentStep = 4,
+                availableDiets = listOf("Classic", "Vegetarian"),
+                availableAllergies = listOf("Peanuts", "Shellfish"),
+                availableDislikes = listOf("Mushrooms"),
                 selectedDiet = "Classic",
                 selectedAllergies = emptySet(),
                 selectedDislikes = emptySet(),
@@ -434,15 +436,7 @@ private fun getTitleForStep(step: Int): String {
     }
 }
 
-private fun getAllergies() = listOf(
-    "Gluten", "Peanut", "Tree Nut", "Soy", 
-    "Sesame", "Mustard", "Sulfite", "Nightshade"
-)
+// Hardcoded lists removed - data comes from API via ViewModel
 
-private fun getDislikes() = listOf(
-    "Avocado", "Beets", "Bell Peppers", "Brussels Sprouts",
-    "Cauliflower", "Eggplant", "Mushrooms", "Olives",
-    "Quinoa", "Tofu", "Turnips"
-)
 
 data class ServingOption(val count: Int, val description: String)

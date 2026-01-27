@@ -40,6 +40,28 @@ data class AuthResponse(
 }
 
 @Serializable
+data class ForgotPasswordRequest(
+    val email: String
+)
+
+@Serializable
+data class ForgotPasswordResponse(
+    val message: String,
+    val token: String? = null
+)
+
+@Serializable
+data class ResetPasswordRequest(
+    val resetToken: String,
+    val newPassword: String
+)
+
+@Serializable
+data class ResetPasswordResponse(
+    val message: String
+)
+
+@Serializable
 data class UserPreferencesDto(
     val diet: String? = null,
     val allergies: String? = null, // Changed from List to String

@@ -1,10 +1,15 @@
 package com.teamconfused.planmyplate.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.teamconfused.planmyplate.model.ForgotPasswordRequest
+import com.teamconfused.planmyplate.model.ResetPasswordRequest
+import com.teamconfused.planmyplate.network.RetrofitClient
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 enum class ForgotPasswordStep {
     EMAIL_INPUT,
@@ -19,7 +24,9 @@ data class ForgotPasswordUiState(
     val code: String = "",
     val newPassword: String = "",
     val confirmPassword: String = "",
-    val error: String? = null
+    val error: String? = null,
+    val isLoading: Boolean = false,
+    val resetToken: String? = null
 )
 
 class ForgotPasswordViewModel : ViewModel() {
@@ -31,7 +38,7 @@ class ForgotPasswordViewModel : ViewModel() {
     }
 
     fun onCodeChange(code: String) {
-        if (code.length <= 4 && code.all { it.isDigit() }) {
+        if (code.length <= 100) { // Accept token as string
              _uiState.update { it.copy(code = code, error = null) }
         }
     }
@@ -55,23 +62,39 @@ class ForgotPasswordViewModel : ViewModel() {
             return
         }
         
-        // Simulate sending code...
-        _uiState.update { it.copy(step = ForgotPasswordStep.VERIFICATION_CODE, error = null) }
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, error = null) }
+            try {
+                val request = ForgotPasswordRequest(email = currentState.email)
+                val response = RetrofitClient.authService.forgotPassword(request)
+                _uiState.update { 
+                    it.copy(
+                        step = ForgotPasswordStep.VERIFICATION_CODE, 
+                        error = null,
+                        resetToken = response.token,
+                        isLoading = false
+                    ) 
+                }
+            } catch (e: Exception) {
+                _uiState.update { 
+                    it.copy(
+                        error = e.localizedMessage ?: "Failed to send reset code",
+                        isLoading = false
+                    ) 
+                }
+            }
+        }
     }
 
     fun onVerifyCodeClick() {
         val currentState = _uiState.value
-        if (currentState.code.length != 4) {
-            _uiState.update { it.copy(error = "Please enter a 4-digit code") }
+        if (currentState.code.isBlank()) {
+            _uiState.update { it.copy(error = "Please enter the reset token") }
             return
         }
         
-        // Mock validation: "0000" is correct
-        if (currentState.code == "0000") {
-            _uiState.update { it.copy(step = ForgotPasswordStep.RESET_PASSWORD, error = null) }
-        } else {
-            _uiState.update { it.copy(error = "Invalid verification code") }
-        }
+        // Store the token for the reset password step
+        _uiState.update { it.copy(step = ForgotPasswordStep.RESET_PASSWORD, error = null, resetToken = currentState.code) }
     }
 
     fun onResetPasswordClick() {
@@ -89,7 +112,28 @@ class ForgotPasswordViewModel : ViewModel() {
             return
         }
 
-        // Simulate password reset...
-        _uiState.update { it.copy(step = ForgotPasswordStep.SUCCESS, error = null) }
+        if (currentState.resetToken == null) {
+            _uiState.update { it.copy(error = "Reset token is missing") }
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, error = null) }
+            try {
+                val request = ResetPasswordRequest(
+                    resetToken = currentState.resetToken,
+                    newPassword = currentState.newPassword
+                )
+                RetrofitClient.authService.resetPassword(request)
+                _uiState.update { it.copy(step = ForgotPasswordStep.SUCCESS, error = null, isLoading = false) }
+            } catch (e: Exception) {
+                _uiState.update { 
+                    it.copy(
+                        error = e.localizedMessage ?: "Failed to reset password",
+                        isLoading = false
+                    ) 
+                }
+            }
+        }
     }
 }

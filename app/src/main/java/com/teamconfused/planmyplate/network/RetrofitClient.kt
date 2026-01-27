@@ -29,11 +29,42 @@ object RetrofitClient {
         .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
         .build()
 
+    // Authentication Service
     val authService: AuthService by lazy {
         retrofit.create(AuthService::class.java)
     }
 
+    // User Services
+    val userService: UserService by lazy {
+        retrofit.create(UserService::class.java)
+    }
+
     val userPreferencesService: UserPreferencesService by lazy {
         retrofit.create(UserPreferencesService::class.java)
+    }
+
+    // Recipe Service
+    val recipeService: RecipeService by lazy {
+        retrofit.create(RecipeService::class.java)
+    }
+
+    // Ingredient Service
+    val ingredientService: IngredientService by lazy {
+        retrofit.create(IngredientService::class.java)
+    }
+
+    // Meal Plan Service
+    val mealPlanService: MealPlanService by lazy {
+        retrofit.create(MealPlanService::class.java)
+    }
+
+    // Grocery List Service
+    val groceryListService: GroceryListService by lazy {
+        retrofit.create(GroceryListService::class.java)
+    }
+
+    // Inventory Service
+    val inventoryService: InventoryService by lazy {
+        retrofit.create(InventoryService::class.java)
     }
 }

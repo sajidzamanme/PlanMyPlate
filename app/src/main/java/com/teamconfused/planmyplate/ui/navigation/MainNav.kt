@@ -29,8 +29,8 @@ fun MainNav(factory: ViewModelFactory, onLogout: () -> Unit) {
             modifier = Modifier.padding(innerPadding)
         ) {
             composable("home") { HomeScreen(navController) }
-            composable("meal_plan") { MealPlanScreen() }
-            composable("groceries") { GroceriesScreen() }
+            composable("meal_plan") { MealPlanScreen(navController) }
+            composable("groceries") { GroceriesScreen(navController) }
             composable("settings") {
                 val viewModel: SettingsViewModel = viewModel(factory = factory)
                 SettingsScreen(
