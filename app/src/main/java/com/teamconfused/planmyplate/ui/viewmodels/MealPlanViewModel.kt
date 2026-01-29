@@ -35,6 +35,7 @@ class MealPlanViewModel(
     // Expose recipe states from RecipeViewModel
     val recommendedRecipesState = recipeViewModel.recommendedRecipesState
     val budgetRecipesState = recipeViewModel.budgetRecipesState
+    val allRecipesState = recipeViewModel.allRecipesState // Added this
 
     init {
         fetchWeeklyMealPlans()
@@ -163,6 +164,13 @@ class MealPlanViewModel(
     }
 
     fun retryFetchRecipes() {
+        recipeViewModel.fetchAllRecipes() // Added this
+        recipeViewModel.fetchRecommendedRecipes()
+        recipeViewModel.fetchBudgetRecipes()
+    }
+    
+    fun refreshRecipes() {
+        recipeViewModel.fetchAllRecipes()
         recipeViewModel.fetchRecommendedRecipes()
         recipeViewModel.fetchBudgetRecipes()
     }

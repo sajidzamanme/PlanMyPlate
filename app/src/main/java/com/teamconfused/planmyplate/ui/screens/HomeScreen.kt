@@ -9,6 +9,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -33,6 +36,8 @@ fun HomeScreen(navController: NavController) {
     val homeViewModel: HomeViewModel = viewModel(factory = viewModelFactory)
     val uiState by homeViewModel.uiState.collectAsState()
     
+    var recipeToShowDetails by remember { mutableStateOf<Recipe?>(null) }
+    
     val lifecycleOwner = androidx.compose.ui.platform.LocalLifecycleOwner.current
     androidx.compose.runtime.DisposableEffect(lifecycleOwner) {
         val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
@@ -47,9 +52,27 @@ fun HomeScreen(navController: NavController) {
     }
     
     if (hasMealPlans) {
-        DashboardWithMeals(navController, uiState, onRetry = { homeViewModel.retry() })
+        DashboardWithMeals(
+            navController = navController, 
+            uiState = uiState, 
+            onRetry = { homeViewModel.retry() },
+            onRecipeClick = { recipeToShowDetails = it }
+        )
     } else {
         EmptyDashboard(navController)
+    }
+
+    recipeToShowDetails?.let { recipe ->
+        com.teamconfused.planmyplate.ui.components.RecipeDetailsDialog(
+            recipe = recipe,
+            isAdded = true, // On Home screen, it's already part of the plan
+            onDismiss = { recipeToShowDetails = null },
+            onToggleRecipe = { 
+                // We could implement removal from plan here if needed, 
+                // but for now just close as requested "pressing should show details"
+                recipeToShowDetails = null
+            }
+        )
     }
 }
 
@@ -57,7 +80,8 @@ fun HomeScreen(navController: NavController) {
 fun DashboardWithMeals(
     navController: NavController,
     uiState: com.teamconfused.planmyplate.ui.viewmodels.HomeUiState,
-    onRetry: () -> Unit
+    onRetry: () -> Unit,
+    onRecipeClick: (Recipe) -> Unit
 ) {
     val currentDate = LocalDate.now()
     val formatter = DateTimeFormatter.ofPattern("EEEE, MMMM d")
@@ -180,13 +204,13 @@ fun DashboardWithMeals(
         )
         
         uiState.todayBreakfast?.let { 
-            MealSection("Breakfast", listOf(it))
+            MealSection("Breakfast", listOf(it), onRecipeClick)
         }
         uiState.todayLunch?.let { 
-            MealSection("Lunch", listOf(it))
+            MealSection("Lunch", listOf(it), onRecipeClick)
         }
         uiState.todayDinner?.let { 
-            MealSection("Dinner", listOf(it))
+            MealSection("Dinner", listOf(it), onRecipeClick)
         }
         
         HorizontalDivider(
@@ -200,7 +224,7 @@ fun DashboardWithMeals(
         )
         
         if (uiState.upcomingMeals.isNotEmpty()) {
-            UpcomingMealSection(uiState.upcomingDayLabel ?: "Upcoming", uiState.upcomingMeals)
+            UpcomingMealSection(uiState.upcomingDayLabel ?: "Upcoming", uiState.upcomingMeals, onRecipeClick)
         } else if (uiState.upcomingMessage != null) {
             Text(
                 text = uiState.upcomingMessage,
@@ -221,7 +245,7 @@ fun DashboardWithMeals(
 }
 
 @Composable
-fun MealSection(mealType: String, recipes: List<Recipe>) {
+fun MealSection(mealType: String, recipes: List<Recipe>, onRecipeClick: (Recipe) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(
             text = mealType,
@@ -229,13 +253,13 @@ fun MealSection(mealType: String, recipes: List<Recipe>) {
             color = MaterialTheme.colorScheme.primary
         )
         recipes.forEach { recipe ->
-            HorizontalRecipeCard(recipe = recipe, onClick = {})
+            HorizontalRecipeCard(recipe = recipe, onClick = { onRecipeClick(recipe) })
         }
     }
 }
 
 @Composable
-fun UpcomingMealSection(label: String, recipes: List<Recipe>) {
+fun UpcomingMealSection(label: String, recipes: List<Recipe>, onRecipeClick: (Recipe) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(
             text = label,
@@ -243,7 +267,7 @@ fun UpcomingMealSection(label: String, recipes: List<Recipe>) {
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         recipes.forEach { recipe ->
-            HorizontalRecipeCard(recipe = recipe, onClick = {})
+            HorizontalRecipeCard(recipe = recipe, onClick = { onRecipeClick(recipe) })
         }
     }
 }

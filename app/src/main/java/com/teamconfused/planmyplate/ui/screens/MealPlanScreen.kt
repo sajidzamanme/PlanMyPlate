@@ -156,6 +156,12 @@ fun RecipeSelectionDialog(
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
     val recommendedState by viewModel.recommendedRecipesState.collectAsState()
     val budgetState by viewModel.budgetRecipesState.collectAsState()
+    val allRecipesState by viewModel.allRecipesState.collectAsState() // Added this
+    
+    // Refresh recipes when dialog opens
+    LaunchedEffect(Unit) {
+        viewModel.refreshRecipes()
+    }
     
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -265,6 +271,46 @@ fun RecipeSelectionDialog(
                             Text("Retry")
                         }
                     }
+                }
+            }
+
+            // All Recipes Section (including newly added ones)
+            when (allRecipesState) {
+                is com.teamconfused.planmyplate.ui.viewmodels.RecipeUiState.Loading -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 32.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                }
+                is com.teamconfused.planmyplate.ui.viewmodels.RecipeUiState.Success -> {
+                    val recipes = (allRecipesState as com.teamconfused.planmyplate.ui.viewmodels.RecipeUiState.Success).recipes
+                    if (recipes.isNotEmpty()) {
+                        CategorizedRecipeSection(
+                            title = "All Recipes",
+                            recipes = recipes,
+                            onRecipeClick = { onRecipeToggle(it) },
+                            onRecipeLongClick = { onRecipeLongClick(it) },
+                            onSeeAllClick = { },
+                            selectedRecipes = selectedRecipes
+                        )
+                    } else {
+                        Text(
+                            text = "No recipes found. Try adding some in Settings!",
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.padding(vertical = 16.dp)
+                        )
+                    }
+                }
+                is com.teamconfused.planmyplate.ui.viewmodels.RecipeUiState.Error -> {
+                    Text(
+                        text = "Failed to load all recipes",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.error
+                    )
                 }
             }
         }
