@@ -1,524 +1,342 @@
 # PlanMyPlate API Documentation
 
-## Base URL
-```
-http://localhost:8081/api
-```
+This document provides a detailed reference for the PlanMyPlate API. It is designed to help developers, including Android developers, understand and integrate with the backend services.
+
+**Base URL:** `/api`
 
 ---
 
-## 1. Authentication Endpoints
+## 1. Authentication
 
-### 1.1 User Signup
-- **Method:** POST
-- **Endpoint:** `/auth/signup`
-- **Request Body:**
-```json
-{
-  "name": "John Doe",
-  "email": "john@example.com",
-  "password": "password123"
-}
-```
-- **Response:** 
-```json
-{
-  "token": "eyJhbGciOiJIUzI1NiJ9...",
-  "email": "john@example.com",
-  "name": "John Doe",
-  "userId": 1
-}
-```
+### Sign Up
+Register a new user account.
 
-### 1.2 User Signin
-- **Method:** POST
-- **Endpoint:** `/auth/signin`
+- **URL:** `/auth/signup`
+- **Method:** `POST`
 - **Request Body:**
-```json
-{
-  "email": "john@example.com",
-  "password": "password123"
-}
-```
-- **Response:** Same as Signup
+  ```json
+  {
+    "name": "John Doe",
+    "email": "john.doe@example.com",
+    "password": "securePassword123"
+  }
+  ```
+- **Response Body:**
+  ```json
+  {
+    "token": "eyJhbGciOiJIUzI1NiJ9...",
+    "email": "john.doe@example.com",
+    "name": "John Doe",
+    "userId": 1
+  }
+  ```
 
-### 1.3 Forgot Password
-- **Method:** POST
-- **Endpoint:** `/auth/forgot-password`
-- **Request Body:**
-```json
-{
-  "email": "john@example.com"
-}
-```
-- **Response:**
-```json
-{
-  "message": "Password reset token sent to email. Token: 1234"
-}
-```
+### Sign In
+Authenticate an existing user.
 
-### 1.4 Reset Password
-- **Method:** POST
-- **Endpoint:** `/auth/reset-password`
+- **URL:** `/auth/signin`
+- **Method:** `POST`
 - **Request Body:**
-```json
-{
-  "resetToken": "1234",
-  "newPassword": "newpassword123"
-}
-```
-- **Response:**
-```json
-{
-  "message": "Password reset successfully"
-}
-```
+  ```json
+  {
+    "email": "john.doe@example.com",
+    "password": "securePassword123"
+  }
+  ```
+- **Response Body:**
+  ```json
+  {
+    "token": "eyJhbGciOiJIUzI1NiJ9...",
+    "email": "john.doe@example.com",
+    "name": "John Doe",
+    "userId": 1
+  }
+  ```
+
+### Forgot Password
+Initiate password reset process.
+
+- **URL:** `/auth/forgot-password`
+- **Method:** `POST`
+- **Request Body:**
+  ```json
+  {
+    "email": "john.doe@example.com"
+  }
+  ```
+- **Response Body:**
+  ```json
+  {
+    "message": "Password reset email sent."
+  }
+  ```
+
+### Reset Password
+Complete password reset.
+
+- **URL:** `/auth/reset-password`
+- **Method:** `POST`
+- **Request Body:**
+  ```json
+  {
+    "resetToken": "token-received-in-email",
+    "newPassword": "newSecurePassword456"
+  }
+  ```
+- **Response Body:**
+  ```json
+  {
+    "message": "Password successfully reset."
+  }
+  ```
 
 ---
 
-## 2. User Endpoints
+## 2. Users
 
-### 2.1 Get Current User (Authenticated)
-- **Method:** GET
-- **Endpoint:** `/users/me`
+### Get Current User
+Retrieve profile of the currently authenticated user.
+
+- **URL:** `/users/me`
+- **Method:** `GET`
 - **Headers:** `Authorization: Bearer <token>`
-- **Response:**
-```json
-{
-  "userId": 1,
-  "email": "john@example.com",
-  "name": "John Doe",
-  "userName": "johndoe"
-}
-```
+- **Response Body:**
+  ```json
+  {
+    "userId": 1,
+    "name": "John Doe",
+    "email": "john.doe@example.com"
+  }
+  ```
 
-### 2.2 Get User by ID
-- **Method:** GET
-- **Endpoint:** `/users/{userId}`
-- **Response:**
-```json
-{
-  "userId": 1,
-  "userName": "johndoe",
-  "name": "John Doe",
-  "email": "john@example.com",
-  "password": "encrypted",
-  "age": 28,
-  "weight": 75.5,
-  "budget": 500.00,
-  "allergies": [
+### Get User by ID
+- **URL:** `/users/{id}`
+- **Method:** `GET`
+- **Response Body:** User object (details omitted for security/brevity unless full entity is returned).
+
+### Update User
+- **URL:** `/users/{id}`
+- **Method:** `PUT`
+- **Request Body:** User data fields to update.
+- **Response Body:** Updated User object.
+
+### Delete User
+- **URL:** `/users/{id}`
+- **Method:** `DELETE`
+- **Response Body:**
+  ```json
+  {
+    "message": "User deleted successfully"
+  }
+  ```
+
+---
+
+## 3. User Preferences
+Manage dietary preferences, allergies, and dislikes.
+
+### Get Preferences
+- **URL:** `/user-preferences/{userId}`
+- **Method:** `GET`
+- **Response Body:**
+  ```json
+  {
+    "prefId": 10,
+    "userId": 1,
+    "diet": "Vegan",
+    "allergies": ["Peanuts", "Shellfish"],
+    "dislikes": ["Mushrooms"],
+    "servings": 2,
+    "budget": 150.00
+  }
+  ```
+
+### Set/Update Preferences
+- **URL:** `/user-preferences/{userId}`
+- **Method:** `POST`
+- **Request Body:**
+  ```json
+  {
+    "diet": "Vegan",
+    "allergies": ["Peanuts"],
+    "dislikes": [],
+    "servings": 4,
+    "budget": 200.00
+  }
+  ```
+- **Response Body:** Updated preferences object (same structure as GET).
+
+---
+
+## 4. Recipes
+
+### Get All Recipes
+- **URL:** `/recipes`
+- **Method:** `GET`
+- **Response Body:** List of Recipe objects.
+  ```json
+  [
     {
-      "allergyId": 1,
-      "allergyName": "peanuts"
-    }
-  ],
-  "dislikes": [
+      "recipeId": 1,
+      "name": "Avocado Toast",
+      "description": "Toasted bread with avocado spread...",
+      "calories": 350,
+      "ingredients": [ ... ]
+    },
+    ...
+  ]
+  ```
+
+### Get Recipe by ID
+- **URL:** `/recipes/{id}`
+- **Method:** `GET`
+- **Response Body:** Single Recipe object.
+
+### Search Recipes
+- **URL:** `/recipes/search?name=pasta`
+- **Method:** `GET`
+- **Response Body:** List of matching Recipe objects.
+
+### Filter by Calories
+- **URL:** `/recipes/filter/calories?minCalories=200&maxCalories=500`
+- **Method:** `GET`
+- **Response Body:** List of Recipe objects within calorie range.
+
+---
+
+## 5. Meal Plans
+
+### Get Weekly Meal Plans
+Retrieve all meal plans for a specific user.
+
+- **URL:** `/meal-plans/user/{userId}/weekly`
+- **Method:** `GET`
+- **Response Body:** List of MealPlan objects.
+  ```json
+  [
     {
-      "ingId": 5,
-      "name": "mushrooms",
-      "price": 30.00
+      "mpId": 5,
+      "startDate": "2023-10-23",
+      "duration": 7,
+      "status": "ACTIVE",
+      "slots": [
+        {
+          "slotId": 101,
+          "mealType": "Breakfast",
+          "date": "2023-10-23",
+          "recipe": { "recipeId": 1, "name": "..." }
+        }
+      ]
     }
   ]
-}
-```
+  ```
 
-### 2.3 Update User
-- **Method:** PUT
-- **Endpoint:** `/users/{userId}`
+### Create Meal Plan (Simple)
+Create a new empty meal plan.
+
+- **URL:** `/meal-plans/user/{userId}`
+- **Method:** `POST`
 - **Request Body:**
-```json
-{
-  "name": "Jane Doe",
-  "userName": "janedoe",
-  "age": 25,
-  "weight": 65.0,
-  "budget": 600.00
-}
-```
-
-### 2.4 Delete User
-- **Method:** DELETE
-- **Endpoint:** `/users/{userId}`
-- **Response:**
-```json
-{
-  "message": "User deleted successfully"
-}
-```
-
----
-
-## 3. Recipe Endpoints
-
-### 3.1 Get All Recipes
-- **Method:** GET
-- **Endpoint:** `/recipes`
-- **Response:** Array of recipes
-
-### 3.2 Get Recipe by ID
-- **Method:** GET
-- **Endpoint:** `/recipes/{id}`
-
-### 3.3 Create Recipe
-- **Method:** POST
-- **Endpoint:** `/recipes`
-- **Request Body:**
-```json
-{
-  "name": "Pasta Carbonara",
-  "description": "Italian pasta dish",
-  "calories": 450
-}
-```
-
-### 3.4 Update Recipe
-- **Method:** PUT
-- **Endpoint:** `/recipes/{id}`
-- **Request Body:** Same format as create
-
-### 3.5 Delete Recipe
-- **Method:** DELETE
-- **Endpoint:** `/recipes/{id}`
-
-### 3.6 Search Recipes by Name
-- **Method:** GET
-- **Endpoint:** `/recipes/search?name=pasta`
-
-### 3.7 Filter Recipes by Calories
-- **Method:** GET
-- **Endpoint:** `/recipes/filter/calories?minCalories=300&maxCalories=500`
-
----
-
-## 4. Meal Plan Endpoints
-
-### 4.1 Get All Meal Plans for User
-- **Method:** GET
-- **Endpoint:** `/meal-plans/user/{userId}`
-
-### 4.2 Get Meal Plan by ID
-- **Method:** GET
-- **Endpoint:** `/meal-plans/{id}`
-
-### 4.3 Create Meal Plan
-- **Method:** POST
-- **Endpoint:** `/meal-plans/user/{userId}`
-- **Request Body:**
-```json
-{
-  "duration": 7,
-  "status": "active"
-}
-```
-
-### 4.3.1 Create Meal Plan with Recipes (Auto-Populates Grocery List)
-- **Method:** POST
-- **Endpoint:** `/meal-plans/user/{userId}/create`
-- **Request Body:**
-```json
-{
-  "recipeIds": [1, 2, 3],
-  "duration": 7,
-  "startDate": "2026-02-01"
-}
-```
-- **Response:** Created MealPlan object. Ingredients from selected recipes are automatically added to the user's active Grocery List.
-
-### 4.4 Update Meal Plan
-- **Method:** PUT
-- **Endpoint:** `/meal-plans/{id}`
-- **Request Body:**
-```json
-{
-  "status": "completed",
-  "duration": 7
-}
-```
-
-### 4.5 Delete Meal Plan
-- **Method:** DELETE
-- **Endpoint:** `/meal-plans/{id}`
-
-### 4.6 Get Meal Plans by Status
-- **Method:** GET
-- **Endpoint:** `/meal-plans/user/{userId}/status/{status}`
-
-### 4.7 Get Weekly Meal Plans
-- **Method:** GET
-- **Endpoint:** `/meal-plans/user/{userId}/weekly`
-
----
-
-## 5. Grocery List Endpoints
-
-### 5.1 Get All Grocery Lists for User
-- **Method:** GET
-- **Endpoint:** `/grocery-lists/user/{userId}`
-
-### 5.2 Get Grocery List by ID
-- **Method:** GET
-- **Endpoint:** `/grocery-lists/{id}`
-
-### 5.3 Create Grocery List
-- **Method:** POST
-- **Endpoint:** `/grocery-lists/user/{userId}`
-- **Request Body:**
-```json
-{
-  "status": "active"
-}
-```
-
-### 5.4 Update Grocery List
-- **Method:** PUT
-- **Endpoint:** `/grocery-lists/{id}`
-- **Request Body:**
-```json
-{
-  "status": "completed"
-}
-```
-
-### 5.4.1 Purchase Items (Move to Inventory)
-- **Method:** POST
-- **Endpoint:** `/grocery-lists/{id}/purchase`
-- **Request Body:**
-```json
-{
-  "ingredientIds": [101, 102, 105]
-}
-```
-- **Response:** 200 OK. Items are moved to Inventory and removed from the Grocery List.
-
-### 5.5 Delete Grocery List
-- **Method:** DELETE
-- **Endpoint:** `/grocery-lists/{id}`
-
-### 5.6 Get Grocery Lists by Status
-- **Method:** GET
-- **Endpoint:** `/grocery-lists/user/{userId}/status/{status}`
-
----
-
-## 6. Inventory Endpoints
-
-### 6.1 Get Inventory for User
-- **Method:** GET
-- **Endpoint:** `/inventory/user/{userId}`
-
-### 6.2 Get Inventory by ID
-- **Method:** GET
-- **Endpoint:** `/inventory/{id}`
-
-### 6.3 Create Inventory for User
-- **Method:** POST
-- **Endpoint:** `/inventory/user/{userId}`
-
-### 6.4 Update Inventory
-- **Method:** PUT
-- **Endpoint:** `/inventory/{id}`
-- **Request Body:**
-```json
-{}
-```
-
-### 6.5 Delete Inventory
-- **Method:** DELETE
-- **Endpoint:** `/inventory/{id}`
-
-### 6.6 Get Inventory Items
-- **Method:** GET
-- **Endpoint:** `/inventory/{inventoryId}/items`
-
-### 6.7 Add Item to Inventory
-- **Method:** POST
-- **Endpoint:** `/inventory/{inventoryId}/items`
-- **Request Body:**
-```json
-{
-  "quantity": 5,
-  "expiryDate": "2026-02-28",
-  "ingredient": {
-    "ingId": 1
+  ```json
+  {
+    "startDate": "2023-11-01",
+    "duration": 7
   }
-}
-```
+  ```
+- **Response Body:** Created MealPlan object.
 
-### 6.8 Remove Item from Inventory
-- **Method:** DELETE
-- **Endpoint:** `/inventory/items/{itemId}`
+### Create Meal Plan with Recipes
+Generate a meal plan with selected recipes.
 
----
-
-## 7. Ingredient Endpoints
-
-### 7.1 Get All Ingredients
-- **Method:** GET
-- **Endpoint:** `/ingredients`
-
-### 7.2 Get Ingredient by ID
-- **Method:** GET
-- **Endpoint:** `/ingredients/{id}`
-
-### 7.3 Create Ingredient
-- **Method:** POST
-- **Endpoint:** `/ingredients`
+- **URL:** `/meal-plans/user/{userId}/create`
+- **Method:** `POST`
 - **Request Body:**
-```json
-{
-  "name": "Tomato",
-  "price": 50.00
-}
-```
-
-### 7.4 Update Ingredient
-- **Method:** PUT
-- **Endpoint:** `/ingredients/{id}`
-- **Request Body:** Same format as create
-
-### 7.5 Delete Ingredient
-- **Method:** DELETE
-- **Endpoint:** `/ingredients/{id}`
-
-### 7.6 Search Ingredients by Name
-- **Method:** GET
-- **Endpoint:** `/ingredients/search?name=tomato`
-
-### 7.7 Filter Ingredients by Price
-- **Method:** GET
-- **Endpoint:** `/ingredients/price/range?minPrice=10&maxPrice=100`
+  ```json
+  {
+    "recipeIds": [1, 5, 12],
+    "duration": 3,
+    "startDate": "2023-11-01"
+  }
+  ```
+- **Response Body:** Created MealPlan object with populated slots.
 
 ---
 
-## 9. Reference Data Endpoints
+## 6. Grocery Lists
 
-### 9.1 Get All Diets
-- **Method:** GET
-- **Endpoint:** `/reference-data/diets`
-- **Response:** List of all available diets.
-```json
-[
-  {
-    "dietId": 1,
-    "dietName": "Vegetarian"
-  },
-  {
-    "dietId": 2,
-    "dietName": "Vegan"
-  }
-]
-```
+### Get Grocery Lists by User
+- **URL:** `/grocery-lists/user/{userId}`
+- **Method:** `GET`
+- **Response Body:** List of GroceryList objects.
 
-### 9.2 Get All Allergies
-- **Method:** GET
-- **Endpoint:** `/reference-data/allergies`
-- **Response:** List of all available allergies.
-```json
-[
-  {
-    "allergyId": 1,
-    "allergyName": "Peanuts"
-  },
-  {
-    "allergyId": 2,
-    "allergyName": "Shellfish"
-  }
-]
-```
+### Purchase Items
+Mark specific ingredients as purchased (deduct from grocery list, add to inventory).
 
-### 9.3 Get All Dislikes (Ingredients)
-- **Method:** GET
-- **Endpoint:** `/reference-data/dislikes`
-- **Response:** List of ingredients that can be disliked. Same format as ingredients.
-
-
----
-
-## 8. User Preferences Endpoints
-
-### 8.1 Set User Preferences
-- **Method:** POST
-- **Endpoint:** `/user-preferences/{userId}`
+- **URL:** `/grocery-lists/{id}/purchase`
+- **Method:** `POST`
 - **Request Body:**
-```json
-{
-  "diet": "Vegetarian",
-  "allergies": "peanuts, shellfish",
-  "dislikes": "mushrooms, onions",
-  "servings": 2,
-  "budget": 500.00
-}
-```
-- **Response:**
-```json
-{
-  "prefId": 1,
-  "userId": 1,
-  "diet": "Vegetarian",
-  "allergies": "peanuts, shellfish",
-  "dislikes": "mushrooms, onions",
-  "servings": 2,
-  "budget": 500.00
-}
-```
-
-### 8.2 Get User Preferences
-- **Method:** GET
-- **Endpoint:** `/user-preferences/{userId}`
-- **Response:**
-```json
-{
-  "prefId": 1,
-  "userId": 1,
-  "diet": "Vegetarian",
-  "allergies": "peanuts, shellfish",
-  "dislikes": "mushrooms, onions",
-  "servings": 2,
-  "budget": 500.00
-}
-```
+  ```json
+  {
+    "ingredientIds": [101, 102, 205]
+  }
+  ```
+- **Response Body:** HTTP 200 OK (Empty body).
 
 ---
 
-## Error Response Format
+## 7. Inventory (Pantry)
 
-All errors follow this format:
-```json
-{
-  "timestamp": "2026-01-28T10:30:00",
-  "status": 400,
-  "error": "Bad Request",
-  "message": "Error description here"
-}
-```
+### Get User Inventory
+- **URL:** `/inventory/user/{userId}`
+- **Method:** `GET`
+- **Response Body:**
+  ```json
+  {
+    "inventoryId": 1,
+    "items": [
+      {
+        "itemId": 50,
+        "ingredient": { "ingId": 101, "name": "Milk" },
+        "quantity": 1,
+        "unit": "Liter"
+      }
+    ]
+  }
+  ```
+
+### Add Item to Inventory
+- **URL:** `/inventory/{inventoryId}/items`
+- **Method:** `POST`
+- **Request Body:**
+  ```json
+  {
+    "ingredient": { "ingId": 101 },
+    "quantity": 2,
+    "unit": "Pack"
+  }
+  ```
+- **Response Body:** The created Inventory Item object.
+
+### Remove Item from Inventory
+- **URL:** `/inventory/items/{itemId}`
+- **Method:** `DELETE`
+- **Response Body:** HTTP 200 OK.
 
 ---
 
-## Authentication
+## 8. Reference Data
 
-Most endpoints (except `/auth/*`, public endpoints) require JWT token in the header:
-```
-Authorization: Bearer <your_jwt_token>
-```
+### Get All Diets
+- **URL:** `/reference-data/diets`
+- **Method:** `GET`
+- **Response Body:** List of Diet objects (e.g., Vegan, Keto).
 
----
+### Get All Allergies
+- **URL:** `/reference-data/allergies`
+- **Method:** `GET`
+- **Response Body:** List of Allergy objects.
 
-## Status Codes
-
-- **200 OK** - Successful GET/PUT
-- **201 Created** - Successful POST
-- **400 Bad Request** - Invalid request
-- **404 Not Found** - Resource not found
-- **500 Internal Server Error** - Server error
-
----
-
-## Rate Limiting
-
-No rate limiting is currently implemented. In production, add rate limiting middleware.
-
----
-
-## Version
-v1.0.0 - Last Updated: January 28, 2026
+### Get All Ingredients (Dislikes)
+- **URL:** `/reference-data/dislikes`
+- **Method:** `GET`
+- **Response Body:** List of Ingredient objects.
