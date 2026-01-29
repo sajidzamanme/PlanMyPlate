@@ -17,6 +17,9 @@ data class MealPlanUiState(
     ),
     val isCreatingPlan: Boolean = false,
     val planCreated: Boolean = false,
+    val isLoadingHistory: Boolean = false,
+    val activeMealPlan: com.teamconfused.planmyplate.model.MealPlan? = null,
+    val mealPlans: List<com.teamconfused.planmyplate.model.MealPlan> = emptyList(),
     val errorMessage: String? = null
 )
 
@@ -33,10 +36,14 @@ class MealPlanViewModel(
     val recommendedRecipesState = recipeViewModel.recommendedRecipesState
     val budgetRecipesState = recipeViewModel.budgetRecipesState
 
+    init {
+        fetchWeeklyMealPlans()
+    }
+    
     fun toggleRecipe(mealType: String, recipe: Recipe) {
         val current = _uiState.value.selectedRecipes[mealType] ?: emptyList()
-        val updated = if (current.contains(recipe)) {
-            current - recipe
+        val updated = if (current.any { it.id == recipe.id }) {
+            current.filter { it.id != recipe.id }
         } else if (current.size < 7) {
             current + recipe
         } else {
@@ -104,6 +111,9 @@ class MealPlanViewModel(
 
                 mealPlanService.createMealPlanWithRecipes(userId, request)
                 
+                // Refresh list
+                fetchWeeklyMealPlans()
+
                 _uiState.update {
                     it.copy(
                         isCreatingPlan = false,
@@ -122,8 +132,49 @@ class MealPlanViewModel(
         }
     }
 
+    fun fetchWeeklyMealPlans() {
+        val userId = sessionManager.getUserId()
+        if (userId == -1) return
+
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoadingHistory = true) }
+            try {
+                val plans = mealPlanService.getWeeklyMealPlans(userId)
+                val active = plans.find { it.status == "active" } // or logic to find latest
+                _uiState.update {
+                    it.copy(
+                        isLoadingHistory = false,
+                        mealPlans = plans,
+                        activeMealPlan = active
+                    )
+                }
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(
+                        isLoadingHistory = false,
+                        // Don't show error on screen heavily for background fetch, maybe logging
+                    )
+                }
+            }
+        }
+    }
+
     fun retryFetchRecipes() {
         recipeViewModel.fetchRecommendedRecipes()
         recipeViewModel.fetchBudgetRecipes()
+    }
+
+    fun startNewPlan() {
+        _uiState.update { 
+            it.copy(
+                activeMealPlan = null,
+                isCreatingPlan = false,
+                selectedRecipes = mapOf(
+                    "Breakfast" to emptyList(),
+                    "Lunch" to emptyList(),
+                    "Dinner" to emptyList()
+                )
+            ) 
+        }
     }
 }

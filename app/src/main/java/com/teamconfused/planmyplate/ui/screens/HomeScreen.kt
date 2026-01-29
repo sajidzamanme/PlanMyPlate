@@ -185,11 +185,15 @@ fun DashboardWithMeals(
             style = MaterialTheme.typography.headlineSmall
         )
         
-        uiState.tomorrowBreakfast?.let {
-            UpcomingMealSection("Tomorrow - Breakfast", listOf(it))
-        }
-        uiState.tomorrowLunch?.let {
-            UpcomingMealSection("Tomorrow - Lunch", listOf(it))
+        if (uiState.upcomingMeals.isNotEmpty()) {
+            UpcomingMealSection(uiState.upcomingDayLabel ?: "Upcoming", uiState.upcomingMeals)
+        } else if (uiState.upcomingMessage != null) {
+            Text(
+                text = uiState.upcomingMessage,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
         }
         
         FilledTonalButton(

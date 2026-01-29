@@ -16,8 +16,9 @@ data class HomeUiState(
     val todayBreakfast: Recipe? = null,
     val todayLunch: Recipe? = null,
     val todayDinner: Recipe? = null,
-    val tomorrowBreakfast: Recipe? = null,
-    val tomorrowLunch: Recipe? = null,
+    val upcomingMeals: List<Recipe> = emptyList(),
+    val upcomingDayLabel: String? = null,
+    val upcomingMessage: String? = null,
     val errorMessage: String? = null
 ) {
     val todayCalories: Int
@@ -55,40 +56,81 @@ class HomeViewModel(
                 // Find active plan
                 val activePlan = plans.find { it.status == "active" }
                 
-                if (activePlan != null && !activePlan.meals.isNullOrEmpty()) {
-                    // Logic to find "today's" meals. 
-                    // Simplified: Assuming creation date represents Day 1.
-                    // Real app should compare dates.
-                    
-                    // For demo/simplicity, let's just show Day 1's meals as Today 
-                    // and Day 2 as Tomorrow.
-                    // In a real scenario: calculate diff between LocalDate.now() and startDate.
-                    
-                    // Assuming Day 1
-                    val day1Meals = activePlan.meals.filter { it.day == 1 }
-                    val day2Meals = activePlan.meals.filter { it.day == 2 }
+                if (activePlan != null && !activePlan.slots.isNullOrEmpty()) {
+                    // Logic to find "today's" meals based on dates in slots
+                    // Enriched slots with computed date if missing
+                    // Use robust inference similar to MealPlanScreen
+                    val enrichedSlots = activePlan.slots.mapIndexed { index, slot ->
+                        // Determine Day Index (1..7)
+                        val dayIndex = if (slot.dayNumber != null && slot.dayNumber > 0) slot.dayNumber
+                                       else if (slot.day != null && slot.day > 0) slot.day
+                                       else {
+                                           // Try date derivation
+                                           val derived = if (slot.date != null && activePlan.startDate != null) {
+                                               try {
+                                                   java.time.temporal.ChronoUnit.DAYS.between(
+                                                       java.time.LocalDate.parse(activePlan.startDate),
+                                                       java.time.LocalDate.parse(slot.date)
+                                                   ).toInt() + 1
+                                               } catch (e: Exception) { 0 }
+                                           } else 0
+                                           
+                                           if (derived > 0) derived else (index / 3) + 1
+                                       }
 
-                    // Fetch recipe details if needed. Models.kt says MealPlanItem has optional recipe object.
-                    // If backend populates it, great. If not, we might need to fetch by ID.
-                    // Assuming backend populates 'recipe' in MealPlanItem or we use recipeService
-                    
-                    // Helper to exact recipe
-                    suspend fun getRecipe(item: com.teamconfused.planmyplate.model.MealPlanItem): Recipe? {
-                        return if (item.recipe != null) {
-                            item.recipe.toRecipe()
+                        val computedDate = if (activePlan.startDate != null) {
+                             try {
+                                 java.time.LocalDate.parse(activePlan.startDate)
+                                     .plusDays((dayIndex - 1).toLong())
+                                     .toString()
+                             } catch (e: Exception) { "Day $dayIndex" }
                         } else {
-                            try {
-                                recipeService.getRecipeById(item.recipeId).toRecipe()
-                            } catch (e: Exception) { null }
+                             // Fallback if no start date, just group by day index string if needed or keep loose
+                             // If we have slot.date, use it, else Day X
+                             slot.date ?: "Day $dayIndex"
                         }
+                        slot to computedDate
                     }
 
-                    val todayBreakfast = day1Meals.find { it.mealType == "Breakfast" }?.let { getRecipe(it) }
-                    val todayLunch = day1Meals.find { it.mealType == "Lunch" }?.let { getRecipe(it) }
-                    val todayDinner = day1Meals.find { it.mealType == "Dinner" }?.let { getRecipe(it) }
+                    // Group slots by date and sort
+                    val slotsByDate = enrichedSlots.groupBy { it.second }.toSortedMap()
+                    val dates = slotsByDate.keys.toList()
+
+                    // Logic to find Today and Next Day
+                    val todayDateString = java.time.LocalDate.now().toString()
                     
-                    val tomorrowBreakfast = day2Meals.find { it.mealType == "Breakfast" }?.let { getRecipe(it) }
-                     val tomorrowLunch = day2Meals.find { it.mealType == "Lunch" }?.let { getRecipe(it) }
+                    // Identify key for "Today"
+                    // If today exists in plan, use it. Else if plan starts in future, use first day as "Today" (preview).
+                    // If plan ended, show nothing or last day? Assuming active plan means relevant.
+                    
+                    val todayKey = if (slotsByDate.containsKey(todayDateString)) {
+                        todayDateString
+                    } else {
+                        // If today is not in keys, pick the first available date (assuming upcoming plan)
+                        dates.firstOrNull { it >= todayDateString } ?: dates.firstOrNull()
+                    }
+                    
+                    // Identify Next Day (day after todayKey)
+                    val todayIndex = dates.indexOf(todayKey)
+                    val nextDayKey = if (todayIndex != -1 && todayIndex + 1 < dates.size) {
+                        dates[todayIndex + 1]
+                    } else {
+                        null
+                    }
+
+                    val todayMealsList = if (todayKey != null) slotsByDate[todayKey]?.map { it.first } ?: emptyList() else emptyList()
+                    val upcomingMealsList = if (nextDayKey != null) slotsByDate[nextDayKey]?.map { it.first } ?: emptyList() else emptyList()
+
+                    // Extract Today's specific meals
+                    val todayBreakfast = todayMealsList.find { it.mealType == "Breakfast" }?.let { getRecipe(it) }
+                    val todayLunch = todayMealsList.find { it.mealType == "Lunch" }?.let { getRecipe(it) }
+                    val todayDinner = todayMealsList.find { it.mealType == "Dinner" }?.let { getRecipe(it) }
+                    
+                    // Extract Upcoming Meals (All of them)
+                    val upcomingRecipes = upcomingMealsList.mapNotNull { getRecipe(it) }
+                    
+                    val upcomingMsg = if (nextDayKey == null && todayKey != null) "No upcoming meals (End of Plan)" else null
+                    val upcomingLabel = if (nextDayKey != null) "Tomorrow" else null // Simplified label logic
 
                     _uiState.update {
                         it.copy(
@@ -96,8 +138,9 @@ class HomeViewModel(
                             todayBreakfast = todayBreakfast,
                             todayLunch = todayLunch,
                             todayDinner = todayDinner,
-                            tomorrowBreakfast = tomorrowBreakfast,
-                            tomorrowLunch = tomorrowLunch
+                            upcomingMeals = upcomingRecipes,
+                            upcomingDayLabel = upcomingLabel,
+                            upcomingMessage = upcomingMsg
                         )
                     }
                 } else {
@@ -121,5 +164,9 @@ class HomeViewModel(
 
     fun retry() {
         fetchTodaysMeals()
+    }
+
+    private fun getRecipe(item: com.teamconfused.planmyplate.model.MealSlot): Recipe? {
+        return item.recipe?.toRecipe()
     }
 }

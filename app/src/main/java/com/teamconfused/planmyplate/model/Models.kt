@@ -63,21 +63,23 @@ data class IngredientRequest(
 
 @Serializable
 data class MealPlan(
-    val id: Int? = null,
+    @SerialName("mpId") val mpId: Int? = null,
     @SerialName("userId") val userId: Int? = null,
     @SerialName("startDate") val startDate: String? = null,
     val duration: Int,
     val status: String = "active",
-    val meals: List<MealPlanItem>? = null,
+    val slots: List<MealSlot>? = null,
     @SerialName("created_at") val createdAt: String? = null
 )
 
 @Serializable
-data class MealPlanItem(
-    val day: Int,
+data class MealSlot(
+    @SerialName("slotId") val slotId: Int? = null,
     val mealType: String, // Breakfast, Lunch, Dinner
-    val recipeId: Int,
-    val recipe: RecipeResponse? = null // Optional, for reading
+    val date: String? = null,
+    val day: Int? = null,
+    @SerialName("day_number") val dayNumber: Int? = null,
+    val recipe: RecipeResponse? = null
 )
 
 @Serializable
@@ -89,16 +91,8 @@ data class CreateMealPlanRequest(
 
 @Serializable
 data class MealPlanRequest(
-    val duration: Int,
-    val status: String = "active",
-    val meals: List<MealPlanItemRequest>
-)
-
-@Serializable
-data class MealPlanItemRequest(
-    val day: Int,
-    val mealType: String,
-    val recipeId: Int
+    @SerialName("startDate") val startDate: String,
+    val duration: Int
 )
 
 // ==================== Grocery List Related Models ====================
@@ -115,7 +109,8 @@ data class GroceryList(
 
 @Serializable
 data class GroceryListRequest(
-    val status: String = "active"
+    val status: String = "active",
+    @SerialName("startDate") val startDate: String? = null
 )
 
 @Serializable
