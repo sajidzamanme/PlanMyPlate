@@ -12,7 +12,7 @@ import retrofit2.http.Path
 
 interface GroceryListService {
     @GET("api/grocery-lists/user/{userId}")
-    suspend fun getAllGroceryListsForUser(@Path("userId") userId: Int): List<GroceryList>
+    suspend fun getGroceryListsForUser(@Path("userId") userId: Int): List<GroceryList>
 
     @GET("api/grocery-lists/{id}")
     suspend fun getGroceryListById(@Path("id") id: Int): GroceryList
@@ -43,4 +43,12 @@ interface GroceryListService {
         @Path("userId") userId: Int,
         @Path("status") status: String
     ): List<GroceryList>
+
+    // New Endpoint for updating individual grocery list items
+    @PUT("api/grocery-lists/{listId}/items/{itemId}")
+    suspend fun updateGroceryListItem(
+        @Path("listId") listId: Int,
+        @Path("itemId") itemId: Int,
+        @Body request: Map<String, Any>
+    ): com.teamconfused.planmyplate.model.GroceryListItem
 }

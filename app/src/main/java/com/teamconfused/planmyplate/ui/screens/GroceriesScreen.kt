@@ -82,22 +82,30 @@ fun GroceriesScreen(navController: NavController) {
                    items(uiState.activeListItems) { item ->
                        GroceryItemCard(
                            item = item,
-                           isChecked = uiState.checkedItems.contains(item.ingredientId ?: item.id ?: 0),
-                           onToggle = { viewModel.toggleItemCheck(item.ingredientId ?: item.id ?: 0) }
+                           isChecked = uiState.checkedItems.contains(item.id ?: 0),
+                           onToggle = { viewModel.toggleItemCheck(item.id ?: 0) },
+                           onIncrease = { viewModel.updateListQuantity(item, 1) },
+                           onDecrease = { viewModel.updateListQuantity(item, -1) }
                        )
                    }
                 }
             }
+        }
             
-            uiState.errorMessage?.let { msg ->
-                Text(msg, color = MaterialTheme.colorScheme.error)
-            }
+        uiState.errorMessage?.let { msg ->
+            Text(msg, color = MaterialTheme.colorScheme.error)
         }
     }
 }
 
 @Composable
-fun GroceryItemCard(item: GroceryListItem, isChecked: Boolean, onToggle: () -> Unit) {
+fun GroceryItemCard(
+    item: GroceryListItem, 
+    isChecked: Boolean, 
+    onToggle: () -> Unit,
+    onIncrease: () -> Unit,
+    onDecrease: () -> Unit
+) {
     Card(
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
@@ -110,19 +118,37 @@ fun GroceryItemCard(item: GroceryListItem, isChecked: Boolean, onToggle: () -> U
         ) {
             Checkbox(checked = isChecked, onCheckedChange = { onToggle() })
             Spacer(modifier = Modifier.width(12.dp))
-            Column {
-                Text(text = item.itemName, style = MaterialTheme.typography.bodyLarge)
-                item.quantity?.let { qty ->
-                     Text(
-                         text = "Qty: $qty ${item.unit ?: ""}",
-                         style = MaterialTheme.typography.bodySmall,
-                         color = MaterialTheme.colorScheme.onSurfaceVariant
-                     )
-                }
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = item.ingredient?.name ?: "Unknown Item", 
+                    style = MaterialTheme.typography.bodyLarge
+                )
+                // Removed quantity text, replaced with counters below
             }
-            Spacer(modifier = Modifier.weight(1f))
-            item.price?.let { price ->
-                Text(text = "$${price}", style = MaterialTheme.typography.bodyMedium)
+            
+            // Quantity Controls
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconButton(
+                    onClick = onDecrease,
+                     modifier = Modifier.size(32.dp),
+                    colors = IconButtonDefaults.filledIconButtonColors(containerColor = MaterialTheme.colorScheme.surface)
+                ) {
+                    Icon(painter = painterResource(com.teamconfused.planmyplate.R.drawable.remove_icon), contentDescription = "Decrease", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
+                }
+                
+                Text(
+                    text = "${item.quantity ?: 1}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(horizontal = 8.dp)
+                )
+                
+                IconButton(
+                    onClick = onIncrease,
+                    modifier = Modifier.size(32.dp),
+                    colors = IconButtonDefaults.filledIconButtonColors(containerColor = MaterialTheme.colorScheme.surface)
+                ) {
+                     Icon(painter = painterResource(com.teamconfused.planmyplate.R.drawable.add_icon), contentDescription = "Increase", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
+                }
             }
         }
     }

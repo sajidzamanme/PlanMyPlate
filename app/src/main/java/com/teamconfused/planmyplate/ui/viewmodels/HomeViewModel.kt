@@ -57,6 +57,9 @@ class HomeViewModel(
                 val activePlan = plans.find { it.status == "active" }
                 
                 if (activePlan != null && !activePlan.slots.isNullOrEmpty()) {
+                    // Update session state to ensure UI shows dashboard on next launch too or if inconsistent
+                    sessionManager.setHasMealPlans(true)
+
                     // Logic to find "today's" meals based on dates in slots
                     // Enriched slots with computed date if missing
                     // Use robust inference similar to MealPlanScreen

@@ -1,5 +1,6 @@
 package com.teamconfused.planmyplate.network
 
+import com.teamconfused.planmyplate.model.CreateRecipeRequest
 import com.teamconfused.planmyplate.model.RecipeRequest
 import com.teamconfused.planmyplate.model.RecipeResponse
 import retrofit2.http.Body
@@ -18,7 +19,7 @@ interface RecipeService {
     suspend fun getRecipeById(@Path("id") id: Int): RecipeResponse
 
     @POST("api/recipes")
-    suspend fun createRecipe(@Body request: RecipeRequest): RecipeResponse
+    suspend fun createRecipe(@Body request: CreateRecipeRequest): RecipeResponse
 
     @PUT("api/recipes/{id}")
     suspend fun updateRecipe(
@@ -33,7 +34,7 @@ interface RecipeService {
     suspend fun searchRecipesByName(@Query("name") name: String): List<RecipeResponse>
 
     @GET("api/recipes/filter/calories")
-    suspend fun filterRecipesByCalories(
+    suspend fun getRecipesByCalories(
         @Query("minCalories") minCalories: Int,
         @Query("maxCalories") maxCalories: Int
     ): List<RecipeResponse>

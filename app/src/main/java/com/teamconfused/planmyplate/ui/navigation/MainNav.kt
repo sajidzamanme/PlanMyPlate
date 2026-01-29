@@ -9,10 +9,13 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.teamconfused.planmyplate.ui.components.BottomNavigationBar
+import com.teamconfused.planmyplate.ui.screens.AddRecipeScreen
 import com.teamconfused.planmyplate.ui.screens.MealPlanScreen
 import com.teamconfused.planmyplate.ui.screens.GroceriesScreen
 import com.teamconfused.planmyplate.ui.screens.HomeScreen
+import com.teamconfused.planmyplate.ui.screens.InventoryScreen
 import com.teamconfused.planmyplate.ui.screens.SettingsScreen
+import com.teamconfused.planmyplate.ui.viewmodels.AddRecipeViewModel
 import com.teamconfused.planmyplate.ui.viewmodels.SettingsViewModel
 import com.teamconfused.planmyplate.ui.viewmodels.ViewModelFactory
 
@@ -31,14 +34,20 @@ fun MainNav(factory: ViewModelFactory, onLogout: () -> Unit) {
             composable("home") { HomeScreen(navController) }
             composable("meal_plan") { MealPlanScreen(navController) }
             composable("groceries") { GroceriesScreen(navController) }
+            composable("inventory") { InventoryScreen(navController) }
             composable("settings") {
-                val viewModel: SettingsViewModel = viewModel(factory = factory)
+                val settingsViewModel: SettingsViewModel = viewModel(factory = factory)
                 SettingsScreen(
                     onLogoutClick = {
-                        viewModel.logout()
+                        settingsViewModel.logout()
                         onLogout()
-                    }
+                    },
+                    onAddRecipeClick = { navController.navigate("add_recipe") }
                 )
+            }
+            composable("add_recipe") {
+                val addRecipeViewModel: AddRecipeViewModel = viewModel(factory = factory)
+                AddRecipeScreen(navController, addRecipeViewModel)
             }
         }
     }

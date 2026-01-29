@@ -21,6 +21,7 @@ class ViewModelFactory(private val sessionManager: SessionManager) : ViewModelPr
             }
             modelClass.isAssignableFrom(GroceryViewModel::class.java) -> GroceryViewModel(RetrofitClient.groceryListService, sessionManager) as T
             modelClass.isAssignableFrom(InventoryViewModel::class.java) -> InventoryViewModel(RetrofitClient.inventoryService, sessionManager) as T
+            modelClass.isAssignableFrom(AddRecipeViewModel::class.java) -> AddRecipeViewModel(RetrofitClient.recipeService) as T
             else -> throw IllegalArgumentException("Unknown ViewModel class")
         }
     }

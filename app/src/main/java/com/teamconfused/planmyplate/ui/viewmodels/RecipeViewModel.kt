@@ -55,7 +55,7 @@ class RecipeViewModel(
             _recommendedRecipesState.value = RecipeUiState.Loading
             try {
                 // Fetch recipes with moderate to high calories (400-600) as "recommended"
-                val response = recipeService.filterRecipesByCalories(
+                val response = recipeService.getRecipesByCalories(
                     minCalories = 400,
                     maxCalories = 600
                 )
@@ -74,7 +74,7 @@ class RecipeViewModel(
             _budgetRecipesState.value = RecipeUiState.Loading
             try {
                 // Fetch recipes with lower calories (200-400) as "budget friendly"
-                val response = recipeService.filterRecipesByCalories(
+                val response = recipeService.getRecipesByCalories(
                     minCalories = 200,
                     maxCalories = 400
                 )

@@ -6,6 +6,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -31,6 +32,19 @@ fun HomeScreen(navController: NavController) {
     val viewModelFactory = ViewModelFactory(sessionManager)
     val homeViewModel: HomeViewModel = viewModel(factory = viewModelFactory)
     val uiState by homeViewModel.uiState.collectAsState()
+    
+    val lifecycleOwner = androidx.compose.ui.platform.LocalLifecycleOwner.current
+    androidx.compose.runtime.DisposableEffect(lifecycleOwner) {
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
+                 homeViewModel.fetchTodaysMeals()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
     
     if (hasMealPlans) {
         DashboardWithMeals(navController, uiState, onRetry = { homeViewModel.retry() })

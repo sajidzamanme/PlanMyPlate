@@ -34,7 +34,11 @@ data class RecipeResponse(
     @SerialName("recipeId") val id: Int? = null,
     val name: String,
     val description: String? = null,
-    val calories: Int? = null
+    val calories: Int? = null,
+    val prepTime: Int? = null,
+    val cookTime: Int? = null,
+    val servings: Int? = null,
+    val instructions: String? = null
 )
 
 @Serializable
@@ -44,17 +48,37 @@ data class RecipeRequest(
     val calories: Int? = null
 )
 
-// ==================== Ingredient Related Models ====================
+@Serializable
+data class CreateRecipeRequest(
+    val name: String,
+    val description: String? = null,
+    val calories: Int? = null,
+    val prepTime: Int? = null,
+    val cookTime: Int? = null,
+    val servings: Int? = null,
+    val instructions: String? = null,
+    val ingredients: List<RecipeIngredientRequest>? = null
+)
 
 @Serializable
-data class Ingredient(
-    @SerialName("ingId") val ingId: Int,
+data class RecipeIngredientRequest(
+    val ingId: Int,
+    val quantity: Int,
+    val unit: String
+)
+
+// ==================== Ingredient Related Models ====================
+
+
+@Serializable
+data class IngredientRequest(
     val name: String,
     val price: Float? = null
 )
 
 @Serializable
-data class IngredientRequest(
+data class Ingredient(
+    @SerialName("ingId") val ingId: Int? = null,
     val name: String,
     val price: Float? = null
 )
@@ -99,11 +123,11 @@ data class MealPlanRequest(
 
 @Serializable
 data class GroceryList(
-    val id: Int? = null,
+    @SerialName("listId") val listId: Int? = null,
     @SerialName("userId") val userId: Int? = null,
     @SerialName("dateCreated") val dateCreated: String? = null,
     val status: String = "active",
-    val items: List<GroceryListItem>? = null,
+    val items: List<GroceryListItem>? = null, // Changed from ingredients to items
     @SerialName("created_at") val createdAt: String? = null
 )
 
@@ -120,19 +144,17 @@ data class PurchaseItemsRequest(
 
 @Serializable
 data class GroceryListItem(
-    val id: Int? = null,
-    @SerialName("ingredientId") val ingredientId: Int? = null,
-    val itemName: String,
+    val id: Int? = null, // This is the grocery_list_ingredients.id (itemId)
+    val ingredient: Ingredient? = null, // Nested ingredient details
     val quantity: Int? = null,
-    val unit: String? = null,
-    val price: Float? = null
+    val unit: String? = null
 )
 
 // ==================== Inventory Related Models ====================
 
 @Serializable
 data class Inventory(
-    val id: Int? = null,
+    @SerialName("invId") val id: Int? = null,
     @SerialName("userId") val userId: Int? = null,
     @SerialName("lastUpdate") val lastUpdate: String? = null,
     @SerialName("created_at") val createdAt: String? = null
@@ -140,16 +162,19 @@ data class Inventory(
 
 @Serializable
 data class InventoryItem(
-    val id: Int? = null,
-    @SerialName("inventoryId") val inventoryId: Int,
+    @SerialName("itemId") val id: Int? = null,
+    // API returns nested "inventory" object, not "inventoryId". Making nullable to avoid parsing error.
+    val inventoryId: Int? = null, 
     val quantity: Int,
     @SerialName("expiryDate") val expiryDate: String,
-    val ingredient: IngredientRef? = null
+    val ingredient: IngredientRef? = null,
+    val name: String? = null // For fallback display
 )
 
 @Serializable
 data class IngredientRef(
-    @SerialName("ingId") val ingId: Int
+    @SerialName("ingId") val ingId: Int,
+    val name: String? = null // Captured if API returns it inside ingredient object
 )
 
 @Serializable

@@ -110,7 +110,7 @@ fun InventoryItemCard(
                 // Let's assume for now I display ID.
                 
                 Text(
-                    text = "Item ${item.ingredient?.ingId ?: "Unknown"}",
+                    text = item.name ?: item.ingredient?.name ?: "Item #${item.ingredient?.ingId ?: "Unknown"}",
                     style = MaterialTheme.typography.titleMedium
                 )
                 Text(

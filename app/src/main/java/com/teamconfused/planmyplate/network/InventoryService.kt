@@ -40,4 +40,12 @@ interface InventoryService {
 
     @DELETE("api/inventory/items/{itemId}")
     suspend fun removeItemFromInventory(@Path("itemId") itemId: Int): Map<String, String>
+
+    // New Endpoint Requirement: Update Item Quantity
+    // This will return 404 until backend implements it.
+    @PUT("api/inventory/items/{itemId}")
+    suspend fun updateInventoryItem(
+        @Path("itemId") itemId: Int, 
+        @Body request: InventoryItemRequest
+    ): InventoryItem
 }

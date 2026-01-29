@@ -202,6 +202,57 @@ Manage dietary preferences, allergies, and dislikes.
 - **Method:** `GET`
 - **Response Body:** List of Recipe objects within calorie range.
 
+### Create Recipe
+Create a new custom recipe with ingredients.
+
+- **URL:** `/recipes`
+- **Method:** `POST`
+- **Request Body:**
+  ```json
+  {
+    "name": "Custom Pasta",
+    "description": "My special pasta recipe",
+    "calories": 450,
+    "prepTime": 30,
+    "cookTime": 20,
+    "servings": 4,
+    "instructions": "1. Boil water\n2. Cook pasta\n3. Add sauce",
+    "ingredients": [
+      {
+        "ingId": 101,
+        "quantity": 200,
+        "unit": "grams"
+      },
+      {
+        "ingId": 205,
+        "quantity": 100,
+        "unit": "ml"
+      }
+    ]
+  }
+  ```
+- **Response Body:** Created Recipe object with assigned `recipeId`.
+
+### Update Recipe
+Update an existing recipe.
+
+- **URL:** `/recipes/{id}`
+- **Method:** `PUT`
+- **Request Body:** Same as Create Recipe
+- **Response Body:** Updated Recipe object.
+
+### Delete Recipe
+Delete a recipe.
+
+- **URL:** `/recipes/{id}`
+- **Method:** `DELETE`
+- **Response Body:**
+  ```json
+  {
+    "message": "Recipe deleted successfully"
+  }
+  ```
+
 ---
 
 ## 5. Meal Plans
@@ -268,9 +319,43 @@ Generate a meal plan with selected recipes.
 - **URL:** `/grocery-lists/user/{userId}`
 - **Method:** `GET`
 - **Response Body:** List of GroceryList objects.
+  ```json
+  [
+    {
+      "listId": 1,
+      "dateCreated": "2023-11-01",
+      "status": "active",
+      "userId": 1,
+      "userId": 1,
+      "items": [
+        {
+          "id": 501,
+          "ingredient": {
+            "ingId": 101,
+            "name": "Milk",
+            "price": 2.50
+          },
+          "quantity": 1,
+          "unit": "Gallon"
+        },
+        {
+          "id": 502,
+          "ingredient": {
+            "ingId": 102,
+            "name": "Eggs",
+            "price": 3.00
+          },
+          "quantity": 12,
+          "unit": "Count"
+        }
+      ]
+    }
+  ]
+  ```
 
 ### Purchase Items
-Mark specific ingredients as purchased (deduct from grocery list, add to inventory).
+Mark specific ingredients as purchased.
+- **Action**: These ingredients are **removed** from the grocery list and **added** to the user's inventory.
 
 - **URL:** `/grocery-lists/{id}/purchase`
 - **Method:** `POST`
@@ -281,6 +366,20 @@ Mark specific ingredients as purchased (deduct from grocery list, add to invento
   }
   ```
 - **Response Body:** HTTP 200 OK (Empty body).
+
+### Update Grocery List Item
+Update quantity or unit of a specific item in the grocery list.
+
+- **URL:** `/grocery-lists/{listId}/items/{itemId}`
+- **Method:** `PUT`
+- **Request Body:**
+  ```json
+  {
+    "quantity": 3,
+    "unit": "Pack"
+  }
+  ```
+- **Response Body:** Updated `GroceryListItem` object.
 
 ---
 
@@ -316,7 +415,22 @@ Mark specific ingredients as purchased (deduct from grocery list, add to invento
   }
   ```
 - **Response Body:** The created Inventory Item object.
+- **Response Body:** HTTP 200 OK.
 
+### Update Inventory Item
+Update quantity or expiry date of a specific inventory item.
+- **Action**: If quantity is set to 0, the item is removed.
+
+- **URL:** `/inventory/items/{itemId}`
+- **Method:** `PUT`
+- **Request Body:**
+  ```json
+  {
+    "quantity": 5,
+    "expiryDate": "2023-12-31"
+  }
+  ```
+- **Response Body:** Updated `InvItem` object, or empty if deleted.
 ### Remove Item from Inventory
 - **URL:** `/inventory/items/{itemId}`
 - **Method:** `DELETE`

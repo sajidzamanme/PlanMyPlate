@@ -114,6 +114,9 @@ class MealPlanViewModel(
                 // Refresh list
                 fetchWeeklyMealPlans()
 
+                // Update Session Manager to indicate meal plans exist
+                sessionManager.setHasMealPlans(true)
+
                 _uiState.update {
                     it.copy(
                         isCreatingPlan = false,

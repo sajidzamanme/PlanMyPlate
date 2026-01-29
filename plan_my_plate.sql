@@ -62,10 +62,12 @@ CREATE TABLE `grocery_list` (
 --
 
 CREATE TABLE `grocery_list_ingredients` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `list_id` int(11) NOT NULL,
   `ing_id` int(11) NOT NULL,
-  `quantity` int(11) DEFAULT NULL,
-  `budget` decimal(10,2) DEFAULT NULL
+  `quantity` int(11) DEFAULT 1,
+  `unit` varchar(50) DEFAULT 'unit',
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -168,7 +170,11 @@ CREATE TABLE `recipe` (
   `recipe_id` int(11) NOT NULL,
   `name` varchar(200) NOT NULL,
   `description` text DEFAULT NULL,
-  `calories` int(11) DEFAULT NULL
+  `calories` int(11) DEFAULT NULL,
+  `prep_time` int(11) DEFAULT NULL,
+  `cook_time` int(11) DEFAULT NULL,
+  `servings` int(11) DEFAULT NULL,
+  `instructions` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -178,8 +184,12 @@ CREATE TABLE `recipe` (
 --
 
 CREATE TABLE `recipe_ingredients` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `recipe_id` int(11) NOT NULL,
-  `ing_id` int(11) NOT NULL
+  `ing_id` int(11) NOT NULL,
+  `quantity` int(11) DEFAULT NULL,
+  `unit` varchar(50) DEFAULT NULL,
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -284,6 +294,14 @@ ALTER TABLE `grocery_list`
   ADD KEY `user_id` (`user_id`);
 
 --
+-- Indexes for table `grocery_list_ingredients`
+--
+ALTER TABLE `grocery_list_ingredients`
+  ADD KEY `list_id` (`list_id`),
+  ADD KEY `ing_id` (`ing_id`);
+
+
+--
 -- Indexes for table `ingredients`
 --
 ALTER TABLE `ingredients`
@@ -344,7 +362,7 @@ ALTER TABLE `recipe`
 -- Indexes for table `recipe_ingredients`
 --
 ALTER TABLE `recipe_ingredients`
-  ADD PRIMARY KEY (`recipe_id`,`ing_id`),
+  ADD KEY `recipe_id` (`recipe_id`),
   ADD KEY `ing_id` (`ing_id`);
 
 --
@@ -413,6 +431,12 @@ ALTER TABLE `grocery_list`
   MODIFY `list_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT for table `grocery_list_ingredients`
+--
+ALTER TABLE `grocery_list_ingredients`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `ingredients`
 --
 ALTER TABLE `ingredients`
@@ -453,6 +477,12 @@ ALTER TABLE `meal_slot`
 --
 ALTER TABLE `recipe`
   MODIFY `recipe_id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `recipe_ingredients`
+--
+ALTER TABLE `recipe_ingredients`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `users`
