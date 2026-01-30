@@ -25,6 +25,6 @@ fun RecipeResponse.toRecipe(): Recipe {
         servings = this.servings,
         instructions = this.instructions,
         ingredients = null,
-        imageUrl = null
+        imageUrl = this.imageUrl
     )
 }

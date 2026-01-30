@@ -181,6 +181,7 @@ Manage dietary preferences, allergies, and dislikes.
       "name": "Avocado Toast",
       "description": "Toasted bread with avocado spread...",
       "calories": 350,
+      "imageUrl": "https://example.com/avocado_toast.jpg",
       "ingredients": [ ... ]
     },
     ...
@@ -217,6 +218,7 @@ Create a new custom recipe with ingredients.
     "cookTime": 20,
     "servings": 4,
     "instructions": "1. Boil water\n2. Cook pasta\n3. Add sauce",
+    "imageUrl": "https://example.com/custom_pasta.jpg",
     "ingredients": [
       {
         "ingId": 101,
@@ -454,3 +456,26 @@ Update quantity or expiry date of a specific inventory item.
 - **URL:** `/reference-data/dislikes`
 - **Method:** `GET`
 - **Response Body:** List of Ingredient objects.
+
+---
+
+## 9. File Uploads
+
+### Upload Image
+Upload an image file to the server and get a URL to use in recipes. 
+
+> [!NOTE]
+> The `imageUrl` field in Recipe endpoints accepts either an external online URL (e.g., Unsplash) or the internal URL returned by this upload endpoint.
+
+- **URL:** `/api/files/upload`
+- **Method:** `POST`
+- **Request Parameters:**
+    - `file`: The image file (MultipartFile)
+- **Response Body:**
+  ```json
+  {
+    "url": "http://localhost:8081/uploads/uuid-filename.jpg",
+    "filename": "uuid-filename.jpg"
+  }
+  ```
+

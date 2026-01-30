@@ -62,6 +62,7 @@ dependencies {
     implementation(libs.retrofit.serialization.converter)
     implementation(libs.okhttp.logging)
     implementation(libs.androidx.compose.runtime)
+    implementation(libs.ui)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

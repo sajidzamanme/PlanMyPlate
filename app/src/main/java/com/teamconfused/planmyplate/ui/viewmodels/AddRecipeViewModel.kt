@@ -1,5 +1,7 @@
 package com.teamconfused.planmyplate.ui.viewmodels
 
+import android.content.Context
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.teamconfused.planmyplate.model.CreateRecipeRequest
@@ -10,6 +12,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
+import java.io.File
+import java.io.FileOutputStream
 
 data class RecipeIngredientInput(
     val ingId: Int = 0,
@@ -26,6 +33,8 @@ data class AddRecipeUiState(
     val cookTime: String = "",
     val servings: String = "",
     val instructions: String = "",
+    val imageUrl: String? = null,
+    val isUploadingImage: Boolean = false,
     val ingredients: List<RecipeIngredientInput> = listOf(RecipeIngredientInput()),
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
@@ -65,6 +74,45 @@ class AddRecipeViewModel(
 
     fun updateInstructions(instructions: String) {
         _uiState.update { it.copy(instructions = instructions) }
+    }
+
+    fun updateImageUrl(imageUrl: String?) {
+        _uiState.update { it.copy(imageUrl = imageUrl) }
+    }
+
+    fun uploadImage(context: Context, uri: Uri) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isUploadingImage = true, errorMessage = null) }
+            try {
+                val file = getFileFromUri(context, uri)
+                if (file != null) {
+                    val requestFile = file.asRequestBody("image/*".toMediaTypeOrNull())
+                    val body = MultipartBody.Part.createFormData("file", file.name, requestFile)
+                    val response = recipeService.uploadImage(body)
+                    _uiState.update { it.copy(imageUrl = response.url, isUploadingImage = false) }
+                } else {
+                    _uiState.update { it.copy(isUploadingImage = false, errorMessage = "Failed to process image") }
+                }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(isUploadingImage = false, errorMessage = "Upload failed: ${e.message}") }
+            }
+        }
+    }
+
+    private fun getFileFromUri(context: Context, uri: Uri): File? {
+        return try {
+            val contentResolver = context.contentResolver
+            val fileName = "upload_${System.currentTimeMillis()}.jpg"
+            val tempFile = File(context.cacheDir, fileName)
+            contentResolver.openInputStream(uri)?.use { inputStream ->
+                FileOutputStream(tempFile).use { outputStream ->
+                    inputStream.copyTo(outputStream)
+                }
+            }
+            tempFile
+        } catch (e: Exception) {
+            null
+        }
     }
 
     fun addIngredient() {
@@ -119,6 +167,7 @@ class AddRecipeViewModel(
                     cookTime = state.cookTime.toIntOrNull(),
                     servings = state.servings.toIntOrNull(),
                     instructions = state.instructions.ifBlank { null },
+                    imageUrl = state.imageUrl,
                     ingredients = ingredientRequests.ifEmpty { null }
                 )
 

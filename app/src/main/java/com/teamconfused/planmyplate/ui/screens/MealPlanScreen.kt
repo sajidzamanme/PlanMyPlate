@@ -8,11 +8,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import com.teamconfused.planmyplate.model.Recipe
 import com.teamconfused.planmyplate.ui.components.CategorizedRecipeSection
 import com.teamconfused.planmyplate.ui.components.HorizontalRecipeCard
@@ -563,11 +566,24 @@ fun WeeklyMealPlanView(
                                      color = if (isToday) MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha=0.8f) else MaterialTheme.colorScheme.onSurfaceVariant
                                  )
                                  slot.recipe?.let { recipe ->
-                                     Text(
-                                         text = recipe.name,
-                                         style = MaterialTheme.typography.bodyMedium,
-                                         color = if (isToday) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
-                                     )
+                                     Row(
+                                         verticalAlignment = Alignment.CenterVertically,
+                                         horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                     ) {
+                                         AsyncImage(
+                                             model = recipe.imageUrl,
+                                             contentDescription = null,
+                                             modifier = Modifier
+                                                 .size(32.dp)
+                                                 .clip(RoundedCornerShape(4.dp)),
+                                             contentScale = ContentScale.Crop
+                                         )
+                                         Text(
+                                             text = recipe.name,
+                                             style = MaterialTheme.typography.bodyMedium,
+                                             color = if (isToday) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
+                                         )
+                                     }
                                  } ?: Text(
                                      text = "Recipe not found", 
                                      style = MaterialTheme.typography.bodySmall,

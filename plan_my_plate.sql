@@ -174,7 +174,8 @@ CREATE TABLE `recipe` (
   `prep_time` int(11) DEFAULT NULL,
   `cook_time` int(11) DEFAULT NULL,
   `servings` int(11) DEFAULT NULL,
-  `instructions` text DEFAULT NULL
+  `instructions` text DEFAULT NULL,
+  `image_url` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------

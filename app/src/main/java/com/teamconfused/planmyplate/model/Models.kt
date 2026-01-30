@@ -38,14 +38,22 @@ data class RecipeResponse(
     val prepTime: Int? = null,
     val cookTime: Int? = null,
     val servings: Int? = null,
-    val instructions: String? = null
+    val instructions: String? = null,
+    val imageUrl: String? = null
+)
+
+@Serializable
+data class ImageUploadResponse(
+    val url: String,
+    val filename: String
 )
 
 @Serializable
 data class RecipeRequest(
     val name: String,
     val description: String? = null,
-    val calories: Int? = null
+    val calories: Int? = null,
+    val imageUrl: String? = null
 )
 
 @Serializable
@@ -57,6 +65,7 @@ data class CreateRecipeRequest(
     val cookTime: Int? = null,
     val servings: Int? = null,
     val instructions: String? = null,
+    val imageUrl: String? = null,
     val ingredients: List<RecipeIngredientRequest>? = null
 )
 
