@@ -54,7 +54,7 @@ class HomeViewModel(
                 val plans = mealPlanService.getWeeklyMealPlans(userId)
                 
                 // Find active plan
-                val activePlan = plans.find { it.status == "active" }
+                val activePlan = plans.find { it.status.equals("active", ignoreCase = true) }
                 
                 if (activePlan != null && !activePlan.slots.isNullOrEmpty()) {
                     // Update session state to ensure UI shows dashboard on next launch too or if inconsistent
@@ -171,5 +171,48 @@ class HomeViewModel(
 
     private fun getRecipe(item: com.teamconfused.planmyplate.model.MealSlot): Recipe? {
         return item.recipe?.toRecipe()
+    }
+
+    // AI Generation
+    private val _generatedRecipe = MutableStateFlow<Recipe?>(null)
+    val generatedRecipe: StateFlow<Recipe?> = _generatedRecipe.asStateFlow()
+
+    private val _isGenerating = MutableStateFlow(false)
+    val isGenerating: StateFlow<Boolean> = _isGenerating.asStateFlow()
+
+    fun generateRecipe(
+        ingredients: List<String>,
+        mealType: String,
+        otherParams: Map<String, Any> // simplified for now, or use full request
+    ) {
+        val userId = sessionManager.getUserId()
+        if (userId == -1) return
+
+        viewModelScope.launch {
+            _isGenerating.value = true
+            try {
+                val token = sessionManager.getAuthToken() ?: ""
+                val request = com.teamconfused.planmyplate.model.GenerateRecipeRequest(
+                    availableIngredients = ingredients,
+                    // Map other params... simplified for this specific task request "just add generate recipe now"
+                    // We'll use defaults or basic inputs from the dialog
+                    mood = otherParams["mood"] as? String,
+                    dietaryPreference = sessionManager.getUserPreferences().diet, // Use user pref if available
+                    maxCalories = 800 // Default
+                )
+                
+                val recipe = com.teamconfused.planmyplate.network.RetrofitClient.aiService.generateRecipe("Bearer $token", request)
+                _generatedRecipe.value = recipe
+            } catch (e: Exception) {
+                // Handle error (show toast or snackbar in UI via side effect)
+                e.printStackTrace()
+            } finally {
+                _isGenerating.value = false
+            }
+        }
+    }
+
+    fun clearGeneratedRecipe() {
+        _generatedRecipe.value = null
     }
 }

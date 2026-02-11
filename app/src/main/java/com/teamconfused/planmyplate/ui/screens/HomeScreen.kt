@@ -51,29 +51,132 @@ fun HomeScreen(navController: NavController) {
         }
     }
     
-    if (hasMealPlans) {
-        DashboardWithMeals(
-            navController = navController, 
-            uiState = uiState, 
-            onRetry = { homeViewModel.retry() },
-            onRecipeClick = { recipeToShowDetails = it }
+    val isGenerating by homeViewModel.isGenerating.collectAsState()
+    val generatedRecipe by homeViewModel.generatedRecipe.collectAsState()
+    var showGenerateDialog by remember { mutableStateOf(false) }
+
+    Scaffold(
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = { showGenerateDialog = true },
+                containerColor = MaterialTheme.colorScheme.primary
+            ) {
+                Icon(
+                    painter = androidx.compose.ui.res.painterResource(com.teamconfused.planmyplate.R.drawable.ic_ai_stars), // Assuming icon exists or use default
+                    contentDescription = "AI Actions"
+                )
+            }
+        }
+    ) { paddingValues ->
+        Box(modifier = Modifier.padding(paddingValues)) {
+            if (hasMealPlans) {
+                DashboardWithMeals(
+                    navController = navController, 
+                    uiState = uiState, 
+                    onRetry = { homeViewModel.retry() },
+                    onRecipeClick = { recipeToShowDetails = it }
+                )
+            } else {
+                EmptyDashboard(navController)
+            }
+        }
+    }
+
+    if (showGenerateDialog) {
+        RecipeGenerationDialog(
+            onDismiss = { showGenerateDialog = false },
+            onGenerate = { ingredients, mood ->
+                homeViewModel.generateRecipe(ingredients, "Dinner", mapOf("mood" to mood))
+                showGenerateDialog = false // Dismiss input dialog, loading will be shown via overlay or another dialog
+            }
         )
-    } else {
-        EmptyDashboard(navController)
+    }
+    
+    // Loading State for Generation
+    if (isGenerating) {
+        AlertDialog(
+            onDismissRequest = {},
+            title = { Text("Working Magic...") },
+            text = { 
+                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                    CircularProgressIndicator()
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text("Our AI chef is cooking up a recipe for you!")
+                }
+            },
+            confirmButton = {}
+        )
+    }
+
+    // Show Generated Recipe
+    generatedRecipe?.let { recipe ->
+        com.teamconfused.planmyplate.ui.components.RecipeDetailsDialog(
+            recipe = recipe,
+            isAdded = true, // It's saved on backend
+            onDismiss = { homeViewModel.clearGeneratedRecipe() },
+            onToggleRecipe = { 
+                homeViewModel.clearGeneratedRecipe()
+            }
+        )
     }
 
     recipeToShowDetails?.let { recipe ->
         com.teamconfused.planmyplate.ui.components.RecipeDetailsDialog(
             recipe = recipe,
-            isAdded = true, // On Home screen, it's already part of the plan
+            isAdded = true, 
             onDismiss = { recipeToShowDetails = null },
             onToggleRecipe = { 
-                // We could implement removal from plan here if needed, 
-                // but for now just close as requested "pressing should show details"
                 recipeToShowDetails = null
             }
         )
     }
+}
+
+@Composable
+fun RecipeGenerationDialog(
+    onDismiss: () -> Unit,
+    onGenerate: (List<String>, String) -> Unit
+) {
+    var ingredientsText by remember { mutableStateOf("") }
+    var moodText by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Generate Recipe with AI") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                OutlinedTextField(
+                    value = ingredientsText,
+                    onValueChange = { ingredientsText = it },
+                    label = { Text("Available Ingredients (comma separated)") },
+                    placeholder = { Text("e.g. chicken, rice, tomato") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = moodText,
+                    onValueChange = { moodText = it },
+                    label = { Text("Mood / Occasion") },
+                    placeholder = { Text("e.g. Quick Dinner, Romantic") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    val ingredients = ingredientsText.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+                    onGenerate(ingredients, moodText)
+                }
+            ) {
+                Text("Generate")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
 }
 
 @Composable

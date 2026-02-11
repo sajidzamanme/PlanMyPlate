@@ -21,6 +21,9 @@ object RetrofitClient {
 
     private val httpClient = OkHttpClient.Builder()
         .addInterceptor(logging)
+        .connectTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+        .readTimeout(150, java.util.concurrent.TimeUnit.SECONDS)
+        .writeTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
         .build()
 
     private val retrofit = Retrofit.Builder()
@@ -66,5 +69,10 @@ object RetrofitClient {
     // Inventory Service
     val inventoryService: InventoryService by lazy {
         retrofit.create(InventoryService::class.java)
+    }
+
+    // AI Service
+    val aiService: AiService by lazy {
+        retrofit.create(AiService::class.java)
     }
 }

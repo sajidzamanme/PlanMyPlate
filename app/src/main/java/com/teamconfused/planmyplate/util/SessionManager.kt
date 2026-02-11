@@ -29,4 +29,30 @@ class SessionManager(context: Context) {
     fun clearSession() {
         prefs.edit().clear().apply()
     }
+
+    fun saveAuthToken(token: String) {
+        prefs.edit().putString("auth_token", token).apply()
+    }
+
+    fun getAuthToken(): String? {
+        return prefs.getString("auth_token", null)
+    }
+
+    fun saveUserPreferences(preferences: com.teamconfused.planmyplate.model.UserPreferences) {
+        val json = kotlinx.serialization.json.Json.encodeToString(com.teamconfused.planmyplate.model.UserPreferences.serializer(), preferences)
+        prefs.edit().putString("user_preferences", json).apply()
+    }
+
+    fun getUserPreferences(): com.teamconfused.planmyplate.model.UserPreferences {
+        val json = prefs.getString("user_preferences", null)
+        return if (json != null) {
+            try {
+                kotlinx.serialization.json.Json.decodeFromString(com.teamconfused.planmyplate.model.UserPreferences.serializer(), json)
+            } catch (e: Exception) {
+                com.teamconfused.planmyplate.model.UserPreferences()
+            }
+        } else {
+            com.teamconfused.planmyplate.model.UserPreferences()
+        }
+    }
 }

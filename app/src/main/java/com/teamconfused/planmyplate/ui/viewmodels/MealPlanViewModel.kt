@@ -144,7 +144,7 @@ class MealPlanViewModel(
             _uiState.update { it.copy(isLoadingHistory = true) }
             try {
                 val plans = mealPlanService.getWeeklyMealPlans(userId)
-                val active = plans.find { it.status == "active" } // or logic to find latest
+                val active = plans.find { it.status.equals("active", ignoreCase = true) } // or logic to find latest
                 _uiState.update {
                     it.copy(
                         isLoadingHistory = false,
@@ -176,7 +176,7 @@ class MealPlanViewModel(
     }
 
     fun startNewPlan() {
-        _uiState.update { 
+        _uiState.update {
             it.copy(
                 activeMealPlan = null,
                 isCreatingPlan = false,
@@ -185,7 +185,47 @@ class MealPlanViewModel(
                     "Lunch" to emptyList(),
                     "Dinner" to emptyList()
                 )
-            ) 
+            )
+        }
+    }
+    fun generateMealPlan(onSuccess: () -> Unit) {
+        val userId = sessionManager.getUserId()
+        if (userId == -1) {
+            _uiState.update { it.copy(errorMessage = "User not logged in") }
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.update { it.copy(isCreatingPlan = true, errorMessage = null) }
+            try {
+                val token = sessionManager.getAuthToken() ?: ""
+                val startDate = java.time.LocalDate.now().plusDays(1).toString()
+                
+                com.teamconfused.planmyplate.network.RetrofitClient.aiService.generateMealPlan(
+                    token = "Bearer $token",
+                    userId = userId,
+                    startDate = startDate
+                )
+                
+                // Refresh list
+                fetchWeeklyMealPlans()
+                sessionManager.setHasMealPlans(true)
+
+                _uiState.update {
+                    it.copy(
+                        isCreatingPlan = false,
+                        planCreated = true
+                    )
+                }
+                onSuccess()
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(
+                        isCreatingPlan = false,
+                        errorMessage = e.message ?: "Failed to generate meal plan"
+                    )
+                }
+            }
         }
     }
 }

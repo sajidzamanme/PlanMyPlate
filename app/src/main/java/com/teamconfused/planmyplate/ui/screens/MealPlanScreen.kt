@@ -382,28 +382,65 @@ fun CreateMealPlanContent(
             )
         }
         
-        Button(
-            onClick = {
-                viewModel.createMealPlan {
-                    // sessionManager set handled in ViewModel success mostly or here
-                    // Assuming sessionManager access from Screen
-                    navController.navigate("home") {
-                        popUpTo("home") { inclusive = true }
-                    }
-                }
-            },
+        Row(
             modifier = Modifier.fillMaxWidth(),
-            enabled = allRecipesSelected && !uiState.isCreatingPlan
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            if (uiState.isCreatingPlan) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(20.dp),
-                    color = MaterialTheme.colorScheme.onPrimary
+            OutlinedButton(
+                onClick = {
+                    viewModel.generateMealPlan {
+                        navController.navigate("home") {
+                            popUpTo("home") { inclusive = true }
+                        }
+                    }
+                },
+                modifier = Modifier
+                    .weight(1f)
+                    .height(50.dp),
+                shape = RoundedCornerShape(12.dp),
+                enabled = !uiState.isCreatingPlan
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_ai_stars), // Use appropriate icon
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
                 )
-            } else {
-                Text("Create Meal Plan")
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Auto Generate")
+            }
+
+            Button(
+                onClick = {
+                    viewModel.createMealPlan {
+                        navController.navigate("home") {
+                            popUpTo("home") { inclusive = true }
+                        }
+                    }
+                },
+                modifier = Modifier
+                    .weight(1f)
+                    .height(50.dp),
+                shape = RoundedCornerShape(12.dp),
+                enabled = allRecipesSelected && !uiState.isCreatingPlan
+            ) {
+                Text("Create Manual")
             }
         }
+    }
+    
+    if (uiState.isCreatingPlan) {
+        AlertDialog(
+            onDismissRequest = {},
+            title = { Text("Creating Your Plan") },
+            text = { 
+                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                    CircularProgressIndicator()
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text("Our AI is crafting a balanced meal plan just for you...")
+                }
+            },
+            confirmButton = {}
+        )
     }
 }
 

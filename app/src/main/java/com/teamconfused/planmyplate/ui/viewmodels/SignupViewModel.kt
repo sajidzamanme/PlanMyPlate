@@ -95,6 +95,7 @@ class SignupViewModel(private val sessionManager: SessionManager) : ViewModel() 
                     val userId = response.getEffectiveUserId()
                     if (userId != null) {
                         sessionManager.saveUserId(userId)
+                        response.token?.let { sessionManager.saveAuthToken(it) }
                     } else {
                         android.util.Log.e("SignupViewModel", "Signup successful but no userId found in response: $response")
                     }

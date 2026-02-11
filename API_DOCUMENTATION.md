@@ -4,6 +4,8 @@ This document provides a detailed reference for the PlanMyPlate API. It is desig
 
 **Base URL:** `/api`
 
+**Postman Collection:** A pre-configured Postman collection is available at [PlanMyPlate_Postman_Collection.json](file:///home/sajidzaman/Study/dbms/PlanMyPlate/PlanMyPlate_Postman_Collection.json). See the [Postman Guide](file:///home/sajidzaman/Study/dbms/PlanMyPlate/POSTMAN_GUIDE.md) for setup and testing workflows.
+
 ---
 
 ## 1. Authentication
@@ -479,3 +481,135 @@ Upload an image file to the server and get a URL to use in recipes.
   }
   ```
 
+---
+
+## 10. AI Recipe Generation
+
+### Generate Recipe with AI
+Generate a custom recipe using Google Gemini AI based on user preferences and constraints.
+
+- **URL:** `/api/ai/generate-recipe`
+- **Method:** `POST`
+- **Headers:** `Authorization: Bearer <token>`
+- **Request Body:**
+  ```json
+  {
+    "availableIngredients": ["chicken", "tomatoes", "garlic", "pasta"],
+    "maxCalories": 600,
+    "cuisineType": "Italian",
+    "allergies": ["peanuts"],
+    "dietaryPreference": "None",
+    "mood": "Comfort Food",
+    "servings": 4,
+    "maxCookingTime": 45
+  }
+  ```
+
+**Request Parameters:**
+- `availableIngredients` (optional): List of ingredients you have available
+- `maxCalories` (optional): Maximum calories per serving (50-5000)
+- `cuisineType` (optional): Desired cuisine (e.g., Italian, Indian, Mexican, Chinese, American)
+- `allergies` (optional): List of allergens to avoid
+- `dietaryPreference` (optional): Dietary restriction (e.g., Vegan, Vegetarian, Keto, Paleo, None)
+- `mood` (optional): Occasion or mood (e.g., Comfort Food, Quick & Easy, Fancy Dinner, Healthy)
+- `servings` (required): Number of servings (1-20)
+- `maxCookingTime` (optional): Maximum total cooking time in minutes (5-300)
+
+- **Response Body (201 Created):**
+  ```json
+  {
+    "recipeId": 123,
+    "name": "Creamy Chicken Pasta",
+    "description": "A comforting Italian-style pasta with tender chicken and rich tomato sauce",
+    "calories": 580,
+    "prepTime": 15,
+    "cookTime": 25,
+    "servings": 4,
+    "instructions": "1. Boil pasta according to package directions...\n2. Season and cook chicken...\n3. Prepare sauce...",
+    "imageUrl": null,
+    "recipeIngredients": [
+      {
+        "id": 1,
+        "ingredient": {
+          "ingId": 1,
+          "name": "Chicken Breast",
+          "price": 8.50
+        },
+        "quantity": 500,
+        "unit": "grams"
+      },
+      {
+        "id": 2,
+        "ingredient": {
+          "ingId": 2,
+          "name": "Pasta",
+          "price": 2.00
+        },
+        "quantity": 400,
+        "unit": "grams"
+      }
+    ]
+  }
+  ```
+
+> [!NOTE]
+> - The AI will create new ingredients in the database if they don't already exist
+> - Generated recipes are automatically saved to your database
+> - The more specific your requirements, the better the AI-generated recipe will be
+> - Set your Gemini API key in `application.properties`: `gemini.api.key=YOUR_KEY`
+
+---
+
+## 11. Error Handling
+
+The API uses standard HTTP status codes and returns a structured JSON error response for all failure cases.
+
+### Error Response Structure
+```json
+{
+  "timestamp": "2026-02-11T18:30:00",
+  "status": 404,
+  "error": "Not Found",
+  "message": "Recipe not found with id: 123"
+}
+```
+
+### Generate Detailed Meal Plan with AI
+Generate a weekly meal plan (21 meals) based on user preferences.
+
+- **URL:** `/api/ai/generate-meal-plan`
+- **Method:** `POST`
+- **Parameters:**
+    - `userId`: ID of the user (required)
+    - `startDate`: Start date in YYYY-MM-DD format (optional, defaults to today)
+- **Response Body:** Created `MealPlan` object with 21 slots.
+  ```json
+  {
+    "mpId": 12,
+    "startDate": "2026-02-12",
+    "duration": 7,
+    "status": "ACTIVE",
+    "slots": [
+      {
+        "id": 101,
+        "mealType": "Breakfast",
+        "dayNumber": 1,
+        "recipe": { ... }
+      },
+      ...
+    ]
+  }
+  ```
+
+### Common Status Codes
+| Status Code | Description | Scenario |
+|-------------|-------------|----------|
+| `200 OK` | Success | Request completed successfully. |
+| `201 Created` | Created | Resource (like a Recipe) was successfully created. |
+| `400 Bad Request` | Client Error | Missing required fields, invalid format, or business logic validation. |
+| `401 Unauthorized` | Auth Error | Missing or invalid JWT token. |
+| `404 Not Found` | Not Found | Requested resource (User, Recipe, Ingredient, etc.) does not exist. |
+| `409 Conflict` | Conflict | Resource already exists (e.g., duplicate email during Sign Up). |
+| `500 Server Error` | Internal Error| Something went wrong on the server. |
+
+---
