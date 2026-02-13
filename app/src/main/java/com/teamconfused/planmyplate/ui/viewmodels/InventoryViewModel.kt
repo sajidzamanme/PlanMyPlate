@@ -40,13 +40,16 @@ class InventoryViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
             try {
+                val token = sessionManager.getAuthToken() ?: return@launch
+                val authHeader = "Bearer $token"
+
                 // Fetch user logic
                 // API 6.1 Get Inventory for User
-                val inventory = inventoryService.getInventoryForUser(userId)
+                val inventory = inventoryService.getInventoryForUser(authHeader, userId)
                 
                 // Then fetch items for that inventory
                 // API 6.6 Get Inventory Items
-                val items = inventory.id?.let { inventoryService.getInventoryItems(it) } ?: emptyList()
+                val items = inventory.id?.let { inventoryService.getInventoryItems(authHeader, it) } ?: emptyList()
                 
                 _uiState.update { 
                     it.copy(
@@ -82,7 +85,9 @@ class InventoryViewModel(
              
              if (newQty == 0 && item.id != null) {
                  try {
-                    inventoryService.removeItemFromInventory(item.id)
+                     val token = sessionManager.getAuthToken() ?: return@launch
+                     val authHeader = "Bearer $token"
+                    inventoryService.removeItemFromInventory(authHeader, item.id)
                  } catch (e: Exception) {
                      fetchInventory() // Revert on failure
                  }
@@ -101,7 +106,9 @@ class InventoryViewModel(
                              expiryDate = item.expiryDate,
                              ingredient = com.teamconfused.planmyplate.model.IngredientRef(ingId = item.ingredient?.ingId ?: 0)
                          )
-                        inventoryService.updateInventoryItem(item.id, req)
+                        val token = sessionManager.getAuthToken() ?: return@launch
+                        val authHeader = "Bearer $token"
+                        inventoryService.updateInventoryItem(authHeader, item.id, req)
                      }
                  } catch (e: Exception) {
                      // Fallback mechanism if Update fails? 

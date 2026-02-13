@@ -23,8 +23,8 @@ data class HomeMealsResult(
 class GetTodaysMealsUseCase(
     private val mealPlanRepository: MealPlanRepository
 ) {
-    suspend operator fun invoke(userId: Int): HomeMealsResult {
-        val plans = mealPlanRepository.getWeeklyMealPlans(userId)
+    suspend operator fun invoke(token: String, userId: Int): HomeMealsResult {
+        val plans = mealPlanRepository.getWeeklyMealPlans(token, userId)
         val activePlan = plans.find { it.status.equals("active", ignoreCase = true) }
 
         if (activePlan == null || activePlan.slots.isNullOrEmpty()) {

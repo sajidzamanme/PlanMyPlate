@@ -15,4 +15,5 @@ val useCaseModule = module {
     factory { GetAllRecipesUseCase(get()) }
     factory { FilterRecipesUseCase(get()) }
     factory { CreateMealPlanUseCase(get()) }
+    factory { com.teamconfused.planmyplate.domain.usecase.GetRecipeUseCase(get()) }
 }

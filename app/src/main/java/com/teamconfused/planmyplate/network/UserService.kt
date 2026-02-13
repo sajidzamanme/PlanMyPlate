@@ -16,14 +16,21 @@ interface UserService {
     ): User
 
     @GET("api/users/{userId}")
-    suspend fun getUserById(@Path("userId") userId: Int): User
+    suspend fun getUserById(
+        @Header("Authorization") token: String,
+        @Path("userId") userId: Int
+    ): User
 
     @PUT("api/users/{userId}")
     suspend fun updateUser(
+        @Header("Authorization") token: String,
         @Path("userId") userId: Int,
         @Body request: UpdateUserRequest
     ): User
 
     @DELETE("api/users/{userId}")
-    suspend fun deleteUser(@Path("userId") userId: Int): Map<String, String>
+    suspend fun deleteUser(
+        @Header("Authorization") token: String,
+        @Path("userId") userId: Int
+    ): Map<String, String>
 }

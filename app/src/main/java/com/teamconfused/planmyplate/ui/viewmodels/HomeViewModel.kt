@@ -50,8 +50,10 @@ class HomeViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
             try {
+                val token = sessionManager.getAuthToken() ?: ""
+                val authHeader = "Bearer $token"
                 // UseCase handles all logic
-                val result = getTodaysMealsUseCase(userId)
+                val result = getTodaysMealsUseCase(authHeader, userId)
                 
                 if (result.hasActivePlan) {
                      sessionManager.setHasMealPlans(true)

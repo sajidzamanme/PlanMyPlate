@@ -12,8 +12,8 @@ val viewModelModule = module {
     viewModel { HomeViewModel(get(), get(), get()) }
     viewModel { MealPlanViewModel(get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { SettingsViewModel(get()) }
-    viewModel { AddRecipeViewModel(get()) }
-    viewModel { RecipeViewModel(get(), get()) }
+    viewModel { AddRecipeViewModel(get(), get()) }
+    viewModel { RecipeViewModel(get(), get(), get(), get()) }
     viewModel { GroceryViewModel(get(), get()) }
     viewModel { InventoryViewModel(get(), get()) }
     // Add others

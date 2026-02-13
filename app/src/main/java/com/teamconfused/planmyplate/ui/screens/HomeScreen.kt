@@ -6,6 +6,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -27,7 +28,7 @@ import org.koin.compose.koinInject
 import androidx.navigation.NavGraph.Companion.findStartDestination
 
 @Composable
-fun HomeScreen(navController: NavController) {
+fun HomeScreen(navController: NavController, rootNavController: NavController) {
     val context = LocalContext.current
     val sessionManager: SessionManager = koinInject()
     val hasMealPlans = sessionManager.hasMealPlans()
@@ -109,25 +110,17 @@ fun HomeScreen(navController: NavController) {
 
     // Show Generated Recipe
     generatedRecipe?.let { recipe ->
-        com.teamconfused.planmyplate.ui.components.RecipeDetailsDialog(
-            recipe = recipe,
-            isAdded = true, // It's saved on backend
-            onDismiss = { homeViewModel.clearGeneratedRecipe() },
-            onToggleRecipe = { 
-                homeViewModel.clearGeneratedRecipe()
-            }
-        )
+        LaunchedEffect(recipe.id) {
+            rootNavController.navigate(com.teamconfused.planmyplate.ui.navigation.Screen.RecipeDetails(recipe.id ?: 0))
+            homeViewModel.clearGeneratedRecipe()
+        }
     }
 
     recipeToShowDetails?.let { recipe ->
-        com.teamconfused.planmyplate.ui.components.RecipeDetailsDialog(
-            recipe = recipe,
-            isAdded = true, 
-            onDismiss = { recipeToShowDetails = null },
-            onToggleRecipe = { 
-                recipeToShowDetails = null
-            }
-        )
+        LaunchedEffect(recipe.id) {
+            rootNavController.navigate(com.teamconfused.planmyplate.ui.navigation.Screen.RecipeDetails(recipe.id ?: 0))
+            recipeToShowDetails = null
+        }
     }
 }
 

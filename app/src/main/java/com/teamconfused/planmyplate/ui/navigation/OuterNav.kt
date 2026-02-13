@@ -9,15 +9,19 @@ import androidx.navigation.compose.composable
 import com.teamconfused.planmyplate.ui.screens.ForgotPasswordScreen
 import com.teamconfused.planmyplate.ui.screens.LoginScreen
 import com.teamconfused.planmyplate.ui.screens.PreferenceSelectionScreen
+import com.teamconfused.planmyplate.ui.screens.RecipeDetailsScreen
 import com.teamconfused.planmyplate.ui.screens.SignupScreen
 import com.teamconfused.planmyplate.ui.screens.WelcomeScreen
 import com.teamconfused.planmyplate.ui.viewmodels.ForgotPasswordViewModel
 import com.teamconfused.planmyplate.ui.viewmodels.LoginViewModel
 import com.teamconfused.planmyplate.ui.viewmodels.PreferenceSelectionViewModel
 import com.teamconfused.planmyplate.ui.viewmodels.SignupViewModel
+import com.teamconfused.planmyplate.ui.viewmodels.RecipeViewModel
+import com.teamconfused.planmyplate.ui.viewmodels.MealPlanViewModel
 import com.teamconfused.planmyplate.util.SessionManager
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
+import androidx.navigation.toRoute
 
 @Composable
 fun NavGraph(navController: NavHostController) {
@@ -69,9 +73,35 @@ fun NavGraph(navController: NavHostController) {
 
         composable<Screen.Main> {
             MainNav(
+                rootNavController = navController,
                 onLogout = {
                     navController.navigate(Screen.Welcome) {
                         popUpTo(Screen.Main) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        composable<Screen.RecipeDetails> { backStackEntry ->
+            val route = backStackEntry.toRoute<Screen.RecipeDetails>()
+            
+            val mealPlanViewModel: MealPlanViewModel = koinViewModel()
+            val uiState by mealPlanViewModel.uiState.collectAsState()
+            
+            val currentMealType = route.mealType ?: "Breakfast"
+            val isAdded = if (route.isSelectionMode) {
+                uiState.selectedRecipes[currentMealType]?.any { it.id == route.recipeId } == true
+            } else {
+                true 
+            }
+
+            RecipeDetailsScreen(
+                navController = navController,
+                recipeId = route.recipeId,
+                isInitiallyAdded = isAdded,
+                onToggleRecipe = { recipe ->
+                    if (route.isSelectionMode) {
+                        mealPlanViewModel.toggleRecipe(currentMealType, recipe)
                     }
                 }
             )

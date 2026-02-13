@@ -6,12 +6,12 @@ import com.teamconfused.planmyplate.model.RecipeRequest
 import okhttp3.MultipartBody
 
 interface RecipeRepository {
-    suspend fun getAllRecipes(): List<Recipe>
-    suspend fun getRecipeById(id: Int): Recipe
-    suspend fun createRecipe(request: CreateRecipeRequest): Recipe
-    suspend fun updateRecipe(id: Int, request: RecipeRequest): Recipe
-    suspend fun deleteRecipe(id: Int)
-    suspend fun searchRecipes(query: String): List<Recipe>
-    suspend fun getRecipesByCalories(min: Int, max: Int): List<Recipe>
-    suspend fun uploadImage(file: MultipartBody.Part): String
+    suspend fun getAllRecipes(token: String): List<Recipe>
+    suspend fun getRecipeById(token: String, id: Int): Recipe
+    suspend fun createRecipe(token: String, request: CreateRecipeRequest): Recipe
+    suspend fun updateRecipe(token: String, id: Int, request: RecipeRequest): Recipe
+    suspend fun deleteRecipe(token: String, id: Int)
+    suspend fun searchRecipes(token: String, query: String): List<Recipe>
+    suspend fun getRecipesByCalories(token: String, min: Int, max: Int): List<Recipe>
+    suspend fun uploadImage(token: String, file: MultipartBody.Part): String
 }

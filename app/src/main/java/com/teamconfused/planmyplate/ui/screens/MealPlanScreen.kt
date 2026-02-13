@@ -18,7 +18,6 @@ import coil.compose.AsyncImage
 import com.teamconfused.planmyplate.model.Recipe
 import com.teamconfused.planmyplate.ui.components.CategorizedRecipeSection
 import com.teamconfused.planmyplate.ui.components.HorizontalRecipeCard
-import com.teamconfused.planmyplate.ui.components.RecipeDetailsDialog
 import com.teamconfused.planmyplate.ui.viewmodels.MealPlanViewModel
 import com.teamconfused.planmyplate.R
 import java.time.LocalDate
@@ -27,7 +26,7 @@ import java.time.temporal.ChronoUnit
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
-fun MealPlanScreen(navController: NavController) {
+fun MealPlanScreen(navController: NavController, rootNavController: NavController) {
     val context = LocalContext.current
     
     val viewModel: MealPlanViewModel = koinViewModel()
@@ -77,16 +76,16 @@ fun MealPlanScreen(navController: NavController) {
     
     recipeToShowDetails?.let { recipe ->
         val currentMealType = selectedMealType ?: "Breakfast"
-        val isAdded = uiState.selectedRecipes[currentMealType]?.contains(recipe) == true
-        RecipeDetailsDialog(
-            recipe = recipe,
-            isAdded = isAdded,
-            onDismiss = { recipeToShowDetails = null },
-            onToggleRecipe = {
-                viewModel.toggleRecipe(currentMealType, recipe)
-                recipeToShowDetails = null
-            }
-        )
+        LaunchedEffect(recipe.id) {
+            rootNavController.navigate(
+                com.teamconfused.planmyplate.ui.navigation.Screen.RecipeDetails(
+                    recipeId = recipe.id ?: 0,
+                    isSelectionMode = true,
+                    mealType = currentMealType
+                )
+            )
+            recipeToShowDetails = null
+        }
     }
 }
 

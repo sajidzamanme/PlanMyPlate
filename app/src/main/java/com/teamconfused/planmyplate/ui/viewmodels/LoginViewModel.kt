@@ -71,11 +71,11 @@ class LoginViewModel(private val sessionManager: SessionManager) : ViewModel() {
                     var hasPreferences = false
                     if (userId != null) {
                         sessionManager.saveUserId(userId)
-                        response.token?.let { sessionManager.saveAuthToken(it) }
-
                         // Check if preferences are already set in the database
                         try {
-                            val prefs = RetrofitClient.userPreferencesService.getPreferences(userId)
+                            val token = response.token ?: ""
+                            val authHeader = "Bearer $token"
+                            val prefs = RetrofitClient.userPreferencesService.getPreferences(authHeader, userId)
                             // Save preferences locally
                             sessionManager.saveUserPreferences(prefs)
                             

@@ -6,8 +6,8 @@ import com.teamconfused.planmyplate.model.Recipe
 class FilterRecipesUseCase(
     private val repository: RecipeRepository
 ) {
-    suspend fun byCalories(min: Int, max: Int): List<Recipe> {
-        return repository.getRecipesByCalories(min, max)
+    suspend fun byCalories(token: String, min: Int, max: Int): List<Recipe> {
+        return repository.getRecipesByCalories(token, min, max)
     }
     
     // Add other filters as needed

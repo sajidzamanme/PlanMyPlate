@@ -44,14 +44,14 @@ class MealPlanViewModel(
     val uiState: StateFlow<MealPlanUiState> = _uiState.asStateFlow()
 
     // Replicate Recipe Lists for selection UI
-    private val _allRecipesState = MutableStateFlow<List<Recipe>>(emptyList())
-    val allRecipesState: StateFlow<List<Recipe>> = _allRecipesState.asStateFlow()
+    private val _allRecipesState = MutableStateFlow<RecipeUiState>(RecipeUiState.Loading)
+    val allRecipesState: StateFlow<RecipeUiState> = _allRecipesState.asStateFlow()
 
-    private val _recommendedRecipesState = MutableStateFlow<List<Recipe>>(emptyList())
-    val recommendedRecipesState: StateFlow<List<Recipe>> = _recommendedRecipesState.asStateFlow()
+    private val _recommendedRecipesState = MutableStateFlow<RecipeUiState>(RecipeUiState.Loading)
+    val recommendedRecipesState: StateFlow<RecipeUiState> = _recommendedRecipesState.asStateFlow()
 
-    private val _budgetRecipesState = MutableStateFlow<List<Recipe>>(emptyList())
-    val budgetRecipesState: StateFlow<List<Recipe>> = _budgetRecipesState.asStateFlow()
+    private val _budgetRecipesState = MutableStateFlow<RecipeUiState>(RecipeUiState.Loading)
+    val budgetRecipesState: StateFlow<RecipeUiState> = _budgetRecipesState.asStateFlow()
 
     init {
         fetchWeeklyMealPlans()
@@ -59,14 +59,24 @@ class MealPlanViewModel(
     }
     
     private fun loadRecipes() {
+        val token = sessionManager.getAuthToken()
+        if (token == null) return
+
+        val authHeader = "Bearer $token"
+
         viewModelScope.launch {
+            _allRecipesState.value = RecipeUiState.Loading
+            _recommendedRecipesState.value = RecipeUiState.Loading
+            _budgetRecipesState.value = RecipeUiState.Loading
             try {
-                val all = getAllRecipesUseCase()
-                _allRecipesState.value = all
-                _recommendedRecipesState.value = all.shuffled().take(5)
-                _budgetRecipesState.value = filterRecipesUseCase.byCalories(0, 400)
+                val all = getAllRecipesUseCase(authHeader)
+                _allRecipesState.value = RecipeUiState.Success(all)
+                _recommendedRecipesState.value = RecipeUiState.Success(all.shuffled().take(5))
+                _budgetRecipesState.value = RecipeUiState.Success(filterRecipesUseCase.byCalories(authHeader, 0, 400))
             } catch (e: Exception) {
-                // handle error
+                _allRecipesState.value = RecipeUiState.Error(e.message ?: "Failed to load recipes")
+                _recommendedRecipesState.value = RecipeUiState.Error(e.message ?: "Failed to load recommended recipes")
+                _budgetRecipesState.value = RecipeUiState.Error(e.message ?: "Failed to load budget recipes")
             }
         }
     }
@@ -118,7 +128,9 @@ class MealPlanViewModel(
                      return@launch
                 }
 
-                createMealPlanUseCase(userId, recipeIds)
+                val token = sessionManager.getAuthToken() ?: ""
+                val authHeader = "Bearer $token"
+                createMealPlanUseCase(authHeader, userId, recipeIds)
                 
                 fetchWeeklyMealPlans()
                 sessionManager.setHasMealPlans(true)
@@ -138,7 +150,9 @@ class MealPlanViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoadingHistory = true) }
             try {
-                val plans = mealPlanRepository.getWeeklyMealPlans(userId)
+                val token = sessionManager.getAuthToken() ?: ""
+                val authHeader = "Bearer $token"
+                val plans = mealPlanRepository.getWeeklyMealPlans(authHeader, userId)
                 val active = plans.find { it.status.equals("active", ignoreCase = true) }
                 _uiState.update {
                     it.copy(
@@ -188,7 +202,7 @@ class MealPlanViewModel(
             _uiState.update { it.copy(isCreatingPlan = true, errorMessage = null) }
             try {
                 // Call AI UseCase
-                generateMealPlanUseCase(token, userId)
+                generateMealPlanUseCase("Bearer $token", userId)
                 
                 fetchWeeklyMealPlans() // Refresh list
                 sessionManager.setHasMealPlans(true)

@@ -3,10 +3,10 @@ package com.teamconfused.planmyplate.domain.usecase
 import com.teamconfused.planmyplate.domain.repository.RecipeRepository
 import com.teamconfused.planmyplate.model.Recipe
 
-class GetAllRecipesUseCase(
+class GetRecipeUseCase(
     private val repository: RecipeRepository
 ) {
-    suspend operator fun invoke(token: String): List<Recipe> {
-        return repository.getAllRecipes(token)
+    suspend operator fun invoke(token: String, id: Int): Recipe {
+        return repository.getRecipeById(token, id)
     }
 }

@@ -136,7 +136,9 @@ class PreferenceSelectionViewModel(private val sessionManager: SessionManager) :
                     servings = currentState.selectedServings,
                     budget = currentState.selectedBudget
                 )
-                RetrofitClient.userPreferencesService.setPreferences(userId, request)
+                val token = sessionManager.getAuthToken() ?: return@launch
+                val authHeader = "Bearer $token"
+                RetrofitClient.userPreferencesService.setPreferences(authHeader, userId, request)
                 _uiState.update { it.copy(isLoading = false) }
                 onComplete()
             } catch (e: Exception) {
@@ -152,7 +154,9 @@ class PreferenceSelectionViewModel(private val sessionManager: SessionManager) :
 
     suspend fun isPreferencesSet(id: Int): Boolean {
         return try {
-            val response = RetrofitClient.userPreferencesService.getPreferences(id)
+            val token = sessionManager.getAuthToken() ?: return false
+            val authHeader = "Bearer $token"
+            val response = RetrofitClient.userPreferencesService.getPreferences(authHeader, id)
             // Check if the returned response has actual data.
             response.diet != null || response.servings != null
         } catch (e: Exception) {

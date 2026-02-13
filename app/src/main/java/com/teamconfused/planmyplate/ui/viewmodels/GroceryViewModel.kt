@@ -42,8 +42,11 @@ class GroceryViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
             try {
+                val token = sessionManager.getAuthToken() ?: return@launch
+                val authHeader = "Bearer $token"
+                
                 // Fetch all lists
-                val lists = groceryListService.getGroceryListsForUser(userId)
+                val lists = groceryListService.getGroceryListsForUser(authHeader, userId)
                 
                 // Active list logic
                 val activeList = lists.find { it.status == "active" } ?: lists.firstOrNull()
@@ -99,8 +102,10 @@ class GroceryViewModel(
                 _uiState.value.activeListId?.let { listId ->
                     val itemId = item.id ?: return@let
                     // Note: sending { "quantity": newQty }
+                    val token = sessionManager.getAuthToken() ?: return@launch
+                    val authHeader = "Bearer $token"
                     val req = mapOf("quantity" to newQty)
-                    groceryListService.updateGroceryListItem(listId, itemId, req)
+                    groceryListService.updateGroceryListItem(authHeader, listId, itemId, req)
                 }
             } catch (e: Exception) {
                 // Ignore 404 if endpoint doesn't exist yet, or handle error
@@ -130,9 +135,12 @@ class GroceryViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             try {
+                val token = sessionManager.getAuthToken() ?: return@launch
+                val authHeader = "Bearer $token"
+
                 // Send selected ingredient IDs to the API
                 val request = PurchaseItemsRequest(ingredientIds = ingredientIds)
-                val response = groceryListService.purchaseItems(listId, request)
+                val response = groceryListService.purchaseItems(authHeader, listId, request)
                 
                 if (response.isSuccessful) {
                     _uiState.update { 

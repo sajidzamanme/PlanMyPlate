@@ -42,7 +42,8 @@ data class AddRecipeUiState(
 )
 
 class AddRecipeViewModel(
-    private val recipeService: RecipeService
+    private val recipeService: RecipeService,
+    private val sessionManager: com.teamconfused.planmyplate.util.SessionManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AddRecipeUiState())
@@ -88,7 +89,9 @@ class AddRecipeViewModel(
                 if (file != null) {
                     val requestFile = file.asRequestBody("image/*".toMediaTypeOrNull())
                     val body = MultipartBody.Part.createFormData("file", file.name, requestFile)
-                    val response = recipeService.uploadImage(body)
+                    val token = sessionManager.getAuthToken() ?: ""
+                    val authHeader = "Bearer $token"
+                    val response = recipeService.uploadImage(authHeader, body)
                     _uiState.update { it.copy(imageUrl = response.url, isUploadingImage = false) }
                 } else {
                     _uiState.update { it.copy(isUploadingImage = false, errorMessage = "Failed to process image") }
@@ -171,7 +174,9 @@ class AddRecipeViewModel(
                     ingredients = ingredientRequests.ifEmpty { null }
                 )
 
-                recipeService.createRecipe(request)
+                val token = sessionManager.getAuthToken() ?: ""
+                val authHeader = "Bearer $token"
+                recipeService.createRecipe(authHeader, request)
                 
                 _uiState.update {
                     it.copy(

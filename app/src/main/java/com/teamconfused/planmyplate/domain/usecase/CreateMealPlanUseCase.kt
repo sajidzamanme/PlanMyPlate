@@ -8,7 +8,7 @@ import java.time.LocalDate
 class CreateMealPlanUseCase(
     private val repository: MealPlanRepository
 ) {
-    suspend operator fun invoke(userId: Int, recipeIds: List<Int>, duration: Int = 7): MealPlan {
+    suspend operator fun invoke(token: String, userId: Int, recipeIds: List<Int>, duration: Int = 7): MealPlan {
         // Calculate start date (e.g. tomorrow)
         val startDate = LocalDate.now().plusDays(1).toString()
         
@@ -18,6 +18,6 @@ class CreateMealPlanUseCase(
             startDate = startDate
         )
 
-        return repository.createMealPlanWithRecipes(userId, request)
+        return repository.createMealPlanWithRecipes(token, userId, request)
     }
 }

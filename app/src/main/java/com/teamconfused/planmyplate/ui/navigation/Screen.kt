@@ -21,4 +21,11 @@ sealed class Screen {
 
     @Serializable
     data object PreferenceSelection : Screen()
+
+    @Serializable
+    data class RecipeDetails(
+        val recipeId: Int,
+        val isSelectionMode: Boolean = false,
+        val mealType: String? = null
+    ) : Screen()
 }
