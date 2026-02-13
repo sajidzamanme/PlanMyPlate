@@ -2,7 +2,13 @@ package com.teamconfused.planmyplate.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.teamconfused.planmyplate.domain.usecase.CreateMealPlanUseCase
+import com.teamconfused.planmyplate.domain.usecase.FilterRecipesUseCase
+import com.teamconfused.planmyplate.domain.usecase.GenerateRecipeUseCase
+import com.teamconfused.planmyplate.domain.usecase.GetAllRecipesUseCase
+import com.teamconfused.planmyplate.domain.usecase.GetTodaysMealsUseCase
 import com.teamconfused.planmyplate.model.Recipe
+import com.teamconfused.planmyplate.model.MealPlan
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -18,27 +24,51 @@ data class MealPlanUiState(
     val isCreatingPlan: Boolean = false,
     val planCreated: Boolean = false,
     val isLoadingHistory: Boolean = false,
-    val activeMealPlan: com.teamconfused.planmyplate.model.MealPlan? = null,
-    val mealPlans: List<com.teamconfused.planmyplate.model.MealPlan> = emptyList(),
+    val activeMealPlan: MealPlan? = null,
+    val mealPlans: List<MealPlan> = emptyList(),
     val errorMessage: String? = null
 )
 
 class MealPlanViewModel(
-    private val recipeViewModel: RecipeViewModel,
-    private val mealPlanService: com.teamconfused.planmyplate.network.MealPlanService,
+    private val createMealPlanUseCase: CreateMealPlanUseCase,
+    private val getTodaysMealsUseCase: GetTodaysMealsUseCase, // Reuse for fetching weekly/active if needed, or use Repo directly.
+    private val getAllRecipesUseCase: GetAllRecipesUseCase,
+    private val filterRecipesUseCase: FilterRecipesUseCase,
+    private val generateRecipeUseCase: GenerateRecipeUseCase, // For AI generation
+    private val generateMealPlanUseCase: com.teamconfused.planmyplate.domain.usecase.GenerateMealPlanUseCase,
+    private val mealPlanRepository: com.teamconfused.planmyplate.domain.repository.MealPlanRepository,
     private val sessionManager: com.teamconfused.planmyplate.util.SessionManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MealPlanUiState())
     val uiState: StateFlow<MealPlanUiState> = _uiState.asStateFlow()
 
-    // Expose recipe states from RecipeViewModel
-    val recommendedRecipesState = recipeViewModel.recommendedRecipesState
-    val budgetRecipesState = recipeViewModel.budgetRecipesState
-    val allRecipesState = recipeViewModel.allRecipesState // Added this
+    // Replicate Recipe Lists for selection UI
+    private val _allRecipesState = MutableStateFlow<List<Recipe>>(emptyList())
+    val allRecipesState: StateFlow<List<Recipe>> = _allRecipesState.asStateFlow()
+
+    private val _recommendedRecipesState = MutableStateFlow<List<Recipe>>(emptyList())
+    val recommendedRecipesState: StateFlow<List<Recipe>> = _recommendedRecipesState.asStateFlow()
+
+    private val _budgetRecipesState = MutableStateFlow<List<Recipe>>(emptyList())
+    val budgetRecipesState: StateFlow<List<Recipe>> = _budgetRecipesState.asStateFlow()
 
     init {
         fetchWeeklyMealPlans()
+        loadRecipes()
+    }
+    
+    private fun loadRecipes() {
+        viewModelScope.launch {
+            try {
+                val all = getAllRecipesUseCase()
+                _allRecipesState.value = all
+                _recommendedRecipesState.value = all.shuffled().take(5)
+                _budgetRecipesState.value = filterRecipesUseCase.byCalories(0, 400)
+            } catch (e: Exception) {
+                // handle error
+            }
+        }
     }
     
     fun toggleRecipe(mealType: String, recipe: Recipe) {
@@ -72,16 +102,11 @@ class MealPlanViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(isCreatingPlan = true, errorMessage = null) }
             try {
-                // Flatten recipes in order: Day 1 Breakfast, Lunch, Dinner, Day 2 ...
-                // The map is by meal type, each has 7 items.
-                // We need to construct the list: [D1_B, D1_L, D1_D, D2_B, D2_L, D2_D, ...]
-                
                 val breakfast = _uiState.value.selectedRecipes["Breakfast"] ?: emptyList()
                 val lunch = _uiState.value.selectedRecipes["Lunch"] ?: emptyList()
                 val dinner = _uiState.value.selectedRecipes["Dinner"] ?: emptyList()
 
                 val recipeIds = mutableListOf<Int>()
-                
                 for (i in 0 until 7) {
                     breakfast.getOrNull(i)?.id?.let { recipeIds.add(it) }
                     lunch.getOrNull(i)?.id?.let { recipeIds.add(it) }
@@ -89,49 +114,19 @@ class MealPlanViewModel(
                 }
 
                 if (recipeIds.size != 21) {
-                     _uiState.update { 
-                         it.copy(
-                             isCreatingPlan = false, 
-                             errorMessage = "Error processing recipes. Please try again."
-                         ) 
-                     }
+                     _uiState.update { it.copy(isCreatingPlan = false, errorMessage = "Error processing recipes.") }
                      return@launch
                 }
 
-                // Calculate start date (e.g. tomorrow or next Monday)
-                // For simplicity, using "2026-02-01" as placeholder or implement date logic
-                // In a real app we'd ask user or pick next day.
-                // Using a dynamic date based on current time for better simulation
-                val startDate = java.time.LocalDate.now().plusDays(1).toString()
-
-                val request = com.teamconfused.planmyplate.model.CreateMealPlanRequest(
-                    recipeIds = recipeIds,
-                    duration = 7,
-                    startDate = startDate
-                )
-
-                mealPlanService.createMealPlanWithRecipes(userId, request)
+                createMealPlanUseCase(userId, recipeIds)
                 
-                // Refresh list
                 fetchWeeklyMealPlans()
-
-                // Update Session Manager to indicate meal plans exist
                 sessionManager.setHasMealPlans(true)
 
-                _uiState.update {
-                    it.copy(
-                        isCreatingPlan = false,
-                        planCreated = true
-                    )
-                }
+                _uiState.update { it.copy(isCreatingPlan = false, planCreated = true) }
                 onSuccess()
             } catch (e: Exception) {
-                _uiState.update {
-                    it.copy(
-                        isCreatingPlan = false,
-                        errorMessage = e.message ?: "Failed to create meal plan"
-                    )
-                }
+                _uiState.update { it.copy(isCreatingPlan = false, errorMessage = e.message ?: "Failed to create meal plan") }
             }
         }
     }
@@ -143,8 +138,8 @@ class MealPlanViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoadingHistory = true) }
             try {
-                val plans = mealPlanService.getWeeklyMealPlans(userId)
-                val active = plans.find { it.status.equals("active", ignoreCase = true) } // or logic to find latest
+                val plans = mealPlanRepository.getWeeklyMealPlans(userId)
+                val active = plans.find { it.status.equals("active", ignoreCase = true) }
                 _uiState.update {
                     it.copy(
                         isLoadingHistory = false,
@@ -153,32 +148,23 @@ class MealPlanViewModel(
                     )
                 }
             } catch (e: Exception) {
-                _uiState.update {
-                    it.copy(
-                        isLoadingHistory = false,
-                        // Don't show error on screen heavily for background fetch, maybe logging
-                    )
-                }
+                _uiState.update { it.copy(isLoadingHistory = false) }
             }
         }
     }
 
     fun retryFetchRecipes() {
-        recipeViewModel.fetchAllRecipes() // Added this
-        recipeViewModel.fetchRecommendedRecipes()
-        recipeViewModel.fetchBudgetRecipes()
+        loadRecipes()
     }
     
     fun refreshRecipes() {
-        recipeViewModel.fetchAllRecipes()
-        recipeViewModel.fetchRecommendedRecipes()
-        recipeViewModel.fetchBudgetRecipes()
+        loadRecipes()
     }
 
     fun startNewPlan() {
         _uiState.update {
             it.copy(
-                activeMealPlan = null,
+                activeMealPlan = null, // Logic to clear active plan locally or just reset UI mode
                 isCreatingPlan = false,
                 selectedRecipes = mapOf(
                     "Breakfast" to emptyList(),
@@ -188,9 +174,12 @@ class MealPlanViewModel(
             )
         }
     }
+    
     fun generateMealPlan(onSuccess: () -> Unit) {
         val userId = sessionManager.getUserId()
-        if (userId == -1) {
+        val token = sessionManager.getAuthToken()
+        
+        if (userId == -1 || token == null) {
             _uiState.update { it.copy(errorMessage = "User not logged in") }
             return
         }
@@ -198,32 +187,20 @@ class MealPlanViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(isCreatingPlan = true, errorMessage = null) }
             try {
-                val token = sessionManager.getAuthToken() ?: ""
-                val startDate = java.time.LocalDate.now().plusDays(1).toString()
+                // Call AI UseCase
+                generateMealPlanUseCase(token, userId)
                 
-                com.teamconfused.planmyplate.network.RetrofitClient.aiService.generateMealPlan(
-                    token = "Bearer $token",
-                    userId = userId,
-                    startDate = startDate
-                )
-                
-                // Refresh list
-                fetchWeeklyMealPlans()
+                fetchWeeklyMealPlans() // Refresh list
                 sessionManager.setHasMealPlans(true)
-
-                _uiState.update {
-                    it.copy(
-                        isCreatingPlan = false,
-                        planCreated = true
-                    )
-                }
+                
+                _uiState.update { it.copy(isCreatingPlan = false, planCreated = true) }
                 onSuccess()
             } catch (e: Exception) {
-                _uiState.update {
+                _uiState.update { 
                     it.copy(
-                        isCreatingPlan = false,
+                        isCreatingPlan = false, 
                         errorMessage = e.message ?: "Failed to generate meal plan"
-                    )
+                    ) 
                 }
             }
         }

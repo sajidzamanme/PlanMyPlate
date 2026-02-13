@@ -162,7 +162,7 @@ fun PreferenceTopBar(
                         .weight(1f)
                         .height(4.dp)
                         .background(
-                            color = if (index <= currentStep) MaterialTheme.colorScheme.primary else Color.LightGray.copy(
+                            color = if (index <= currentStep) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant.copy(
                                 alpha = 0.5f
                             ),
                             shape = RoundedCornerShape(2.dp)
@@ -345,8 +345,8 @@ fun SelectionButton(
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(12.dp),
-        border = if (!isSelected) BorderStroke(1.dp, Color.LightGray) else BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary),
-        color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else Color.White,
+        border = if (!isSelected) BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant) else BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary),
+        color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
         modifier = Modifier.fillMaxWidth()
     ) {
         Box(
@@ -357,7 +357,7 @@ fun SelectionButton(
                 text = text,
                 style = MaterialTheme.typography.bodyLarge.copy(
                     fontWeight = FontWeight.Medium,
-                    color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else Color.Black
+                    color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
                 )
             )
         }
@@ -373,8 +373,8 @@ fun SelectionChip(
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(12.dp),
-        border = if (!isSelected) BorderStroke(1.dp, Color.LightGray) else BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary),
-        color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else Color.White,
+        border = if (!isSelected) BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant) else BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary),
+        color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
     ) {
         Box(
             modifier = Modifier.padding(vertical = 12.dp, horizontal = 20.dp),
@@ -384,7 +384,7 @@ fun SelectionChip(
                 text = text,
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontWeight = FontWeight.Medium,
-                    color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else Color.Black
+                    color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
                 )
             )
         }
@@ -400,8 +400,8 @@ fun ServingCard(
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(12.dp),
-        border = if (!isSelected) BorderStroke(1.dp, Color.LightGray) else BorderStroke(1.6.dp, MaterialTheme.colorScheme.primary),
-        color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else Color.White,
+        border = if (!isSelected) BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant) else BorderStroke(1.6.dp, MaterialTheme.colorScheme.primary),
+        color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(
@@ -411,14 +411,14 @@ fun ServingCard(
                 text = "${option.count} servings",
                 style = MaterialTheme.typography.titleMedium.copy(
                     fontWeight = FontWeight.Bold,
-                    color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else Color.Black
+                    color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
                 )
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = option.description,
                 style = MaterialTheme.typography.bodyMedium.copy(
-                    color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f) else Color.Gray
+                    color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant
                 )
             )
         }

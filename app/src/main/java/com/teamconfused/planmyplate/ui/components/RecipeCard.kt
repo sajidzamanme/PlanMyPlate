@@ -46,7 +46,7 @@ fun RecipeCard(recipe: Recipe, onClick: () -> Unit, onLongClick: () -> Unit = {}
                 onLongClick = onLongClick
             )
             .then(
-                if (isSelected) Modifier.border(3.dp, Color(0xFF4CAF50), RoundedCornerShape(16.dp))
+                if (isSelected) Modifier.border(3.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(16.dp))
                 else Modifier
             ),
         colors = CardDefaults.cardColors(
@@ -87,7 +87,7 @@ fun RecipeCard(recipe: Recipe, onClick: () -> Unit, onLongClick: () -> Unit = {}
                             .padding(8.dp)
                             .size(32.dp),
                         shape = CircleShape,
-                        color = Color(0xFF4CAF50)
+                        color = MaterialTheme.colorScheme.primary
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.check_icon),

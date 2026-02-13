@@ -13,7 +13,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.teamconfused.planmyplate.model.Recipe
@@ -21,20 +20,17 @@ import com.teamconfused.planmyplate.ui.components.CategorizedRecipeSection
 import com.teamconfused.planmyplate.ui.components.HorizontalRecipeCard
 import com.teamconfused.planmyplate.ui.components.RecipeDetailsDialog
 import com.teamconfused.planmyplate.ui.viewmodels.MealPlanViewModel
-import com.teamconfused.planmyplate.ui.viewmodels.ViewModelFactory
-import com.teamconfused.planmyplate.util.SessionManager
 import com.teamconfused.planmyplate.R
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun MealPlanScreen(navController: NavController) {
     val context = LocalContext.current
-    val sessionManager = SessionManager(context)
     
-    val viewModelFactory = ViewModelFactory(sessionManager)
-    val viewModel: MealPlanViewModel = viewModel(factory = viewModelFactory)
+    val viewModel: MealPlanViewModel = koinViewModel()
     val uiState by viewModel.uiState.collectAsState()
     
     var selectedMealType by remember { mutableStateOf<String?>(null) }
@@ -344,7 +340,7 @@ fun CreateMealPlanContent(
         )
         
         Text(
-            text = "Select 7 recipes for each meal type",
+            text = "Select 7 recipes for each meal slot",
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -386,7 +382,7 @@ fun CreateMealPlanContent(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            OutlinedButton(
+            Button(
                 onClick = {
                     viewModel.generateMealPlan {
                         navController.navigate("home") {
@@ -396,17 +392,22 @@ fun CreateMealPlanContent(
                 },
                 modifier = Modifier
                     .weight(1f)
-                    .height(50.dp),
+                    .height(56.dp),
                 shape = RoundedCornerShape(12.dp),
-                enabled = !uiState.isCreatingPlan
+                enabled = !uiState.isCreatingPlan,
+                contentPadding = PaddingValues(horizontal = 8.dp)
             ) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_ai_stars), // Use appropriate icon
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
+//                Icon(
+//                    painter = painterResource(R.drawable.ic_ai_stars),
+//                    contentDescription = null,
+//                    modifier = Modifier.size(18.dp)
+//                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = "Auto Generate",
+                    style = MaterialTheme.typography.labelLarge,
+                    maxLines = 1
                 )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Auto Generate")
             }
 
             Button(
@@ -419,11 +420,16 @@ fun CreateMealPlanContent(
                 },
                 modifier = Modifier
                     .weight(1f)
-                    .height(50.dp),
+                    .height(56.dp),
                 shape = RoundedCornerShape(12.dp),
-                enabled = allRecipesSelected && !uiState.isCreatingPlan
+                enabled = allRecipesSelected && !uiState.isCreatingPlan,
+                contentPadding = PaddingValues(horizontal = 8.dp)
             ) {
-                Text("Create Manual")
+                Text(
+                    text = "Create Manual",
+                    style = MaterialTheme.typography.labelLarge,
+                    maxLines = 1
+                )
             }
         }
     }

@@ -11,19 +11,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.teamconfused.planmyplate.model.InventoryItem
 import com.teamconfused.planmyplate.ui.viewmodels.InventoryViewModel
-import com.teamconfused.planmyplate.ui.viewmodels.ViewModelFactory
-import com.teamconfused.planmyplate.util.SessionManager
+
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun InventoryScreen(navController: NavController) {
     val context = LocalContext.current
-    val sessionManager = SessionManager(context)
-    val viewModelFactory = ViewModelFactory(sessionManager)
-    val viewModel: InventoryViewModel = viewModel(factory = viewModelFactory)
+    
+    val viewModel: InventoryViewModel = koinViewModel()
     val uiState by viewModel.uiState.collectAsState()
 
     Scaffold { padding ->

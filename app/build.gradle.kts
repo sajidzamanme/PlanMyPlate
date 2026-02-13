@@ -63,6 +63,8 @@ dependencies {
     implementation(libs.okhttp.logging)
     implementation(libs.androidx.compose.runtime)
     implementation(libs.ui)
+    implementation(libs.koin.android)
+    implementation(libs.koin.androidx.compose)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -17,10 +16,10 @@ import com.teamconfused.planmyplate.ui.screens.InventoryScreen
 import com.teamconfused.planmyplate.ui.screens.SettingsScreen
 import com.teamconfused.planmyplate.ui.viewmodels.AddRecipeViewModel
 import com.teamconfused.planmyplate.ui.viewmodels.SettingsViewModel
-import com.teamconfused.planmyplate.ui.viewmodels.ViewModelFactory
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
-fun MainNav(factory: ViewModelFactory, onLogout: () -> Unit) {
+fun MainNav(onLogout: () -> Unit) {
     val navController = rememberNavController()
 
     Scaffold(
@@ -36,7 +35,7 @@ fun MainNav(factory: ViewModelFactory, onLogout: () -> Unit) {
             composable("groceries") { GroceriesScreen(navController) }
             composable("inventory") { InventoryScreen(navController) }
             composable("settings") {
-                val settingsViewModel: SettingsViewModel = viewModel(factory = factory)
+                val settingsViewModel: SettingsViewModel = koinViewModel()
                 SettingsScreen(
                     onLogoutClick = {
                         settingsViewModel.logout()
@@ -46,7 +45,7 @@ fun MainNav(factory: ViewModelFactory, onLogout: () -> Unit) {
                 )
             }
             composable("add_recipe") {
-                val addRecipeViewModel: AddRecipeViewModel = viewModel(factory = factory)
+                val addRecipeViewModel: AddRecipeViewModel = koinViewModel()
                 AddRecipeScreen(navController, addRecipeViewModel)
             }
         }

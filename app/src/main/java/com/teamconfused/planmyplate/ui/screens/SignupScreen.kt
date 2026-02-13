@@ -215,14 +215,14 @@ fun SignupScreen(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                HorizontalDivider(modifier = Modifier.weight(1f), color = Color.LightGray)
+                HorizontalDivider(modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.outlineVariant)
                 Text(
                     text = "Or",
                     modifier = Modifier.padding(horizontal = 16.dp),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color.Gray
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                HorizontalDivider(modifier = Modifier.weight(1f), color = Color.LightGray)
+                HorizontalDivider(modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.outlineVariant)
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -234,9 +234,9 @@ fun SignupScreen(
                     .fillMaxWidth()
                     .height(56.dp),
                 shape = RoundedCornerShape(12.dp),
-                border = BorderStroke(1.dp, Color.LightGray)
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
             ) {
-                Text("Sign Up with Google", color = Color.Black)
+                Text("Sign Up with Google", color = MaterialTheme.colorScheme.onSurface)
             }
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -263,7 +263,7 @@ fun SignupScreen(
             ) {
                 Text(
                     "Already a member? ",
-                    color = Color.Gray,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodySmall
                 )
                 Text(
@@ -272,7 +272,7 @@ fun SignupScreen(
                         fontWeight = FontWeight.Bold,
                     ),
                     modifier = Modifier.clickable { onLoginClick() },
-                    color = Color.Black
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
 

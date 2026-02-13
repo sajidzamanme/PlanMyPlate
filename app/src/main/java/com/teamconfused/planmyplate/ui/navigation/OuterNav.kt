@@ -3,7 +3,6 @@ package com.teamconfused.planmyplate.ui.navigation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -16,12 +15,13 @@ import com.teamconfused.planmyplate.ui.viewmodels.ForgotPasswordViewModel
 import com.teamconfused.planmyplate.ui.viewmodels.LoginViewModel
 import com.teamconfused.planmyplate.ui.viewmodels.PreferenceSelectionViewModel
 import com.teamconfused.planmyplate.ui.viewmodels.SignupViewModel
-import com.teamconfused.planmyplate.ui.viewmodels.ViewModelFactory
 import com.teamconfused.planmyplate.util.SessionManager
+import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.koinInject
 
 @Composable
-fun NavGraph(navController: NavHostController, sessionManager: SessionManager) {
-    val factory = ViewModelFactory(sessionManager)
+fun NavGraph(navController: NavHostController) {
+    val sessionManager: SessionManager = koinInject()
     
     val startDestination = if (sessionManager.isLoggedIn()) Screen.Main else Screen.Welcome
 
@@ -37,7 +37,7 @@ fun NavGraph(navController: NavHostController, sessionManager: SessionManager) {
         }
 
         composable<Screen.Login> {
-            val viewModel: LoginViewModel = viewModel(factory = factory)
+            val viewModel: LoginViewModel = koinViewModel()
             val uiState by viewModel.uiState.collectAsState()
 
             LoginScreen(
@@ -69,7 +69,6 @@ fun NavGraph(navController: NavHostController, sessionManager: SessionManager) {
 
         composable<Screen.Main> {
             MainNav(
-                factory = factory,
                 onLogout = {
                     navController.navigate(Screen.Welcome) {
                         popUpTo(Screen.Main) { inclusive = true }
@@ -79,7 +78,7 @@ fun NavGraph(navController: NavHostController, sessionManager: SessionManager) {
         }
 
         composable<Screen.Signup> {
-            val viewModel: SignupViewModel = viewModel(factory = factory)
+            val viewModel: SignupViewModel = koinViewModel()
             val uiState by viewModel.uiState.collectAsState()
 
             SignupScreen(
@@ -106,7 +105,7 @@ fun NavGraph(navController: NavHostController, sessionManager: SessionManager) {
         }
 
         composable<Screen.ForgotPassword> {
-            val viewModel: ForgotPasswordViewModel = viewModel(factory = factory)
+            val viewModel: ForgotPasswordViewModel = koinViewModel()
             val uiState by viewModel.uiState.collectAsState()
 
             ForgotPasswordScreen(
@@ -128,7 +127,7 @@ fun NavGraph(navController: NavHostController, sessionManager: SessionManager) {
         }
 
         composable<Screen.PreferenceSelection> {
-            val viewModel: PreferenceSelectionViewModel = viewModel(factory = factory)
+            val viewModel: PreferenceSelectionViewModel = koinViewModel()
             val uiState by viewModel.uiState.collectAsState()
 
             PreferenceSelectionScreen(

@@ -6,7 +6,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -16,24 +15,24 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.teamconfused.planmyplate.model.Recipe
 import com.teamconfused.planmyplate.ui.components.HorizontalRecipeCard
 import com.teamconfused.planmyplate.ui.viewmodels.HomeViewModel
-import com.teamconfused.planmyplate.ui.viewmodels.ViewModelFactory
 import com.teamconfused.planmyplate.util.SessionManager
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.koinInject
+import androidx.navigation.NavGraph.Companion.findStartDestination
 
 @Composable
 fun HomeScreen(navController: NavController) {
     val context = LocalContext.current
-    val sessionManager = SessionManager(context)
+    val sessionManager: SessionManager = koinInject()
     val hasMealPlans = sessionManager.hasMealPlans()
     
-    val viewModelFactory = ViewModelFactory(sessionManager)
-    val homeViewModel: HomeViewModel = viewModel(factory = viewModelFactory)
+    val homeViewModel: HomeViewModel = koinViewModel()
     val uiState by homeViewModel.uiState.collectAsState()
     
     var recipeToShowDetails by remember { mutableStateOf<Recipe?>(null) }
@@ -338,7 +337,15 @@ fun DashboardWithMeals(
         }
         
         FilledTonalButton(
-            onClick = { navController.navigate("meal_plan") },
+            onClick = { 
+                navController.navigate("meal_plan") {
+                    popUpTo(navController.graph.findStartDestination().id) {
+                        saveState = true
+                    }
+                    launchSingleTop = true
+                    restoreState = true
+                }
+            },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp)
         ) {
@@ -396,7 +403,15 @@ fun EmptyDashboard(navController: NavController) {
             modifier = Modifier.padding(bottom = 32.dp)
         )
         FilledTonalButton(
-            onClick = { navController.navigate("meal_plan") },
+            onClick = { 
+                navController.navigate("meal_plan") {
+                    popUpTo(navController.graph.findStartDestination().id) {
+                        saveState = true
+                    }
+                    launchSingleTop = true
+                    restoreState = true
+                }
+            },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp)
         ) {

@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.teamconfused.planmyplate.model.ForgotPasswordRequest
 import com.teamconfused.planmyplate.model.ResetPasswordRequest
+import com.teamconfused.planmyplate.network.AuthService
 import com.teamconfused.planmyplate.network.RetrofitClient
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -29,7 +30,9 @@ data class ForgotPasswordUiState(
     val resetToken: String? = null
 )
 
-class ForgotPasswordViewModel : ViewModel() {
+class ForgotPasswordViewModel(
+    private val authService: AuthService
+) : ViewModel() {
     private val _uiState = MutableStateFlow(ForgotPasswordUiState())
     val uiState: StateFlow<ForgotPasswordUiState> = _uiState.asStateFlow()
 
@@ -66,7 +69,7 @@ class ForgotPasswordViewModel : ViewModel() {
             _uiState.update { it.copy(isLoading = true, error = null) }
             try {
                 val request = ForgotPasswordRequest(email = currentState.email)
-                val response = RetrofitClient.authService.forgotPassword(request)
+                val response = authService.forgotPassword(request)
                 _uiState.update { 
                     it.copy(
                         step = ForgotPasswordStep.VERIFICATION_CODE, 
@@ -124,7 +127,7 @@ class ForgotPasswordViewModel : ViewModel() {
                     resetToken = currentState.resetToken,
                     newPassword = currentState.newPassword
                 )
-                RetrofitClient.authService.resetPassword(request)
+                authService.resetPassword(request)
                 _uiState.update { it.copy(step = ForgotPasswordStep.SUCCESS, error = null, isLoading = false) }
             } catch (e: Exception) {
                 _uiState.update { 
