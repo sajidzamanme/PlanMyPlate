@@ -37,7 +37,8 @@ fun HomeScreen(navController: NavController, rootNavController: NavController) {
     val uiState by homeViewModel.uiState.collectAsState()
     
     var recipeToShowDetails by remember { mutableStateOf<Recipe?>(null) }
-    
+    var mealTypeToShowDetails by remember { mutableStateOf<String?>(null) }
+
     val lifecycleOwner = androidx.compose.ui.platform.LocalLifecycleOwner.current
     androidx.compose.runtime.DisposableEffect(lifecycleOwner) {
         val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
@@ -54,6 +55,7 @@ fun HomeScreen(navController: NavController, rootNavController: NavController) {
     val isGenerating by homeViewModel.isGenerating.collectAsState()
     val generatedRecipe by homeViewModel.generatedRecipe.collectAsState()
     var showGenerateDialog by remember { mutableStateOf(false) }
+    var generatingMealType by remember { mutableStateOf<String?>("Dinner") }
 
     Scaffold(
         floatingActionButton = {
@@ -74,7 +76,10 @@ fun HomeScreen(navController: NavController, rootNavController: NavController) {
                     navController = navController, 
                     uiState = uiState, 
                     onRetry = { homeViewModel.retry() },
-                    onRecipeClick = { recipeToShowDetails = it }
+                    onRecipeClick = { recipe, type -> 
+                        recipeToShowDetails = recipe 
+                        mealTypeToShowDetails = type
+                    }
                 )
             } else {
                 EmptyDashboard(navController)
@@ -86,8 +91,11 @@ fun HomeScreen(navController: NavController, rootNavController: NavController) {
         RecipeGenerationDialog(
             onDismiss = { showGenerateDialog = false },
             onGenerate = { ingredients, mood ->
-                homeViewModel.generateRecipe(ingredients, "Dinner", mapOf("mood" to mood))
-                showGenerateDialog = false // Dismiss input dialog, loading will be shown via overlay or another dialog
+                // For now we default to "Dinner" or could add a selector in the dialog
+                val type = "Dinner" 
+                generatingMealType = type
+                homeViewModel.generateRecipe(ingredients, type, mapOf("mood" to mood))
+                showGenerateDialog = false
             }
         )
     }
@@ -111,15 +119,28 @@ fun HomeScreen(navController: NavController, rootNavController: NavController) {
     // Show Generated Recipe
     generatedRecipe?.let { recipe ->
         LaunchedEffect(recipe.id) {
-            rootNavController.navigate(com.teamconfused.planmyplate.ui.navigation.Screen.RecipeDetails(recipe.id ?: 0))
+            rootNavController.navigate(
+                com.teamconfused.planmyplate.ui.navigation.Screen.RecipeDetails(
+                    recipeId = recipe.id ?: 0,
+                    fromDashboard = true,
+                    mealType = generatingMealType
+                )
+            )
             homeViewModel.clearGeneratedRecipe()
         }
     }
 
     recipeToShowDetails?.let { recipe ->
         LaunchedEffect(recipe.id) {
-            rootNavController.navigate(com.teamconfused.planmyplate.ui.navigation.Screen.RecipeDetails(recipe.id ?: 0))
+            rootNavController.navigate(
+                com.teamconfused.planmyplate.ui.navigation.Screen.RecipeDetails(
+                    recipeId = recipe.id ?: 0,
+                    fromDashboard = true,
+                    mealType = mealTypeToShowDetails
+                )
+            )
             recipeToShowDetails = null
+            mealTypeToShowDetails = null
         }
     }
 }
@@ -176,7 +197,7 @@ fun DashboardWithMeals(
     navController: NavController,
     uiState: com.teamconfused.planmyplate.ui.viewmodels.HomeUiState,
     onRetry: () -> Unit,
-    onRecipeClick: (Recipe) -> Unit
+    onRecipeClick: (Recipe, String?) -> Unit
 ) {
     val currentDate = LocalDate.now()
     val formatter = DateTimeFormatter.ofPattern("EEEE, MMMM d")
@@ -255,7 +276,20 @@ fun DashboardWithMeals(
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
-                            text = "Today",
+                            text = "Consumed",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "${uiState.consumedCalories}",
+                            style = MaterialTheme.typography.displaySmall,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = "Planned",
                             style = MaterialTheme.typography.labelLarge,
                             color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                         )
@@ -264,29 +298,6 @@ fun DashboardWithMeals(
                             text = "$todayCalories",
                             style = MaterialTheme.typography.displaySmall,
                             color = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                        Text(
-                            text = "calories",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                        )
-                    }
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = "This Week",
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "$weeklyCalories",
-                            style = MaterialTheme.typography.displaySmall,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                        Text(
-                            text = "of $weeklyGoal goal",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                         )
                     }
                 }
@@ -298,20 +309,38 @@ fun DashboardWithMeals(
             style = MaterialTheme.typography.headlineSmall
         )
         
-        uiState.todayBreakfast?.let { 
-            MealSection("Breakfast", listOf(it), onRecipeClick)
+        val today = java.time.LocalDate.now().toString()
+        
+        fun getAdditionalForType(type: String) = uiState.additionalMeals
+            .filter { it.date == today && it.mealType.equalsIgnoreCase(type) }
+            .map { it.recipe }
+
+        if (!uiState.handledMealTypes.contains("Breakfast")) {
+            val planned = uiState.todayBreakfast
+            val additional = getAdditionalForType("Breakfast")
+            if (planned != null || additional.isNotEmpty()) {
+                MealSection("Breakfast", planned, additional) { onRecipeClick(it, "Breakfast") }
+            }
         }
-        uiState.todayLunch?.let { 
-            MealSection("Lunch", listOf(it), onRecipeClick)
+        if (!uiState.handledMealTypes.contains("Lunch")) {
+            val planned = uiState.todayLunch
+            val additional = getAdditionalForType("Lunch")
+            if (planned != null || additional.isNotEmpty()) {
+                MealSection("Lunch", planned, additional) { onRecipeClick(it, "Lunch") }
+            }
         }
-        uiState.todayDinner?.let { 
-            MealSection("Dinner", listOf(it), onRecipeClick)
+        if (!uiState.handledMealTypes.contains("Dinner")) {
+            val planned = uiState.todayDinner
+            val additional = getAdditionalForType("Dinner")
+            if (planned != null || additional.isNotEmpty()) {
+                MealSection("Dinner", planned, additional) { onRecipeClick(it, "Dinner") }
+            }
         }
         
         HorizontalDivider(
             modifier = Modifier.padding(vertical = 8.dp),
-            color = MaterialTheme.colorScheme.surfaceVariant
         )
+
         
         Text(
             text = "Upcoming Meals",
@@ -319,7 +348,7 @@ fun DashboardWithMeals(
         )
         
         if (uiState.upcomingMeals.isNotEmpty()) {
-            UpcomingMealSection(uiState.upcomingDayLabel ?: "Upcoming", uiState.upcomingMeals, onRecipeClick)
+            UpcomingMealSection(uiState.upcomingDayLabel ?: "Upcoming", uiState.upcomingMeals) { onRecipeClick(it, null) }
         } else if (uiState.upcomingMessage != null) {
             Text(
                 text = uiState.upcomingMessage,
@@ -348,18 +377,38 @@ fun DashboardWithMeals(
 }
 
 @Composable
-fun MealSection(mealType: String, recipes: List<Recipe>, onRecipeClick: (Recipe) -> Unit) {
+fun MealSection(
+    mealType: String,
+    plannedRecipe: Recipe?,
+    additionalRecipes: List<Recipe>,
+    onRecipeClick: (Recipe) -> Unit
+) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(
             text = mealType,
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.primary
         )
-        recipes.forEach { recipe ->
+        
+        plannedRecipe?.let { recipe ->
             HorizontalRecipeCard(recipe = recipe, onClick = { onRecipeClick(recipe) })
+        }
+        
+        additionalRecipes.forEach { recipe ->
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = "Additional",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                HorizontalRecipeCard(recipe = recipe, onClick = { onRecipeClick(recipe) })
+            }
         }
     }
 }
+
+// Helper extension
+fun String.equalsIgnoreCase(other: String) = this.equals(other, ignoreCase = true)
 
 @Composable
 fun UpcomingMealSection(label: String, recipes: List<Recipe>, onRecipeClick: (Recipe) -> Unit) {

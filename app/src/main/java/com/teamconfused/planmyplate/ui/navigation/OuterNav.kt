@@ -86,6 +86,7 @@ fun NavGraph(navController: NavHostController) {
             val route = backStackEntry.toRoute<Screen.RecipeDetails>()
             
             val mealPlanViewModel: MealPlanViewModel = koinViewModel()
+            val homeViewModel: com.teamconfused.planmyplate.ui.viewmodels.HomeViewModel = koinViewModel()
             val uiState by mealPlanViewModel.uiState.collectAsState()
             
             val currentMealType = route.mealType ?: "Breakfast"
@@ -99,10 +100,19 @@ fun NavGraph(navController: NavHostController) {
                 navController = navController,
                 recipeId = route.recipeId,
                 isInitiallyAdded = isAdded,
+                showControls = !route.readOnly,
+                fromDashboard = route.fromDashboard,
+                mealType = route.mealType,
                 onToggleRecipe = { recipe ->
                     if (route.isSelectionMode) {
                         mealPlanViewModel.toggleRecipe(currentMealType, recipe)
                     }
+                },
+                onCooked = { type, calories, id ->
+                    homeViewModel.markAsCooked(type, calories, id)
+                },
+                onSkip = { id ->
+                    homeViewModel.skipMeal(route.mealType, id)
                 }
             )
         }

@@ -1,5 +1,6 @@
 package com.teamconfused.planmyplate.ui.viewmodels
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.teamconfused.planmyplate.domain.usecase.GenerateRecipeUseCase
@@ -19,12 +20,16 @@ data class HomeUiState(
     val upcomingMeals: List<Recipe> = emptyList(),
     val upcomingDayLabel: String? = null,
     val upcomingMessage: String? = null,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val consumedCalories: Int = 0,
+    val handledMealTypes: Set<String> = emptySet(),
+    val additionalMeals: List<com.teamconfused.planmyplate.model.AdditionalMeal> = emptyList()
 ) {
     val todayCalories: Int
-        get() = (todayBreakfast?.calories ?: 0) + 
-                (todayLunch?.calories ?: 0) + 
-                (todayDinner?.calories ?: 0)
+        get() = (if (!handledMealTypes.contains("Breakfast")) todayBreakfast?.calories ?: 0 else 0) + 
+                (if (!handledMealTypes.contains("Lunch")) todayLunch?.calories ?: 0 else 0) + 
+                (if (!handledMealTypes.contains("Dinner")) todayDinner?.calories ?: 0 else 0) +
+                additionalMeals.sumOf { it.recipe.calories }
 }
 
 class HomeViewModel(
@@ -37,7 +42,23 @@ class HomeViewModel(
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
     init {
+        loadLocalData()
         fetchTodaysMeals()
+    }
+
+    private fun loadLocalData() {
+        val today = java.time.LocalDate.now().toString()
+        val handled = sessionManager.getHandledMeals()[today] ?: emptySet()
+        val calories = sessionManager.getConsumedCalories()[today] ?: 0
+        val additional = sessionManager.getAdditionalMeals().filter { it.date == today }
+        
+        _uiState.update { 
+            it.copy(
+                handledMealTypes = handled,
+                consumedCalories = calories,
+                additionalMeals = additional
+            )
+        }
     }
 
     fun fetchTodaysMeals() {
@@ -108,7 +129,7 @@ class HomeViewModel(
                 val diet = sessionManager.getUserPreferences().diet
                 val mood = otherParams["mood"] as? String
 
-                 // UseCase
+                Log.d("HomeViewModel", "Starting AI Recipe generation for type: $mealType with mood: $mood")
                 val recipe = generateRecipeUseCase(
                     token = "Bearer $token",
                     ingredients = ingredients, 
@@ -116,12 +137,90 @@ class HomeViewModel(
                     dietaryPreference = diet, 
                     maxCalories = 800
                 )
+                
+                Log.d("HomeViewModel", "AI Recipe generated successfully: ${recipe.name}")
+                
+                val today = java.time.LocalDate.now().toString()
+                val newAdditionalMeal = com.teamconfused.planmyplate.model.AdditionalMeal(
+                    recipeId = recipe.id ?: (System.currentTimeMillis() % Int.MAX_VALUE).toInt(),
+                    recipe = recipe,
+                    date = today,
+                    mealType = mealType
+                )
+                
+                val allAdditional = sessionManager.getAdditionalMeals() + newAdditionalMeal
+                sessionManager.saveAdditionalMeals(allAdditional)
+                
+                _uiState.update { 
+                    it.copy(additionalMeals = it.additionalMeals + newAdditionalMeal)
+                }
+                
                 _generatedRecipe.value = recipe
             } catch (e: Exception) {
+                Log.e("HomeViewModel", "Error in AI generation flow: ${e.message}", e)
                 e.printStackTrace()
             } finally {
                 _isGenerating.value = false
             }
+        }
+    }
+
+    fun markAsCooked(mealType: String?, calories: Int, recipeId: Int? = null) {
+        val today = java.time.LocalDate.now().toString()
+        _uiState.update { 
+            val newHandled = if (mealType != null) it.handledMealTypes + mealType else it.handledMealTypes
+            
+            // Persist handled
+            val allHandled = sessionManager.getHandledMeals().toMutableMap()
+            allHandled[today] = newHandled
+            sessionManager.saveHandledMeals(allHandled)
+            
+            // Persist calories
+            val allCalories = sessionManager.getConsumedCalories().toMutableMap()
+            allCalories[today] = (allCalories[today] ?: 0) + calories
+            sessionManager.saveConsumedCalories(allCalories)
+            
+            // Handle additional meals
+            val newAdditionalInState = if (recipeId != null) it.additionalMeals.filter { r -> r.recipeId != recipeId } else it.additionalMeals
+            if (recipeId != null) {
+                val allAdditional = sessionManager.getAdditionalMeals().filter { r -> 
+                    // Remove if it's the one we cooked, matching by ID AND date (to be safe)
+                    !(r.recipeId == recipeId && r.date == today)
+                }
+                sessionManager.saveAdditionalMeals(allAdditional)
+            }
+
+            it.copy(
+                consumedCalories = it.consumedCalories + calories,
+                handledMealTypes = newHandled,
+                additionalMeals = newAdditionalInState
+            )
+        }
+    }
+
+    fun skipMeal(mealType: String?, recipeId: Int? = null) {
+        val today = java.time.LocalDate.now().toString()
+        _uiState.update {
+            val newHandled = if (mealType != null) it.handledMealTypes + mealType else it.handledMealTypes
+            
+            // Persist handled
+            val allHandled = sessionManager.getHandledMeals().toMutableMap()
+            allHandled[today] = newHandled
+            sessionManager.saveHandledMeals(allHandled)
+
+            // Handle additional meals
+            val newAdditionalInState = if (recipeId != null) it.additionalMeals.filter { r -> r.recipeId != recipeId } else it.additionalMeals
+            if (recipeId != null) {
+                val allAdditional = sessionManager.getAdditionalMeals().filter { r -> 
+                    !(r.recipeId == recipeId && r.date == today)
+                }
+                sessionManager.saveAdditionalMeals(allAdditional)
+            }
+
+            it.copy(
+                handledMealTypes = newHandled,
+                additionalMeals = newAdditionalInState
+            )
         }
     }
 

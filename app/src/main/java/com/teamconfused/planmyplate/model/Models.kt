@@ -39,7 +39,15 @@ data class RecipeResponse(
     val cookTime: Int? = null,
     val servings: Int? = null,
     val instructions: String? = null,
+    @SerialName("recipeIngredients") val ingredients: List<RecipeIngredientResponse>? = null,
     val imageUrl: String? = null
+)
+
+@Serializable
+data class RecipeIngredientResponse(
+    val quantity: Int? = null,
+    val unit: String? = null,
+    val ingredient: Ingredient? = null
 )
 
 @Serializable
@@ -107,11 +115,11 @@ data class MealPlan(
 
 @Serializable
 data class MealSlot(
-    @SerialName("slotId") val slotId: Int? = null,
+    @SerialName("id") val slotId: Int? = null,
     val mealType: String, // Breakfast, Lunch, Dinner
     val date: String? = null,
     val day: Int? = null,
-    @SerialName("day_number") val dayNumber: Int? = null,
+    @SerialName("dayNumber") val dayNumber: Int? = null,
     val recipe: RecipeResponse? = null
 )
 
@@ -237,4 +245,12 @@ data class ErrorResponse(
     val status: Int,
     val error: String,
     val message: String
+)
+
+@Serializable
+data class AdditionalMeal(
+    val recipeId: Int, // ID of the generated recipe
+    val recipe: Recipe,
+    val date: String, // YYYY-MM-DD
+    val mealType: String // Breakfast, Lunch, Dinner
 )

@@ -26,6 +26,8 @@ data class MealPlanUiState(
     val isLoadingHistory: Boolean = false,
     val activeMealPlan: MealPlan? = null,
     val mealPlans: List<MealPlan> = emptyList(),
+    val additionalMeals: List<com.teamconfused.planmyplate.model.AdditionalMeal> = emptyList(),
+    val handledMeals: Map<String, Set<String>> = emptyMap(),
     val errorMessage: String? = null
 )
 
@@ -54,8 +56,18 @@ class MealPlanViewModel(
     val budgetRecipesState: StateFlow<RecipeUiState> = _budgetRecipesState.asStateFlow()
 
     init {
+        loadLocalData()
         fetchWeeklyMealPlans()
         loadRecipes()
+    }
+    
+    fun loadLocalData() {
+        _uiState.update { 
+            it.copy(
+                additionalMeals = sessionManager.getAdditionalMeals(),
+                handledMeals = sessionManager.getHandledMeals()
+            )
+        }
     }
     
     private fun loadRecipes() {

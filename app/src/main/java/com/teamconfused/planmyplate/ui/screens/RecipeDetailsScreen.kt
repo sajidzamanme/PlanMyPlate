@@ -34,12 +34,17 @@ fun RecipeDetailsScreen(
     navController: NavController,
     recipeId: Int,
     isInitiallyAdded: Boolean = false,
-    onToggleRecipe: (Recipe) -> Unit = {}
+    showControls: Boolean = true,
+    fromDashboard: Boolean = false,
+    mealType: String? = null,
+    onToggleRecipe: (Recipe) -> Unit = {},
+    onCooked: (String?, Int, Int?) -> Unit = { _, _, _ -> },
+    onSkip: (Int?) -> Unit = {}
 ) {
     val viewModel: RecipeViewModel = koinViewModel()
     val recipe by viewModel.selectedRecipeState.collectAsState()
     val isLoading by viewModel.isDetailsLoading.collectAsState()
-    
+
     var isAdded by remember { mutableStateOf(isInitiallyAdded) }
 
     LaunchedEffect(recipeId) {
@@ -56,169 +61,241 @@ fun RecipeDetailsScreen(
     recipe?.let { currentRecipe ->
         Scaffold(
             bottomBar = {
-                Surface(
-                    tonalElevation = 8.dp,
-                    shadowElevation = 8.dp
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                if (fromDashboard) {
+                    Surface(
+                        tonalElevation = 8.dp,
+                        shadowElevation = 8.dp
                     ) {
-                        OutlinedButton(
-                            onClick = { navController.popBackStack() },
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(12.dp),
-                            contentPadding = PaddingValues(16.dp)
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            horizontalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
-                            Text("Back")
+                            OutlinedButton(
+                                onClick = {
+                                    onSkip(currentRecipe.id)
+                                    navController.popBackStack()
+                                },
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(12.dp),
+                                contentPadding = PaddingValues(16.dp)
+                            ) {
+                                Text("Skip")
+                            }
+
+                            Button(
+                                onClick = {
+                                    onCooked(mealType, currentRecipe.calories ?: 0, currentRecipe.id)
+                                    navController.popBackStack()
+                                },
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(12.dp),
+                                contentPadding = PaddingValues(16.dp)
+                            ) {
+                                Text(
+                                    "Cooked",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
                         }
-                        
-                        Button(
-                            onClick = { 
-                                onToggleRecipe(currentRecipe)
-                                isAdded = !isAdded
-                            },
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(12.dp),
-                            contentPadding = PaddingValues(16.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = if (isAdded) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
-                            )
+                    }
+                } else if (showControls) {
+                    Surface(
+                        tonalElevation = 8.dp,
+                        shadowElevation = 8.dp
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            horizontalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
-                            Text(if (isAdded) "Remove" else "Add")
+                            OutlinedButton(
+                                onClick = { navController.popBackStack() },
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(12.dp),
+                                contentPadding = PaddingValues(16.dp)
+                            ) {
+                                Text("Back")
+                            }
+
+                            Button(
+                                onClick = {
+                                    onToggleRecipe(currentRecipe)
+                                    isAdded = !isAdded
+                                },
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(12.dp),
+                                contentPadding = PaddingValues(16.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (isAdded) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+                                )
+                            ) {
+                                Text(if (isAdded) "Remove" else "Add")
+                            }
                         }
                     }
                 }
             }
         ) { padding ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .padding(bottom = padding.calculateBottomPadding())
-            ) {
-                // Header with Image
-                Box(
+            Box(modifier = Modifier.fillMaxSize()) {
+                Column(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .height(350.dp)
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .padding(bottom = padding.calculateBottomPadding())
                 ) {
-                    AsyncImage(
-                        model = currentRecipe.imageUrl,
-                        contentDescription = null,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp)),
-                        contentScale = ContentScale.Crop
-                    )
-                    
+                    // Header with Image
                     Box(
                         modifier = Modifier
-                            .fillMaxSize()
-                            .background(
-                                Brush.verticalGradient(
-                                    colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.8f)),
-                                    startY = 500f
-                                )
-                            )
-                    )
-                    
-                    IconButton(
-                        onClick = { navController.popBackStack() },
-                        modifier = Modifier
-                            .padding(16.dp)
-                            .statusBarsPadding()
-                            .background(Color.Black.copy(alpha = 0.3f), CircleShape)
+                            .fillMaxWidth()
+                            .height(350.dp)
                     ) {
-                        Icon(painter = painterResource(R.drawable.arrow_back_icon), contentDescription = "Back", tint = Color.White)
-                    }
-                    
-                    Column(
-                        modifier = Modifier
-                            .align(Alignment.BottomStart)
-                            .padding(24.dp)
-                    ) {
-                        Text(
-                            text = currentRecipe.name,
-                            style = MaterialTheme.typography.headlineLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
+                        AsyncImage(
+                            model = currentRecipe.imageUrl,
+                            contentDescription = null,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp)),
+                            contentScale = ContentScale.Crop
                         )
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                           Text(
-                               text = "${currentRecipe.calories} kcal",
-                               style = MaterialTheme.typography.titleMedium,
-                               color = Color.White.copy(alpha = 0.8f)
-                           )
+
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(
+                                    Brush.verticalGradient(
+                                        colors = listOf(
+                                            Color.Transparent,
+                                            Color.Black.copy(alpha = 0.8f)
+                                        ),
+                                        startY = 500f
+                                    )
+                                )
+                        )
+
+                        Column(
+                            modifier = Modifier
+                                .align(Alignment.BottomStart)
+                                .padding(24.dp)
+                        ) {
+                            Text(
+                                text = currentRecipe.name,
+                                style = MaterialTheme.typography.headlineLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = "${currentRecipe.calories} kcal",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = Color.White.copy(alpha = 0.8f)
+                                )
+                            }
                         }
                     }
-                }
 
-                Column(
-                    modifier = Modifier.padding(24.dp),
-                    verticalArrangement = Arrangement.spacedBy(24.dp)
-                ) {
-                    // Quick Stats
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                    Column(
+                        modifier = Modifier.padding(24.dp),
+                        verticalArrangement = Arrangement.spacedBy(24.dp)
                     ) {
-                        StatItem("Prep", "${currentRecipe.prepTime ?: "-"}\nmin", MaterialTheme.colorScheme.primaryContainer)
-                        StatItem("Cook", "${currentRecipe.cookTime ?: "-"}\nmin", MaterialTheme.colorScheme.secondaryContainer)
-                        StatItem("Serves", "${currentRecipe.servings ?: "-"}\npers.", MaterialTheme.colorScheme.tertiaryContainer)
-                    }
-
-                    // Tab Selection (Pill shape)
-                    var selectedTab by remember { mutableIntStateOf(0) }
-                    val tabs = listOf("Description", "Ingredients", "Instructions")
-
-                    Surface(
-                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                        shape = CircleShape,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
+                        // Quick Stats
                         Row(
-                            modifier = Modifier.padding(4.dp),
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            tabs.forEachIndexed { index, title ->
-                                Box(
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .clip(CircleShape)
-                                        .background(if (selectedTab == index) MaterialTheme.colorScheme.primary else Color.Transparent)
-                                        .clickable { selectedTab = index }
-                                        .padding(vertical = 12.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        text = title,
-                                        style = MaterialTheme.typography.labelLarge,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = if (selectedTab == index) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
+                            StatItem(
+                                "Prep",
+                                "${currentRecipe.prepTime ?: "-"}\nmin",
+                                MaterialTheme.colorScheme.primaryContainer
+                            )
+                            StatItem(
+                                "Cook",
+                                "${currentRecipe.cookTime ?: "-"}\nmin",
+                                MaterialTheme.colorScheme.secondaryContainer
+                            )
+                            StatItem(
+                                "Serves",
+                                "${currentRecipe.servings ?: "-"}\npers.",
+                                MaterialTheme.colorScheme.tertiaryContainer
+                            )
+                        }
+
+                        // Tab Selection (Pill shape)
+                        var selectedTab by remember { mutableIntStateOf(0) }
+                        val tabs = listOf("Description", "Ingredients", "Instructions")
+
+                        Surface(
+                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                            shape = CircleShape,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(4.dp),
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                tabs.forEachIndexed { index, title ->
+                                    Box(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .clip(CircleShape)
+                                            .background(if (selectedTab == index) MaterialTheme.colorScheme.primary else Color.Transparent)
+                                            .clickable { selectedTab = index }
+                                            .padding(vertical = 12.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = title,
+                                            style = MaterialTheme.typography.labelLarge,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = if (selectedTab == index) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        // Tab Content
+                        AnimatedContent(
+                            targetState = selectedTab,
+                            transitionSpec = {
+                                fadeIn() togetherWith fadeOut()
+                            },
+                            label = "TabContent"
+                        ) { targetIndex ->
+                            Column(modifier = Modifier.fillMaxWidth()) {
+                                when (targetIndex) {
+                                    0 -> DescriptionTab(currentRecipe.description)
+                                    1 -> IngredientsTab(currentRecipe.ingredients)
+                                    2 -> InstructionsTab(currentRecipe.instructions)
                                 }
                             }
                         }
                     }
+                }
 
-                    // Tab Content
-                    AnimatedContent(
-                        targetState = selectedTab,
-                        transitionSpec = {
-                            fadeIn() togetherWith fadeOut()
-                        },
-                        label = "TabContent"
-                    ) { targetIndex ->
-                        Column(modifier = Modifier.fillMaxWidth()) {
-                            when (targetIndex) {
-                                0 -> DescriptionTab(currentRecipe.description)
-                                1 -> IngredientsTab(currentRecipe.ingredients)
-                                2 -> InstructionsTab(currentRecipe.instructions)
-                            }
-                        }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .statusBarsPadding()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(
+                        onClick = { navController.popBackStack() },
+                        modifier = Modifier.background(
+                            Color.Black.copy(alpha = 0.3f),
+                            CircleShape
+                        )
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.arrow_back_icon),
+                            contentDescription = "Back",
+                            tint = Color.White
+                        )
                     }
                 }
             }

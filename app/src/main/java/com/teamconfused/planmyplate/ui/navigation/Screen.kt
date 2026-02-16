@@ -26,6 +26,8 @@ sealed class Screen {
     data class RecipeDetails(
         val recipeId: Int,
         val isSelectionMode: Boolean = false,
-        val mealType: String? = null
+        val mealType: String? = null,
+        val readOnly: Boolean = false,
+        val fromDashboard: Boolean = false
     ) : Screen()
 }

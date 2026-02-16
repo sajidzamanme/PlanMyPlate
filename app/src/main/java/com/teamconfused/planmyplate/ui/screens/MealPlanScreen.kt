@@ -1,5 +1,6 @@
 package com.teamconfused.planmyplate.ui.screens
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -8,11 +9,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.teamconfused.planmyplate.model.Recipe
@@ -20,6 +23,7 @@ import com.teamconfused.planmyplate.ui.components.CategorizedRecipeSection
 import com.teamconfused.planmyplate.ui.components.HorizontalRecipeCard
 import com.teamconfused.planmyplate.ui.viewmodels.MealPlanViewModel
 import com.teamconfused.planmyplate.R
+import com.teamconfused.planmyplate.ui.navigation.Screen
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
@@ -32,6 +36,11 @@ fun MealPlanScreen(navController: NavController, rootNavController: NavControlle
     val viewModel: MealPlanViewModel = koinViewModel()
     val uiState by viewModel.uiState.collectAsState()
     
+    // Refresh local data when screen is focused
+    LaunchedEffect(Unit) {
+        viewModel.loadLocalData()
+    }
+    
     var selectedMealType by remember { mutableStateOf<String?>(null) }
     var recipeToShowDetails by remember { mutableStateOf<Recipe?>(null) }
     
@@ -41,9 +50,14 @@ fun MealPlanScreen(navController: NavController, rootNavController: NavControlle
         if (uiState.activeMealPlan != null && !uiState.isCreatingPlan) {
             WeeklyMealPlanView(
                 mealPlan = uiState.activeMealPlan!!,
+                additionalMeals = uiState.additionalMeals,
+                handledMeals = uiState.handledMeals,
                 modifier = Modifier.padding(padding),
                 onDelete = { /* Implement delete/reset logic if needed */ },
-                onCreateNew = { viewModel.startNewPlan() }
+                onCreateNew = { viewModel.startNewPlan() },
+                onRecipeClick = { recipeId ->
+                    rootNavController.navigate(Screen.RecipeDetails(recipeId, readOnly = true))
+                }
             )
         } else {
             CreateMealPlanContent(
@@ -452,9 +466,12 @@ fun CreateMealPlanContent(
 @Composable
 fun WeeklyMealPlanView(
     mealPlan: com.teamconfused.planmyplate.model.MealPlan,
+    additionalMeals: List<com.teamconfused.planmyplate.model.AdditionalMeal> = emptyList(),
+    handledMeals: Map<String, Set<String>> = emptyMap(),
     modifier: Modifier = Modifier,
     onDelete: () -> Unit,
-    onCreateNew: () -> Unit
+    onCreateNew: () -> Unit,
+    onRecipeClick: (Int) -> Unit = {}
 ) {
     // Process slots to group by Date/Day
     val slots = mealPlan.slots ?: emptyList()
@@ -585,52 +602,131 @@ fun WeeklyMealPlanView(
                              color = if (isToday) MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     } else {
-                        // Sort meals: Breakfast, Lunch, Dinner
-                        val sortedSlots = slotsForDay.sortedBy { 
-                            when(it.mealType) {
-                                "Breakfast" -> 1
-                                "Lunch" -> 2
-                                "Dinner" -> 3
-                                else -> 4
-                            }
-                        }
+                        // Show Breakfast, Lunch, Dinner in fixed order
+                        val mealTypes = listOf("Breakfast", "Lunch", "Dinner")
+                        
+                        mealTypes.forEach { type ->
+                             val slot = slotsForDay.find { it.mealType.equals(type, ignoreCase = true) }
+                             val additionalForSlot = additionalMeals.filter { 
+                                 it.date == dateForDay.toString() && it.mealType.equalsIgnoreCase(type) 
+                             }
+                             val isHandled = handledMeals[dateForDay.toString()]?.contains(type) ?: false
 
-                        sortedSlots.forEach { slot ->
-                             Row(
-                                 verticalAlignment = Alignment.CenterVertically,
-                                 modifier = Modifier.fillMaxWidth() 
-                             ) {
-                                 Text(
-                                     text = slot.mealType,
-                                     style = MaterialTheme.typography.labelMedium,
-                                     fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-                                     modifier = Modifier.width(80.dp),
-                                     color = if (isToday) MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha=0.8f) else MaterialTheme.colorScheme.onSurfaceVariant
-                                 )
-                                 slot.recipe?.let { recipe ->
+                             Column(modifier = Modifier.fillMaxWidth()) {
+                                 // 1. Show Planned Meal
+                                 Row(
+                                     verticalAlignment = Alignment.CenterVertically,
+                                     modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp) 
+                                 ) {
+                                     Text(
+                                         text = type,
+                                         style = MaterialTheme.typography.labelLarge,
+                                         fontWeight = androidx.compose.ui.text.font.FontWeight.ExtraBold,
+                                         modifier = Modifier.width(95.dp),
+                                         color = if (isToday) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.primary
+                                     )
+                                     
+                                     if (slot?.recipe != null) {
+                                         val recipe = slot.recipe
+                                         Row(
+                                             verticalAlignment = Alignment.CenterVertically,
+                                             horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                             modifier = Modifier
+                                                 .weight(1f)
+                                                 .clip(RoundedCornerShape(8.dp))
+                                                 .clickable { recipe.id?.let { onRecipeClick(it) } }
+                                                 .padding(4.dp)
+                                         ) {
+                                             Box {
+                                                 AsyncImage(
+                                                     model = recipe.imageUrl,
+                                                     contentDescription = null,
+                                                     modifier = Modifier
+                                                         .size(48.dp)
+                                                         .clip(RoundedCornerShape(10.dp))
+                                                         .alpha(if (isHandled) 0.5f else 1.0f),
+                                                     contentScale = ContentScale.Crop
+                                                 )
+                                                 if (isHandled) {
+                                                     Icon(
+                                                         painter = painterResource(com.teamconfused.planmyplate.R.drawable.check_icon),
+                                                         contentDescription = null,
+                                                         tint = MaterialTheme.colorScheme.primary,
+                                                         modifier = Modifier.align(Alignment.Center).size(24.dp)
+                                                     )
+                                                 }
+                                             }
+                                             Text(
+                                                 text = recipe.name,
+                                                 style = MaterialTheme.typography.bodyLarge,
+                                                 fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
+                                                 color = if (isToday) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
+                                                 maxLines = 2,
+                                                 lineHeight = 20.sp,
+                                                 overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                                                 textDecoration = if (isHandled) androidx.compose.ui.text.style.TextDecoration.LineThrough else null
+                                             )
+                                         }
+                                     } else {
+                                         Surface(
+                                             color = if (isToday) MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.05f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                                             shape = RoundedCornerShape(8.dp),
+                                             modifier = Modifier.fillMaxWidth()
+                                         ) {
+                                             Text(
+                                                 text = "Not planned", 
+                                                 style = MaterialTheme.typography.bodyMedium,
+                                                 fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
+                                                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                                 color = if (isToday) MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.5f) else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                                             )
+                                         }
+                                     }
+                                 }
+                                 
+                                 // 2. Show Additional Meals for this slot
+                                 additionalForSlot.forEach { additional ->
                                      Row(
                                          verticalAlignment = Alignment.CenterVertically,
-                                         horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
                                      ) {
-                                         AsyncImage(
-                                             model = recipe.imageUrl,
-                                             contentDescription = null,
-                                             modifier = Modifier
-                                                 .size(32.dp)
-                                                 .clip(RoundedCornerShape(4.dp)),
-                                             contentScale = ContentScale.Crop
-                                         )
                                          Text(
-                                             text = recipe.name,
-                                             style = MaterialTheme.typography.bodyMedium,
-                                             color = if (isToday) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
+                                             text = "Additional",
+                                             style = MaterialTheme.typography.labelLarge,
+                                             fontWeight = androidx.compose.ui.text.font.FontWeight.ExtraBold,
+                                             modifier = Modifier.width(95.dp),
+                                             color = MaterialTheme.colorScheme.secondary
                                          )
+                                         
+                                         Row(
+                                             verticalAlignment = Alignment.CenterVertically,
+                                             horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                             modifier = Modifier
+                                                 .weight(1f)
+                                                 .clip(RoundedCornerShape(8.dp))
+                                                 .clickable { onRecipeClick(additional.recipeId) }
+                                                 .padding(4.dp)
+                                         ) {
+                                             AsyncImage(
+                                                 model = additional.recipe.imageUrl,
+                                                 contentDescription = null,
+                                                 modifier = Modifier
+                                                     .size(48.dp)
+                                                     .clip(RoundedCornerShape(10.dp)),
+                                                 contentScale = ContentScale.Crop
+                                             )
+                                             Text(
+                                                 text = additional.recipe.name,
+                                                 style = MaterialTheme.typography.bodyLarge,
+                                                 fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
+                                                 color = MaterialTheme.colorScheme.onSurface,
+                                                 maxLines = 2,
+                                                 lineHeight = 20.sp,
+                                                 overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                             )
+                                         }
                                      }
-                                 } ?: Text(
-                                     text = "Recipe not found", 
-                                     style = MaterialTheme.typography.bodySmall,
-                                     fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
-                                 )
+                                 }
                              }
                         }
                     }

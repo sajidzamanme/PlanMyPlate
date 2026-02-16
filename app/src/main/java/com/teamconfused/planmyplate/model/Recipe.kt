@@ -28,7 +28,12 @@ fun RecipeResponse.toRecipe(): Recipe {
         cookTime = this.cookTime,
         servings = this.servings,
         instructions = this.instructions,
-        ingredients = null,
+        ingredients = this.ingredients?.map { 
+            val qty = if (it.quantity != null && it.quantity > 0) "${it.quantity} " else ""
+            val unit = if (!it.unit.isNullOrBlank()) "${it.unit} " else ""
+            val name = it.ingredient?.name ?: "Unknown Ingredient"
+            "$qty$unit$name".trim()
+        },
         imageUrl = this.imageUrl
     )
 }

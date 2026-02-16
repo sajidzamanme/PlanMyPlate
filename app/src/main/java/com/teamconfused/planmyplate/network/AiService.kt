@@ -13,7 +13,7 @@ interface AiService {
     suspend fun generateRecipe(
         @Header("Authorization") token: String,
         @Body request: GenerateRecipeRequest
-    ): Recipe
+    ): com.teamconfused.planmyplate.model.RecipeResponse
 
     @POST("api/ai/generate-meal-plan")
     suspend fun generateMealPlan(
