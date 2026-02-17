@@ -5,6 +5,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -22,12 +23,25 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun GroceriesScreen(navController: NavController) {
     val context = LocalContext.current
-    // SessionManager usage for factory removed.
     
     val viewModel: GroceryViewModel = koinViewModel()
     val uiState by viewModel.uiState.collectAsState()
+    var isRefreshing by remember { mutableStateOf(false) }
+
+    // Initial load on first composition
+    LaunchedEffect(Unit) {
+        viewModel.fetchGroceryLists()
+    }
+    
+    // Sync refresh state with loading state
+    LaunchedEffect(uiState.isLoading) {
+        if (!uiState.isLoading) {
+            isRefreshing = false
+        }
+    }
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         floatingActionButton = {
             if (uiState.checkedItems.isNotEmpty()) {
                 FloatingActionButton(
@@ -45,54 +59,63 @@ fun GroceriesScreen(navController: NavController) {
             }
         }
     ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+        PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh = {
+                isRefreshing = true
+                viewModel.fetchGroceryLists()
+            },
+            modifier = Modifier.padding(padding)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(start = 20.dp, end = 20.dp, top = 20.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Text(
-                    text = "Grocery List",
-                    style = MaterialTheme.typography.headlineMedium
-                )
-                TextButton(onClick = { navController.navigate("inventory") }) {
-                    Text("My Inventory")
-                }
-            }
-
-            if (uiState.isLoading) {
-                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
-                }
-            } else if (uiState.activeListItems.isEmpty()) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("Your grocery list is empty", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-            } else {
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                   items(uiState.activeListItems) { item ->
-                       GroceryItemCard(
-                           item = item,
-                           isChecked = uiState.checkedItems.contains(item.id ?: 0),
-                           onToggle = { viewModel.toggleItemCheck(item.id ?: 0) },
-                           onIncrease = { viewModel.updateListQuantity(item, 1) },
-                           onDecrease = { viewModel.updateListQuantity(item, -1) }
-                       )
-                   }
+                    Text(
+                        text = "Grocery List",
+                        style = MaterialTheme.typography.headlineMedium
+                    )
+                    TextButton(onClick = { navController.navigate("inventory") }) {
+                        Text("My Inventory")
+                    }
+                }
+
+                if (uiState.isLoading) {
+                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
+                } else if (uiState.activeListItems.isEmpty()) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text("Your grocery list is empty", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                } else {
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        contentPadding = PaddingValues(bottom = 20.dp)
+                    ) {
+                       items(uiState.activeListItems) { item ->
+                           GroceryItemCard(
+                               item = item,
+                               isChecked = uiState.checkedItems.contains(item.id ?: 0),
+                               onToggle = { viewModel.toggleItemCheck(item.id ?: 0) },
+                               onIncrease = { viewModel.updateListQuantity(item, 1) },
+                               onDecrease = { viewModel.updateListQuantity(item, -1) }
+                           )
+                       }
+                    }
                 }
             }
-        }
-            
-        uiState.errorMessage?.let { msg ->
-            Text(msg, color = MaterialTheme.colorScheme.error)
+                
+            uiState.errorMessage?.let { msg ->
+                Text(msg, color = MaterialTheme.colorScheme.error)
+            }
         }
     }
 }
@@ -122,7 +145,13 @@ fun GroceryItemCard(
                     text = item.ingredient?.name ?: "Unknown Item", 
                     style = MaterialTheme.typography.bodyLarge
                 )
-                // Removed quantity text, replaced with counters below
+                if (!item.unit.isNullOrBlank()) {
+                    Text(
+                        text = item.unit,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
             
             // Quantity Controls

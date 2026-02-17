@@ -47,12 +47,8 @@ fun MainNav(rootNavController: NavController, onLogout: () -> Unit) {
                         settingsViewModel.logout()
                         onLogout()
                     },
-                    onAddRecipeClick = { navController.navigate("add_recipe") }
+                    onUpdatePreferencesClick = { rootNavController.navigate(com.teamconfused.planmyplate.ui.navigation.Screen.PreferenceSelection) }
                 )
-            }
-            composable("add_recipe") {
-                val addRecipeViewModel: AddRecipeViewModel = koinViewModel()
-                AddRecipeScreen(navController, addRecipeViewModel)
             }
         }
     }

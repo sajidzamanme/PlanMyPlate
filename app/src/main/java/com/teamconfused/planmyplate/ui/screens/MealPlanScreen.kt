@@ -35,10 +35,11 @@ fun MealPlanScreen(navController: NavController, rootNavController: NavControlle
     
     val viewModel: MealPlanViewModel = koinViewModel()
     val uiState by viewModel.uiState.collectAsState()
-    
-    // Refresh local data when screen is focused
+    // Initial load on first composition
     LaunchedEffect(Unit) {
         viewModel.loadLocalData()
+        viewModel.fetchWeeklyMealPlans()
+        viewModel.loadRecipes()
     }
     
     var selectedMealType by remember { mutableStateOf<String?>(null) }
@@ -46,7 +47,9 @@ fun MealPlanScreen(navController: NavController, rootNavController: NavControlle
     
     val allRecipesSelected = uiState.selectedRecipes.values.all { it.size == 7 }
     
-    Scaffold { padding ->
+    Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
+    ) { padding ->
         if (uiState.activeMealPlan != null && !uiState.isCreatingPlan) {
             WeeklyMealPlanView(
                 mealPlan = uiState.activeMealPlan!!,

@@ -5,6 +5,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -17,56 +18,81 @@ import com.teamconfused.planmyplate.ui.viewmodels.InventoryViewModel
 
 import org.koin.androidx.compose.koinViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InventoryScreen(navController: NavController) {
     val context = LocalContext.current
     
     val viewModel: InventoryViewModel = koinViewModel()
     val uiState by viewModel.uiState.collectAsState()
+    var isRefreshing by remember { mutableStateOf(false) }
 
-    Scaffold { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+    // Initial load on first composition
+    LaunchedEffect(Unit) {
+        viewModel.fetchInventory()
+    }
+    
+    // Sync refresh state with loading state
+    LaunchedEffect(uiState.isLoading) {
+        if (!uiState.isLoading) {
+            isRefreshing = false
+        }
+    }
+
+    Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
+    ) { padding ->
+        PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh = {
+                isRefreshing = true
+                viewModel.fetchInventory()
+            },
+            modifier = Modifier.padding(padding)
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(start = 20.dp, end = 20.dp, top = 20.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                IconButton(onClick = { navController.popBackStack() }) {
-                    Icon(painter = androidx.compose.ui.res.painterResource(com.teamconfused.planmyplate.R.drawable.arrow_back_icon), contentDescription = "Back")
-                }
-                Text(
-                    text = "My Inventory",
-                    style = MaterialTheme.typography.headlineMedium
-                )
-            }
-
-            if (uiState.isLoading) {
-                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
-                }
-            } else if (uiState.items.isEmpty()) {
-                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("Inventory is empty", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-            } else {
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    items(uiState.items) { item ->
-                        InventoryItemCard(
-                            item = item,
-                            onIncrease = { viewModel.updateItemQuantity(item, 1) },
-                            onDecrease = { viewModel.updateItemQuantity(item, -1) }
-                        )
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(painter = androidx.compose.ui.res.painterResource(com.teamconfused.planmyplate.R.drawable.arrow_back_icon), contentDescription = "Back")
+                    }
+                    Text(
+                        text = "My Inventory",
+                        style = MaterialTheme.typography.headlineMedium
+                    )
+                }
+
+                if (uiState.isLoading) {
+                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
+                } else if (uiState.items.isEmpty()) {
+                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text("Inventory is empty", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                } else {
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        contentPadding = PaddingValues(bottom = 20.dp)
+                    ) {
+                        items(uiState.items) { item ->
+                            InventoryItemCard(
+                                item = item,
+                                onIncrease = { viewModel.updateItemQuantity(item, 1) },
+                                onDecrease = { viewModel.updateItemQuantity(item, -1) }
+                            )
+                        }
                     }
                 }
-            }
-             uiState.errorMessage?.let { msg ->
-                Text(msg, color = MaterialTheme.colorScheme.error)
+                 uiState.errorMessage?.let { msg ->
+                    Text(msg, color = MaterialTheme.colorScheme.error)
+                }
             }
         }
     }
@@ -89,27 +115,12 @@ fun InventoryItemCard(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Column {
-                // Assuming 'ingredient' object has name. InventoryItem has 'ingredient' ref or full object?
-                // Models.kt: val ingredient: IngredientRef? = null. 
-                // IngredientRef has 'ingId'. It does NOT have name.
-                // This is a problem. The 'get inventory items' response should ideally return ingredient name or full object.
-                // If it only returns Ref, we can't show names easily without fetching ingredients map.
-                // Let's check Models.kt again.
-                // Line 121: val ingredient: IngredientRef?
-                // If backend returns expanded object, Gson might miss it if type is strictly Ref.
-                // Users usually want names. 
-                // I will try to rely on 'ingId' for now, but really we need a name. 
-                // Maybe I can fetch ingredient details? OR I should have updated Model to allow name.
-                // I'll display "Item #${item.ingredient?.ingId}" if name missing.
-                // BUT wait, API Doc 6.6 "Get Inventory Items".
-                // Doesn't show response format explicitly but usually it contains details.
-                // I'll update Model.kt to use `Ingredient` instead of `IngredientRef` for reading if possible, or Add `name` to `InventoryItem`.
-                // Let's assume for now I display ID.
-                
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = item.name ?: item.ingredient?.name ?: "Item #${item.ingredient?.ingId ?: "Unknown"}",
-                    style = MaterialTheme.typography.titleMedium
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                 )
                 Text(
                     text = "Expires: ${item.expiryDate}",
@@ -131,8 +142,8 @@ fun InventoryItemCard(
                     }
                 }
                 
-                Text(
-                    text = "${item.quantity}",
+               Text(
+                    text = "${item.quantity}${if (!item.unit.isNullOrBlank()) " ${item.unit}" else ""}",
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.padding(horizontal = 12.dp)
                 )

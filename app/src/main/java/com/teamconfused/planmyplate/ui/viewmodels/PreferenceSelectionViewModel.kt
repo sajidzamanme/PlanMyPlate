@@ -31,6 +31,7 @@ class PreferenceSelectionViewModel(private val sessionManager: SessionManager) :
 
     init {
         loadReferenceData()
+        loadExistingPreferences()
     }
 
     private fun loadReferenceData() {
@@ -101,6 +102,32 @@ class PreferenceSelectionViewModel(private val sessionManager: SessionManager) :
             _uiState.update { it.copy(currentStep = it.currentStep + 1) }
         } else {
             savePreferences(onComplete)
+        }
+    }
+
+    private fun loadExistingPreferences() {
+        val userId = sessionManager.getUserId()
+        if (userId == -1 || userId == 0) return
+
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+            try {
+                val token = sessionManager.getAuthToken() ?: return@launch
+                val authHeader = "Bearer $token"
+                val prefs = RetrofitClient.userPreferencesService.getPreferences(authHeader, userId)
+                
+                _uiState.update { it.copy(
+                    selectedDiet = prefs.diet,
+                    selectedAllergies = prefs.allergies?.toSet() ?: emptySet(),
+                    selectedDislikes = prefs.dislikes?.toSet() ?: emptySet(),
+                    selectedServings = prefs.servings,
+                    selectedBudget = prefs.budget ?: 50f,
+                    isLoading = false
+                )}
+            } catch (e: Exception) {
+                // If it's a 404, we just stop loading; it's okay for new users
+                _uiState.update { it.copy(isLoading = false) }
+            }
         }
     }
 

@@ -2,10 +2,10 @@ package com.teamconfused.planmyplate.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.teamconfused.planmyplate.model.GroceryList
-import com.teamconfused.planmyplate.model.GroceryListItem
-import com.teamconfused.planmyplate.model.PurchaseItemsRequest
+import com.teamconfused.planmyplate.model.*
 import com.teamconfused.planmyplate.network.GroceryListService
+import com.teamconfused.planmyplate.network.InventoryService
+import com.teamconfused.planmyplate.network.MealPlanService
 import com.teamconfused.planmyplate.util.SessionManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -24,6 +24,8 @@ data class GroceryUiState(
 
 class GroceryViewModel(
     private val groceryListService: GroceryListService,
+    private val mealPlanService: MealPlanService,
+    private val inventoryService: InventoryService,
     private val sessionManager: SessionManager
 ) : ViewModel() {
 
@@ -32,7 +34,6 @@ class GroceryViewModel(
     val uiState: StateFlow<GroceryUiState> = _uiState.asStateFlow()
 
     init {
-        fetchGroceryLists()
     }
 
     fun fetchGroceryLists() {
@@ -45,12 +46,12 @@ class GroceryViewModel(
                 val token = sessionManager.getAuthToken() ?: return@launch
                 val authHeader = "Bearer $token"
                 
-                // Fetch all lists
+                // 1. Fetch all lists
                 val lists = groceryListService.getGroceryListsForUser(authHeader, userId)
                 
-                // Active list logic
+                // 3. Process Active Grocery List
                 val activeList = lists.find { it.status == "active" } ?: lists.firstOrNull()
-                val items = activeList?.items ?: emptyList() // Use .items
+                val items = activeList?.items ?: emptyList()
 
                 _uiState.update { 
                     it.copy(
@@ -65,6 +66,7 @@ class GroceryViewModel(
             }
         }
     }
+
     
     // Toggle check status of an item
     fun toggleItemCheck(itemId: Int) {
@@ -78,8 +80,6 @@ class GroceryViewModel(
         }
     }
 
-
-    
     fun updateListQuantity(item: GroceryListItem, delta: Int) {
         val currentQty = item.quantity ?: 1
         val newQty = (currentQty + delta).coerceAtLeast(1)
@@ -109,7 +109,6 @@ class GroceryViewModel(
                 }
             } catch (e: Exception) {
                 // Ignore 404 if endpoint doesn't exist yet, or handle error
-                // Ideally revert local state if failed, but for better UX we might just log
                 println("Failed to sync quantity: ${e.message}")
             }
         }
@@ -117,20 +116,21 @@ class GroceryViewModel(
 
     fun purchaseSelectedItems(onSuccess: () -> Unit) {
         val listId = _uiState.value.activeListId ?: return
-        // Checked items track itemId (row ID). Purchase API likely expects ingredientIds based on old doc, 
-        // BUT user documentation update in prompt removed "URL" and "Request Body" section for Purchase but kept "Action".
-        // Wait, user provided snippet has "URL: /grocery-lists/{id}/purchase" and "Request Body: { "ingredientIds": ... }".
-        // So we need to map checked itemIds (row IDs) to ingredientIds.
-        
         val checkedIds = _uiState.value.checkedItems
         if (checkedIds.isEmpty()) return
         
-        // Find corresponding ingredients
-        val ingredientIds = _uiState.value.activeListItems
+        // Map checked items to PurchaseItemDetail with current UI quantities
+        val purchaseItems = _uiState.value.activeListItems
             .filter { checkedIds.contains(it.id) }
-            .mapNotNull { it.ingredient?.ingId }
-            
-        if (ingredientIds.isEmpty()) return
+            .mapNotNull { item ->
+                val itemId = item.id ?: return@mapNotNull null
+                PurchaseItemDetail(
+                    itemId = itemId,
+                    quantity = item.quantity ?: 1
+                )
+            }
+
+        if (purchaseItems.isEmpty()) return
 
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
@@ -138,8 +138,7 @@ class GroceryViewModel(
                 val token = sessionManager.getAuthToken() ?: return@launch
                 val authHeader = "Bearer $token"
 
-                // Send selected ingredient IDs to the API
-                val request = PurchaseItemsRequest(ingredientIds = ingredientIds)
+                val request = PurchaseItemsRequest(items = purchaseItems)
                 val response = groceryListService.purchaseItems(authHeader, listId, request)
                 
                 if (response.isSuccessful) {
@@ -147,7 +146,6 @@ class GroceryViewModel(
                         it.copy(
                             isLoading = false, 
                             checkedItems = emptySet()
-                            // Optimistically remove items or re-fetch
                         ) 
                     }
                     fetchGroceryLists() // Refresh to see reduced list

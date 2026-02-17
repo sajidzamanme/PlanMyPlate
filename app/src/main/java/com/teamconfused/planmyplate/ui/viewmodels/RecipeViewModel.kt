@@ -39,9 +39,6 @@ class RecipeViewModel(
     val isDetailsLoading: StateFlow<Boolean> = _isDetailsLoading.asStateFlow()
 
     init {
-        fetchAllRecipes()
-        fetchRecommendedRecipes()
-        fetchBudgetRecipes()
     }
 
     fun fetchAllRecipes() {

@@ -6,6 +6,11 @@ import kotlinx.serialization.Serializable
 // ==================== User Related Models ====================
 
 @Serializable
+data class UserRef(
+    @SerialName("userId") val userId: Int
+)
+
+@Serializable
 data class User(
     @SerialName("userId") val userId: Int,
     @SerialName("userName") val userName: String? = null,
@@ -155,8 +160,14 @@ data class GroceryListRequest(
 )
 
 @Serializable
+data class PurchaseItemDetail(
+    val itemId: Int,
+    val quantity: Int
+)
+
+@Serializable
 data class PurchaseItemsRequest(
-    val ingredientIds: List<Int>
+    val items: List<PurchaseItemDetail>
 )
 
 @Serializable
@@ -172,8 +183,9 @@ data class GroceryListItem(
 @Serializable
 data class Inventory(
     @SerialName("invId") val id: Int? = null,
-    @SerialName("userId") val userId: Int? = null,
+    val user: UserRef? = null,
     @SerialName("lastUpdate") val lastUpdate: String? = null,
+    val items: List<InventoryItem>? = null,
     @SerialName("created_at") val createdAt: String? = null
 )
 
@@ -183,6 +195,8 @@ data class InventoryItem(
     // API returns nested "inventory" object, not "inventoryId". Making nullable to avoid parsing error.
     val inventoryId: Int? = null, 
     val quantity: Int,
+    val unit: String? = null,
+    @SerialName("dateAdded") val dateAdded: String? = null,
     @SerialName("expiryDate") val expiryDate: String,
     val ingredient: IngredientRef? = null,
     val name: String? = null // For fallback display
@@ -197,6 +211,8 @@ data class IngredientRef(
 @Serializable
 data class InventoryItemRequest(
     val quantity: Int,
+    val unit: String? = null,
+    @SerialName("dateAdded") val dateAdded: String? = null,
     @SerialName("expiryDate") val expiryDate: String,
     val ingredient: IngredientRef
 )

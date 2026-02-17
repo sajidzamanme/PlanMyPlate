@@ -43,7 +43,6 @@ class HomeViewModel(
 
     init {
         loadLocalData()
-        fetchTodaysMeals()
     }
 
     private fun loadLocalData() {

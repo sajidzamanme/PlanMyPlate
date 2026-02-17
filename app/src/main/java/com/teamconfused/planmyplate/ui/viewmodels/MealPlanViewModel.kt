@@ -57,8 +57,6 @@ class MealPlanViewModel(
 
     init {
         loadLocalData()
-        fetchWeeklyMealPlans()
-        loadRecipes()
     }
     
     fun loadLocalData() {
@@ -70,7 +68,7 @@ class MealPlanViewModel(
         }
     }
     
-    private fun loadRecipes() {
+    fun loadRecipes() {
         val token = sessionManager.getAuthToken()
         if (token == null) return
 

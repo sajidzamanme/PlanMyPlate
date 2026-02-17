@@ -71,6 +71,7 @@ class LoginViewModel(private val sessionManager: SessionManager) : ViewModel() {
                     var hasPreferences = false
                     if (userId != null) {
                         sessionManager.saveUserId(userId)
+                        response.token?.let { sessionManager.saveAuthToken(it) }
                         // Check if preferences are already set in the database
                         try {
                             val token = response.token ?: ""

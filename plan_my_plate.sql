@@ -496,6 +496,12 @@ ALTER TABLE `users`
 --
 ALTER TABLE `user_preferences`
   MODIFY `pref_id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- Add unit column to inv_item table
+--
+ALTER TABLE `inv_item` 
+  ADD COLUMN unit VARCHAR(50);
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

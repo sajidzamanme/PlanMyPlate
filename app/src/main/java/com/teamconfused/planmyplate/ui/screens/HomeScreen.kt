@@ -5,6 +5,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -27,6 +28,7 @@ import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 import androidx.navigation.NavGraph.Companion.findStartDestination
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(navController: NavController, rootNavController: NavController) {
     val context = LocalContext.current
@@ -38,17 +40,17 @@ fun HomeScreen(navController: NavController, rootNavController: NavController) {
     
     var recipeToShowDetails by remember { mutableStateOf<Recipe?>(null) }
     var mealTypeToShowDetails by remember { mutableStateOf<String?>(null) }
+    var isRefreshing by remember { mutableStateOf(false) }
 
-    val lifecycleOwner = androidx.compose.ui.platform.LocalLifecycleOwner.current
-    androidx.compose.runtime.DisposableEffect(lifecycleOwner) {
-        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
-            if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
-                 homeViewModel.fetchTodaysMeals()
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
+    // Initial load on first composition
+    LaunchedEffect(Unit) {
+        homeViewModel.fetchTodaysMeals()
+    }
+    
+    // Sync refresh state with loading state
+    LaunchedEffect(uiState.isLoading) {
+        if (!uiState.isLoading) {
+            isRefreshing = false
         }
     }
     
@@ -58,6 +60,7 @@ fun HomeScreen(navController: NavController, rootNavController: NavController) {
     var generatingMealType by remember { mutableStateOf<String?>("Dinner") }
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { showGenerateDialog = true },
@@ -70,7 +73,14 @@ fun HomeScreen(navController: NavController, rootNavController: NavController) {
             }
         }
     ) { paddingValues ->
-        Box(modifier = Modifier.padding(paddingValues)) {
+        PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh = {
+                isRefreshing = true
+                homeViewModel.fetchTodaysMeals()
+            },
+            modifier = Modifier.padding(paddingValues)
+        ) {
             if (hasMealPlans) {
                 DashboardWithMeals(
                     navController = navController, 

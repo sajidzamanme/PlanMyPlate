@@ -358,17 +358,28 @@ Generate a meal plan with selected recipes.
   ```
 
 ### Purchase Items
-Mark specific ingredients as purchased.
-- **Action**: These ingredients are **removed** from the grocery list and **added** to the user's inventory.
+Mark specific grocery list items as purchased.
+- **Action**: These items are **removed** from the grocery list and **added** to the user's inventory with their quantities and units preserved.
+- **Note**: If the user doesn't have an inventory yet, one will be automatically created.
 
 - **URL:** `/grocery-lists/{id}/purchase`
 - **Method:** `POST`
 - **Request Body:**
   ```json
   {
-    "ingredientIds": [101, 102, 205]
+    "items": [
+      { "itemId": 501, "quantity": 1 },
+      { "itemId": 502, "quantity": 12 },
+      { "itemId": 503, "quantity": 2 }
+    ]
   }
   ```
+  > [!IMPORTANT]
+  > Use grocery list **item IDs** (from the `id` field in grocery list items) and the **quantity** purchased.
+  
+  > [!NOTE]
+  > If the purchased quantity is less than the amount in the grocery list, the item will remain in the list with the updated quantity. If it's equal or greater, the item is removed.
+
 - **Response Body:** HTTP 200 OK (Empty body).
 
 ### Update Grocery List Item
@@ -390,24 +401,33 @@ Update quantity or unit of a specific item in the grocery list.
 ## 7. Inventory (Pantry)
 
 ### Get User Inventory
+Retrieve the user's inventory (pantry).
+- **Note**: If the user doesn't have an inventory yet, this will return a 404. An inventory is automatically created when items are first purchased from a grocery list.
+
 - **URL:** `/inventory/user/{userId}`
 - **Method:** `GET`
 - **Response Body:**
   ```json
   {
-    "inventoryId": 1,
+    "invId": 1,
+    "lastUpdate": "2026-02-18",
+    "user": { "userId": 1 },
     "items": [
       {
         "itemId": 50,
-        "ingredient": { "ingId": 101, "name": "Milk" },
-        "quantity": 1,
-        "unit": "Liter"
+        "ingredient": { "ingId": 101, "name": "Milk", "price": 2.50 },
+        "quantity": 2,
+        "unit": "Liter",
+        "dateAdded": "2026-02-18",
+        "expiryDate": "2026-02-25"
       }
     ]
   }
   ```
 
 ### Add Item to Inventory
+Manually add an item to the inventory.
+
 - **URL:** `/inventory/{inventoryId}/items`
 - **Method:** `POST`
 - **Request Body:**
@@ -415,11 +435,12 @@ Update quantity or unit of a specific item in the grocery list.
   {
     "ingredient": { "ingId": 101 },
     "quantity": 2,
-    "unit": "Pack"
+    "unit": "Liter",
+    "dateAdded": "2026-02-18",
+    "expiryDate": "2026-02-25"
   }
   ```
-- **Response Body:** The created Inventory Item object.
-- **Response Body:** HTTP 200 OK.
+- **Response Body:** The created `InvItem` object.
 
 ### Update Inventory Item
 Update quantity or expiry date of a specific inventory item.

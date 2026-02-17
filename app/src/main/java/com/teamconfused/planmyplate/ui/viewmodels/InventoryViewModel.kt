@@ -30,7 +30,6 @@ class InventoryViewModel(
     val uiState: StateFlow<InventoryUiState> = _uiState.asStateFlow()
 
     init {
-        fetchInventory()
     }
 
     fun fetchInventory() {
@@ -48,7 +47,6 @@ class InventoryViewModel(
                 val inventory = inventoryService.getInventoryForUser(authHeader, userId)
                 
                 // Then fetch items for that inventory
-                // API 6.6 Get Inventory Items
                 val items = inventory.id?.let { inventoryService.getInventoryItems(authHeader, it) } ?: emptyList()
                 
                 _uiState.update { 
@@ -101,11 +99,13 @@ class InventoryViewModel(
                  try {
                      if (delta != 0 && item.id != null) {
                         // Use new UPDATE endpoint (requires backend impl)
-                        val req = com.teamconfused.planmyplate.model.InventoryItemRequest(
-                             quantity = newQty,
-                             expiryDate = item.expiryDate,
-                             ingredient = com.teamconfused.planmyplate.model.IngredientRef(ingId = item.ingredient?.ingId ?: 0)
-                         )
+                         val req = com.teamconfused.planmyplate.model.InventoryItemRequest(
+                              quantity = newQty,
+                              unit = item.unit,
+                              dateAdded = item.dateAdded,
+                              expiryDate = item.expiryDate,
+                              ingredient = com.teamconfused.planmyplate.model.IngredientRef(ingId = item.ingredient?.ingId ?: 0)
+                          )
                         val token = sessionManager.getAuthToken() ?: return@launch
                         val authHeader = "Bearer $token"
                         inventoryService.updateInventoryItem(authHeader, item.id, req)
