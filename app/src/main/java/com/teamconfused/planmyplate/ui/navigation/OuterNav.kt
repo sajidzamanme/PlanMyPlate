@@ -3,6 +3,7 @@ package com.teamconfused.planmyplate.ui.navigation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -85,8 +86,11 @@ fun NavGraph(navController: NavHostController) {
         composable<Screen.RecipeDetails> { backStackEntry ->
             val route = backStackEntry.toRoute<Screen.RecipeDetails>()
             
-            val mealPlanViewModel: MealPlanViewModel = koinViewModel()
-            val homeViewModel: com.teamconfused.planmyplate.ui.viewmodels.HomeViewModel = koinViewModel()
+            val mainBackStackEntry = remember(backStackEntry) {
+                navController.getBackStackEntry(Screen.Main)
+            }
+            val mealPlanViewModel: MealPlanViewModel = koinViewModel(viewModelStoreOwner = mainBackStackEntry)
+            val homeViewModel: com.teamconfused.planmyplate.ui.viewmodels.HomeViewModel = koinViewModel(viewModelStoreOwner = mainBackStackEntry)
             val uiState by mealPlanViewModel.uiState.collectAsState()
             
             val currentMealType = route.mealType ?: "Breakfast"

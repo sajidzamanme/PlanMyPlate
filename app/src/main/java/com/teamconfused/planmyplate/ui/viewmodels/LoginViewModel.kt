@@ -53,6 +53,7 @@ class LoginViewModel(private val sessionManager: SessionManager) : ViewModel() {
             // Admin bypass
             if (currentState.email == "admin@email.com" && currentState.password == "12345678") {
                 sessionManager.saveUserId(0)
+                sessionManager.saveAuthToken("admin-bypass-token")
                 _uiState.update { it.copy(isLoading = false) }
                 onLoginSuccess(false)
                 return

@@ -30,12 +30,15 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(navController: NavController, rootNavController: NavController) {
+fun HomeScreen(
+    navController: NavController, 
+    rootNavController: NavController,
+    homeViewModel: HomeViewModel = koinViewModel()
+) {
     val context = LocalContext.current
     val sessionManager: SessionManager = koinInject()
     val hasMealPlans = sessionManager.hasMealPlans()
     
-    val homeViewModel: HomeViewModel = koinViewModel()
     val uiState by homeViewModel.uiState.collectAsState()
     
     var recipeToShowDetails by remember { mutableStateOf<Recipe?>(null) }

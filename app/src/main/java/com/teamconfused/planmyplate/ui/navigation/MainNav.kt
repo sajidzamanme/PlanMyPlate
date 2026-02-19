@@ -1,10 +1,12 @@
 package com.teamconfused.planmyplate.ui.navigation
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -24,6 +26,7 @@ import androidx.navigation.navArgument
 import com.teamconfused.planmyplate.ui.viewmodels.MealPlanViewModel
 import org.koin.androidx.compose.koinViewModel
 
+@SuppressLint("UnrememberedGetBackStackEntry")
 @Composable
 fun MainNav(rootNavController: NavController, onLogout: () -> Unit) {
     val navController = rememberNavController()
@@ -31,13 +34,23 @@ fun MainNav(rootNavController: NavController, onLogout: () -> Unit) {
     Scaffold(
         bottomBar = { BottomNavigationBar(navController = navController) }
     ) { innerPadding ->
+        val mainBackStackEntry = remember(rootNavController) {
+            rootNavController.getBackStackEntry(Screen.Main)
+        }
+        val mealPlanViewModel: MealPlanViewModel = koinViewModel(viewModelStoreOwner = mainBackStackEntry)
+        val homeViewModel: com.teamconfused.planmyplate.ui.viewmodels.HomeViewModel = koinViewModel(viewModelStoreOwner = mainBackStackEntry)
+
         NavHost(
             navController = navController,
             startDestination = "home",
             modifier = Modifier.padding(innerPadding)
         ) {
-            composable("home") { HomeScreen(navController, rootNavController) }
-            composable("meal_plan") { MealPlanScreen(navController, rootNavController) }
+            composable("home") { 
+                HomeScreen(navController, rootNavController, homeViewModel) 
+            }
+            composable("meal_plan") { 
+                MealPlanScreen(navController, rootNavController, mealPlanViewModel) 
+            }
             composable("groceries") { GroceriesScreen(navController) }
             composable("inventory") { InventoryScreen(navController) }
             composable("settings") {

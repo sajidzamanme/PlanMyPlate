@@ -9,7 +9,7 @@ class SessionManager(context: Context) {
     private val prefs: SharedPreferences = context.getSharedPreferences("user_session", Context.MODE_PRIVATE)
 
     fun saveUserId(userId: Int) {
-        prefs.edit().putInt("user_id", userId).apply()
+        prefs.edit().putInt("user_id", userId).commit()
     }
 
     fun getUserId(): Int {
@@ -33,7 +33,7 @@ class SessionManager(context: Context) {
     }
 
     fun saveAuthToken(token: String) {
-        prefs.edit().putString("auth_token", token).apply()
+        prefs.edit().putString("auth_token", token).commit()
     }
 
     fun getAuthToken(): String? {

@@ -28,6 +28,7 @@ data class MealPlanUiState(
     val mealPlans: List<MealPlan> = emptyList(),
     val additionalMeals: List<com.teamconfused.planmyplate.model.AdditionalMeal> = emptyList(),
     val handledMeals: Map<String, Set<String>> = emptyMap(),
+    val isReplacingPlan: Boolean = false,
     val errorMessage: String? = null
 )
 
@@ -101,9 +102,9 @@ class MealPlanViewModel(
             current
         }
         
-        _uiState.value = _uiState.value.copy(
-            selectedRecipes = _uiState.value.selectedRecipes + (mealType to updated)
-        )
+        _uiState.update { 
+            it.copy(selectedRecipes = it.selectedRecipes + (mealType to updated))
+        }
     }
 
     fun createMealPlan(onSuccess: () -> Unit) {
@@ -120,11 +121,12 @@ class MealPlanViewModel(
         }
 
         viewModelScope.launch {
-            _uiState.update { it.copy(isCreatingPlan = true, errorMessage = null) }
+            _uiState.update { it.copy(isCreatingPlan = true, errorMessage = null, planCreated = false) }
             try {
-                val breakfast = _uiState.value.selectedRecipes["Breakfast"] ?: emptyList()
-                val lunch = _uiState.value.selectedRecipes["Lunch"] ?: emptyList()
-                val dinner = _uiState.value.selectedRecipes["Dinner"] ?: emptyList()
+                val currentState = _uiState.value
+                val breakfast = currentState.selectedRecipes["Breakfast"] ?: emptyList()
+                val lunch = currentState.selectedRecipes["Lunch"] ?: emptyList()
+                val dinner = currentState.selectedRecipes["Dinner"] ?: emptyList()
 
                 val recipeIds = mutableListOf<Int>()
                 for (i in 0 until 7) {
@@ -134,8 +136,8 @@ class MealPlanViewModel(
                 }
 
                 if (recipeIds.size != 21) {
-                     _uiState.update { it.copy(isCreatingPlan = false, errorMessage = "Error processing recipes.") }
-                     return@launch
+                    _uiState.update { it.copy(errorMessage = "Error processing recipes.") }
+                    return@launch
                 }
 
                 val token = sessionManager.getAuthToken() ?: ""
@@ -145,10 +147,12 @@ class MealPlanViewModel(
                 fetchWeeklyMealPlans()
                 sessionManager.setHasMealPlans(true)
 
-                _uiState.update { it.copy(isCreatingPlan = false, planCreated = true) }
+                _uiState.update { it.copy(planCreated = true, isReplacingPlan = false) }
                 onSuccess()
             } catch (e: Exception) {
-                _uiState.update { it.copy(isCreatingPlan = false, errorMessage = e.message ?: "Failed to create meal plan") }
+                _uiState.update { it.copy(errorMessage = e.message ?: "Failed to create meal plan") }
+            } finally {
+                _uiState.update { it.copy(isCreatingPlan = false) }
             }
         }
     }
@@ -168,7 +172,7 @@ class MealPlanViewModel(
                     it.copy(
                         isLoadingHistory = false,
                         mealPlans = plans,
-                        activeMealPlan = active
+                        activeMealPlan = if (it.isReplacingPlan) it.activeMealPlan else active
                     )
                 }
             } catch (e: Exception) {
@@ -181,6 +185,12 @@ class MealPlanViewModel(
         loadRecipes()
     }
     
+    fun refreshAll() {
+        loadLocalData()
+        fetchWeeklyMealPlans()
+        loadRecipes()
+    }
+
     fun refreshRecipes() {
         loadRecipes()
     }
@@ -188,8 +198,9 @@ class MealPlanViewModel(
     fun startNewPlan() {
         _uiState.update {
             it.copy(
-                activeMealPlan = null, // Logic to clear active plan locally or just reset UI mode
+                activeMealPlan = null,
                 isCreatingPlan = false,
+                isReplacingPlan = true,
                 selectedRecipes = mapOf(
                     "Breakfast" to emptyList(),
                     "Lunch" to emptyList(),
@@ -209,7 +220,7 @@ class MealPlanViewModel(
         }
 
         viewModelScope.launch {
-            _uiState.update { it.copy(isCreatingPlan = true, errorMessage = null) }
+            _uiState.update { it.copy(isCreatingPlan = true, errorMessage = null, planCreated = false) }
             try {
                 // Call AI UseCase
                 generateMealPlanUseCase("Bearer $token", userId)
@@ -217,15 +228,14 @@ class MealPlanViewModel(
                 fetchWeeklyMealPlans() // Refresh list
                 sessionManager.setHasMealPlans(true)
                 
-                _uiState.update { it.copy(isCreatingPlan = false, planCreated = true) }
+                _uiState.update { it.copy(planCreated = true, isReplacingPlan = false) }
                 onSuccess()
             } catch (e: Exception) {
                 _uiState.update { 
-                    it.copy(
-                        isCreatingPlan = false, 
-                        errorMessage = e.message ?: "Failed to generate meal plan"
-                    ) 
+                    it.copy(errorMessage = e.message ?: "Failed to generate meal plan") 
                 }
+            } finally {
+                _uiState.update { it.copy(isCreatingPlan = false) }
             }
         }
     }

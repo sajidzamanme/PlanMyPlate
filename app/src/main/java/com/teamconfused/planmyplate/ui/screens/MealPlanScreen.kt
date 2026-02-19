@@ -27,19 +27,33 @@ import com.teamconfused.planmyplate.ui.navigation.Screen
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
-fun MealPlanScreen(navController: NavController, rootNavController: NavController) {
+fun MealPlanScreen(
+    navController: NavController, 
+    rootNavController: NavController,
+    viewModel: MealPlanViewModel = koinViewModel()
+) {
     val context = LocalContext.current
     
-    val viewModel: MealPlanViewModel = koinViewModel()
     val uiState by viewModel.uiState.collectAsState()
-    // Initial load on first composition
-    LaunchedEffect(Unit) {
-        viewModel.loadLocalData()
-        viewModel.fetchWeeklyMealPlans()
-        viewModel.loadRecipes()
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    // Refresh data whenever the screen becomes visible (ON_START)
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_START) {
+                viewModel.refreshAll()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
     }
     
     var selectedMealType by remember { mutableStateOf<String?>(null) }
