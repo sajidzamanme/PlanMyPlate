@@ -1,8 +1,8 @@
 package com.teamconfused.planmyplate.domain.usecase
 
+import com.teamconfused.planmyplate.data.model.GenerateRecipeRequest
+import com.teamconfused.planmyplate.domain.model.Recipe
 import com.teamconfused.planmyplate.domain.repository.AiRepository
-import com.teamconfused.planmyplate.model.GenerateRecipeRequest
-import com.teamconfused.planmyplate.model.Recipe
 
 class GenerateRecipeUseCase(
     private val aiRepository: AiRepository

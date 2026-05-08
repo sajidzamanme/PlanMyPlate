@@ -22,7 +22,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.teamconfused.planmyplate.R
-import com.teamconfused.planmyplate.model.Recipe
+import com.teamconfused.planmyplate.domain.model.Recipe
 
 @Composable
 fun CategorizedRecipeSection(

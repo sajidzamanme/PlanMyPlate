@@ -1,9 +1,10 @@
 package com.teamconfused.planmyplate.ui.viewmodels
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.teamconfused.planmyplate.model.SignupRequest
-import com.teamconfused.planmyplate.network.RetrofitClient
+import com.teamconfused.planmyplate.data.model.SignupRequest
+import com.teamconfused.planmyplate.network.AuthService
 import com.teamconfused.planmyplate.util.SessionManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -24,7 +25,10 @@ data class SignupUiState(
     val errorMessage: String? = null
 )
 
-class SignupViewModel(private val sessionManager: SessionManager) : ViewModel() {
+class SignupViewModel(
+    private val authService: AuthService,
+    private val sessionManager: SessionManager
+) : ViewModel() {
     private val _uiState = MutableStateFlow(SignupUiState())
     val uiState: StateFlow<SignupUiState> = _uiState.asStateFlow()
 
@@ -92,13 +96,13 @@ class SignupViewModel(private val sessionManager: SessionManager) : ViewModel() 
                         email = currentState.email,
                         password = currentState.password
                     )
-                    val response = RetrofitClient.authService.signup(request)
+                    val response = authService.signup(request)
                     val userId = response.getEffectiveUserId()
                     if (userId != null) {
                         sessionManager.saveUserId(userId)
                         response.token?.let { sessionManager.saveAuthToken(it) }
                     } else {
-                        android.util.Log.e("SignupViewModel", "Signup successful but no userId found in response: $response")
+                        Log.e("SignupViewModel", "Signup successful but no userId found in response: $response")
                     }
                     _uiState.update { it.copy(isLoading = false) }
                     onSignupSuccess()

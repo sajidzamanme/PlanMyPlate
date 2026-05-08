@@ -1,4 +1,4 @@
-package com.teamconfused.planmyplate.model
+package com.teamconfused.planmyplate.data.model
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -64,8 +64,8 @@ data class ResetPasswordResponse(
 @Serializable
 data class UserPreferencesDto(
     val diet: String? = null,
-    val allergies: String? = null, // Changed from List to String
-    val dislikes: String? = null,  // Changed from List to String
+    val allergies: String? = null,
+    val dislikes: String? = null,
     val servings: Int? = null,
     val budget: Float? = null,
     val age: Int? = null,

@@ -1,8 +1,8 @@
 package com.teamconfused.planmyplate.domain.repository
 
-import com.teamconfused.planmyplate.model.CreateRecipeRequest
-import com.teamconfused.planmyplate.model.Recipe
-import com.teamconfused.planmyplate.model.RecipeRequest
+import com.teamconfused.planmyplate.data.model.CreateRecipeRequest
+import com.teamconfused.planmyplate.data.model.RecipeRequest
+import com.teamconfused.planmyplate.domain.model.Recipe
 import okhttp3.MultipartBody
 
 interface RecipeRepository {

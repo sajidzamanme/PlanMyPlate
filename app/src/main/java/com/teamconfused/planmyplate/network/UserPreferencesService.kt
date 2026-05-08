@@ -1,10 +1,10 @@
 package com.teamconfused.planmyplate.network
 
-import com.teamconfused.planmyplate.model.Allergy
-import com.teamconfused.planmyplate.model.Diet
-import com.teamconfused.planmyplate.model.Ingredient
-import com.teamconfused.planmyplate.model.UserPreferences
-import com.teamconfused.planmyplate.model.UserPreferencesRequest
+import com.teamconfused.planmyplate.data.model.IngredientDto
+import com.teamconfused.planmyplate.data.model.AllergyDto
+import com.teamconfused.planmyplate.data.model.DietDto
+import com.teamconfused.planmyplate.data.model.UserPreferencesRequest
+import com.teamconfused.planmyplate.data.model.UserPreferencesResponse
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Header
@@ -17,20 +17,20 @@ interface UserPreferencesService {
         @Header("Authorization") token: String,
         @Path("userId") userId: Int,
         @Body dto: UserPreferencesRequest
-    ): UserPreferences
+    ): UserPreferencesResponse
 
     @GET("api/user-preferences/{userId}")
     suspend fun getPreferences(
         @Header("Authorization") token: String,
         @Path("userId") userId: Int
-    ): UserPreferences
+    ): UserPreferencesResponse
 
     @GET("api/reference-data/diets")
-    suspend fun getDiets(): List<Diet>
+    suspend fun getDiets(): List<DietDto>
 
     @GET("api/reference-data/allergies")
-    suspend fun getAllergies(): List<Allergy>
+    suspend fun getAllergies(): List<AllergyDto>
 
     @GET("api/reference-data/dislikes")
-    suspend fun getDislikes(): List<Ingredient>
+    suspend fun getDislikes(): List<IngredientDto>
 }

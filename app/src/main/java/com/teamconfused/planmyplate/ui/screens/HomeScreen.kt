@@ -18,7 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.teamconfused.planmyplate.model.Recipe
+import com.teamconfused.planmyplate.domain.model.Recipe
 import com.teamconfused.planmyplate.ui.components.HorizontalRecipeCard
 import com.teamconfused.planmyplate.ui.viewmodels.HomeViewModel
 import com.teamconfused.planmyplate.util.SessionManager

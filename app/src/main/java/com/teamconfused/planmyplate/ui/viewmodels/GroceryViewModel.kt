@@ -2,7 +2,11 @@ package com.teamconfused.planmyplate.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.teamconfused.planmyplate.model.*
+import com.teamconfused.planmyplate.data.mapper.toDomain
+import com.teamconfused.planmyplate.data.model.PurchaseItemDetail
+import com.teamconfused.planmyplate.data.model.PurchaseItemsRequest
+import com.teamconfused.planmyplate.domain.model.GroceryList
+import com.teamconfused.planmyplate.domain.model.GroceryListItem
 import com.teamconfused.planmyplate.network.GroceryListService
 import com.teamconfused.planmyplate.network.InventoryService
 import com.teamconfused.planmyplate.network.MealPlanService
@@ -47,7 +51,8 @@ class GroceryViewModel(
                 val authHeader = "Bearer $token"
                 
                 // 1. Fetch all lists
-                val lists = groceryListService.getGroceryListsForUser(authHeader, userId)
+                val listDtos = groceryListService.getGroceryListsForUser(authHeader, userId)
+                val lists = listDtos.map { it.toDomain() }
                 
                 // 3. Process Active Grocery List
                 val activeList = lists.find { it.status == "active" } ?: lists.firstOrNull()

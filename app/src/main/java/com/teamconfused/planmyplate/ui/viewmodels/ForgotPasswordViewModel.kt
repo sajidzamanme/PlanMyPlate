@@ -2,10 +2,9 @@ package com.teamconfused.planmyplate.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.teamconfused.planmyplate.model.ForgotPasswordRequest
-import com.teamconfused.planmyplate.model.ResetPasswordRequest
+import com.teamconfused.planmyplate.data.model.ForgotPasswordRequest
+import com.teamconfused.planmyplate.data.model.ResetPasswordRequest
 import com.teamconfused.planmyplate.network.AuthService
-import com.teamconfused.planmyplate.network.RetrofitClient
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

@@ -1,8 +1,8 @@
 package com.teamconfused.planmyplate.network
 
-import com.teamconfused.planmyplate.model.Inventory
-import com.teamconfused.planmyplate.model.InventoryItem
-import com.teamconfused.planmyplate.model.InventoryItemRequest
+import com.teamconfused.planmyplate.data.model.InventoryDto
+import com.teamconfused.planmyplate.data.model.InventoryItemDto
+import com.teamconfused.planmyplate.data.model.InventoryItemRequest
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
@@ -16,26 +16,26 @@ interface InventoryService {
     suspend fun getInventoryForUser(
         @Header("Authorization") token: String,
         @Path("userId") userId: Int
-    ): Inventory
+    ): InventoryDto
 
     @GET("api/inventory/{id}")
     suspend fun getInventoryById(
         @Header("Authorization") token: String,
         @Path("id") id: Int
-    ): Inventory
+    ): InventoryDto
 
     @POST("api/inventory/user/{userId}")
     suspend fun createInventoryForUser(
         @Header("Authorization") token: String,
         @Path("userId") userId: Int
-    ): Inventory
+    ): InventoryDto
 
     @PUT("api/inventory/{id}")
     suspend fun updateInventory(
         @Header("Authorization") token: String,
         @Path("id") id: Int,
         @Body request: Map<String, Any> = emptyMap()
-    ): Inventory
+    ): InventoryDto
 
     @DELETE("api/inventory/{id}")
     suspend fun deleteInventory(
@@ -47,14 +47,14 @@ interface InventoryService {
     suspend fun getInventoryItems(
         @Header("Authorization") token: String,
         @Path("inventoryId") inventoryId: Int
-    ): List<InventoryItem>
+    ): List<InventoryItemDto>
 
     @POST("api/inventory/{inventoryId}/items")
     suspend fun addItemToInventory(
         @Header("Authorization") token: String,
         @Path("inventoryId") inventoryId: Int,
         @Body request: InventoryItemRequest
-    ): InventoryItem
+    ): InventoryItemDto
 
     @DELETE("api/inventory/items/{itemId}")
     suspend fun removeItemFromInventory(
@@ -62,12 +62,10 @@ interface InventoryService {
         @Path("itemId") itemId: Int
     ): Map<String, String>
 
-    // New Endpoint Requirement: Update Item Quantity
-    // This will return 404 until backend implements it.
     @PUT("api/inventory/items/{itemId}")
     suspend fun updateInventoryItem(
         @Header("Authorization") token: String,
         @Path("itemId") itemId: Int, 
         @Body request: InventoryItemRequest
-    ): InventoryItem
+    ): InventoryItemDto
 }

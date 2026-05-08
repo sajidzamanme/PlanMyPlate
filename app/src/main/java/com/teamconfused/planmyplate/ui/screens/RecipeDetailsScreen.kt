@@ -24,7 +24,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.teamconfused.planmyplate.R
-import com.teamconfused.planmyplate.model.Recipe
+import com.teamconfused.planmyplate.domain.model.Recipe
 import com.teamconfused.planmyplate.ui.viewmodels.RecipeViewModel
 import org.koin.androidx.compose.koinViewModel
 

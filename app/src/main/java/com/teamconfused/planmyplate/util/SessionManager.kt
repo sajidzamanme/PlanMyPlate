@@ -2,14 +2,17 @@ package com.teamconfused.planmyplate.util
 
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.core.content.edit
+import com.teamconfused.planmyplate.domain.model.AdditionalMeal
+import com.teamconfused.planmyplate.domain.model.UserPreferences
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
-import kotlinx.serialization.builtins.serializer
 
 class SessionManager(context: Context) {
     private val prefs: SharedPreferences = context.getSharedPreferences("user_session", Context.MODE_PRIVATE)
 
     fun saveUserId(userId: Int) {
-        prefs.edit().putInt("user_id", userId).commit()
+        prefs.edit(commit = true) { putInt("user_id", userId) }
     }
 
     fun getUserId(): Int {
@@ -21,7 +24,7 @@ class SessionManager(context: Context) {
     }
     
     fun setHasMealPlans(hasMealPlans: Boolean) {
-        prefs.edit().putBoolean("has_meal_plans", hasMealPlans).apply()
+        prefs.edit { putBoolean("has_meal_plans", hasMealPlans) }
     }
     
     fun hasMealPlans(): Boolean {
@@ -29,75 +32,75 @@ class SessionManager(context: Context) {
     }
 
     fun clearSession() {
-        prefs.edit().clear().apply()
+        prefs.edit { clear() }
     }
 
     fun saveAuthToken(token: String) {
-        prefs.edit().putString("auth_token", token).commit()
+        prefs.edit(commit = true) { putString("auth_token", token) }
     }
 
     fun getAuthToken(): String? {
         return prefs.getString("auth_token", null)
     }
 
-    fun saveUserPreferences(preferences: com.teamconfused.planmyplate.model.UserPreferences) {
-        val json = kotlinx.serialization.json.Json.encodeToString(com.teamconfused.planmyplate.model.UserPreferences.serializer(), preferences)
-        prefs.edit().putString("user_preferences", json).apply()
+    fun saveUserPreferences(preferences: UserPreferences) {
+        val json = Json.encodeToString(UserPreferences.serializer(), preferences)
+        prefs.edit { putString("user_preferences", json) }
     }
 
-    fun getUserPreferences(): com.teamconfused.planmyplate.model.UserPreferences {
+    fun getUserPreferences(): UserPreferences {
         val json = prefs.getString("user_preferences", null)
         return if (json != null) {
             try {
-                kotlinx.serialization.json.Json.decodeFromString(com.teamconfused.planmyplate.model.UserPreferences.serializer(), json)
-            } catch (e: Exception) {
-                com.teamconfused.planmyplate.model.UserPreferences()
+                Json.decodeFromString(UserPreferences.serializer(), json)
+            } catch (_: Exception) {
+                UserPreferences()
             }
         } else {
-            com.teamconfused.planmyplate.model.UserPreferences()
+            UserPreferences()
         }
     }
 
     // --- Local Sandbox Storage ---
 
-    fun saveAdditionalMeals(meals: List<com.teamconfused.planmyplate.model.AdditionalMeal>) {
-        val json = kotlinx.serialization.json.Json.encodeToString(kotlinx.serialization.builtins.ListSerializer(com.teamconfused.planmyplate.model.AdditionalMeal.serializer()), meals)
-        prefs.edit().putString("additional_meals", json).apply()
+    fun saveAdditionalMeals(meals: List<AdditionalMeal>) {
+        val json = Json.encodeToString(kotlinx.serialization.builtins.ListSerializer(AdditionalMeal.serializer()), meals)
+        prefs.edit { putString("additional_meals", json) }
     }
 
-    fun getAdditionalMeals(): List<com.teamconfused.planmyplate.model.AdditionalMeal> {
+    fun getAdditionalMeals(): List<AdditionalMeal> {
         val json = prefs.getString("additional_meals", null) ?: return emptyList()
         return try {
-            kotlinx.serialization.json.Json.decodeFromString(kotlinx.serialization.builtins.ListSerializer(com.teamconfused.planmyplate.model.AdditionalMeal.serializer()), json)
-        } catch (e: Exception) {
+            Json.decodeFromString(kotlinx.serialization.builtins.ListSerializer(AdditionalMeal.serializer()), json)
+        } catch (_: Exception) {
             emptyList()
         }
     }
 
     fun saveHandledMeals(handled: Map<String, Set<String>>) {
-        val json = kotlinx.serialization.json.Json.encodeToString(kotlinx.serialization.builtins.MapSerializer(serializer<String>(), kotlinx.serialization.builtins.SetSerializer(serializer<String>())), handled)
-        prefs.edit().putString("handled_meals", json).apply()
+        val json = Json.encodeToString(kotlinx.serialization.builtins.MapSerializer(serializer<String>(), kotlinx.serialization.builtins.SetSerializer(serializer<String>())), handled)
+        prefs.edit { putString("handled_meals", json) }
     }
 
     fun getHandledMeals(): Map<String, Set<String>> {
         val json = prefs.getString("handled_meals", null) ?: return emptyMap()
         return try {
-            kotlinx.serialization.json.Json.decodeFromString(kotlinx.serialization.builtins.MapSerializer(serializer<String>(), kotlinx.serialization.builtins.SetSerializer(serializer<String>())), json)
-        } catch (e: Exception) {
+            Json.decodeFromString(kotlinx.serialization.builtins.MapSerializer(serializer<String>(), kotlinx.serialization.builtins.SetSerializer(serializer<String>())), json)
+        } catch (_: Exception) {
             emptyMap()
         }
     }
 
     fun saveConsumedCalories(calories: Map<String, Int>) {
-        val json = kotlinx.serialization.json.Json.encodeToString(kotlinx.serialization.builtins.MapSerializer(serializer<String>(), serializer<Int>()), calories)
-        prefs.edit().putString("consumed_calories", json).apply()
+        val json = Json.encodeToString(kotlinx.serialization.builtins.MapSerializer(serializer<String>(), serializer<Int>()), calories)
+        prefs.edit { putString("consumed_calories", json) }
     }
 
     fun getConsumedCalories(): Map<String, Int> {
         val json = prefs.getString("consumed_calories", null) ?: return emptyMap()
         return try {
-            kotlinx.serialization.json.Json.decodeFromString(kotlinx.serialization.builtins.MapSerializer(serializer<String>(), serializer<Int>()), json)
-        } catch (e: Exception) {
+            Json.decodeFromString(kotlinx.serialization.builtins.MapSerializer(serializer<String>(), serializer<Int>()), json)
+        } catch (_: Exception) {
             emptyMap()
         }
     }

@@ -2,9 +2,11 @@ package com.teamconfused.planmyplate.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.teamconfused.planmyplate.domain.model.Recipe
 import com.teamconfused.planmyplate.domain.usecase.FilterRecipesUseCase
 import com.teamconfused.planmyplate.domain.usecase.GetAllRecipesUseCase
-import com.teamconfused.planmyplate.model.Recipe
+import com.teamconfused.planmyplate.domain.usecase.GetRecipeUseCase
+import com.teamconfused.planmyplate.util.SessionManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,8 +21,8 @@ sealed class RecipeUiState {
 class RecipeViewModel(
     private val getAllRecipesUseCase: GetAllRecipesUseCase,
     private val filterRecipesUseCase: FilterRecipesUseCase,
-    private val getRecipeUseCase: com.teamconfused.planmyplate.domain.usecase.GetRecipeUseCase,
-    private val sessionManager: com.teamconfused.planmyplate.util.SessionManager
+    private val getRecipeUseCase: GetRecipeUseCase,
+    private val sessionManager: SessionManager
 ) : ViewModel() {
 
     private val _allRecipesState = MutableStateFlow<RecipeUiState>(RecipeUiState.Loading)

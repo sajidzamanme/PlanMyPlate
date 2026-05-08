@@ -1,10 +1,9 @@
 package com.teamconfused.planmyplate.network
 
-import com.teamconfused.planmyplate.model.CreateRecipeRequest
-import com.teamconfused.planmyplate.model.ImageUploadResponse
-import com.teamconfused.planmyplate.model.RecipeIngredientRequest
-import com.teamconfused.planmyplate.model.RecipeRequest
-import com.teamconfused.planmyplate.model.RecipeResponse
+import com.teamconfused.planmyplate.data.model.CreateRecipeRequest
+import com.teamconfused.planmyplate.data.model.ImageUploadResponse
+import com.teamconfused.planmyplate.data.model.RecipeRequest
+import com.teamconfused.planmyplate.data.model.RecipeResponse
 import okhttp3.MultipartBody
 import retrofit2.http.Body
 import retrofit2.http.DELETE

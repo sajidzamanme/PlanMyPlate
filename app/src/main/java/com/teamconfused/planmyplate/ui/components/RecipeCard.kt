@@ -33,7 +33,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.teamconfused.planmyplate.R
-import com.teamconfused.planmyplate.model.Recipe
+import com.teamconfused.planmyplate.domain.model.Recipe
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable

@@ -14,7 +14,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.teamconfused.planmyplate.R
-import com.teamconfused.planmyplate.model.GroceryListItem
+import com.teamconfused.planmyplate.domain.model.GroceryListItem
 import com.teamconfused.planmyplate.ui.viewmodels.GroceryViewModel
 
 import org.koin.androidx.compose.koinViewModel

@@ -2,18 +2,24 @@ package com.teamconfused.planmyplate.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.teamconfused.planmyplate.data.model.CreateMealPlanRequest
+import com.teamconfused.planmyplate.domain.model.AdditionalMeal
+import com.teamconfused.planmyplate.domain.model.MealPlan
+import com.teamconfused.planmyplate.domain.model.Recipe
+import com.teamconfused.planmyplate.domain.repository.MealPlanRepository
 import com.teamconfused.planmyplate.domain.usecase.CreateMealPlanUseCase
 import com.teamconfused.planmyplate.domain.usecase.FilterRecipesUseCase
+import com.teamconfused.planmyplate.domain.usecase.GenerateMealPlanUseCase
 import com.teamconfused.planmyplate.domain.usecase.GenerateRecipeUseCase
 import com.teamconfused.planmyplate.domain.usecase.GetAllRecipesUseCase
 import com.teamconfused.planmyplate.domain.usecase.GetTodaysMealsUseCase
-import com.teamconfused.planmyplate.model.Recipe
-import com.teamconfused.planmyplate.model.MealPlan
+import com.teamconfused.planmyplate.util.SessionManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 
 data class MealPlanUiState(
     val selectedRecipes: Map<String, List<Recipe>> = mapOf(
@@ -26,7 +32,7 @@ data class MealPlanUiState(
     val isLoadingHistory: Boolean = false,
     val activeMealPlan: MealPlan? = null,
     val mealPlans: List<MealPlan> = emptyList(),
-    val additionalMeals: List<com.teamconfused.planmyplate.model.AdditionalMeal> = emptyList(),
+    val additionalMeals: List<AdditionalMeal> = emptyList(),
     val handledMeals: Map<String, Set<String>> = emptyMap(),
     val isReplacingPlan: Boolean = false,
     val errorMessage: String? = null
@@ -34,19 +40,18 @@ data class MealPlanUiState(
 
 class MealPlanViewModel(
     private val createMealPlanUseCase: CreateMealPlanUseCase,
-    private val getTodaysMealsUseCase: GetTodaysMealsUseCase, // Reuse for fetching weekly/active if needed, or use Repo directly.
+    private val getTodaysMealsUseCase: GetTodaysMealsUseCase,
     private val getAllRecipesUseCase: GetAllRecipesUseCase,
     private val filterRecipesUseCase: FilterRecipesUseCase,
-    private val generateRecipeUseCase: GenerateRecipeUseCase, // For AI generation
-    private val generateMealPlanUseCase: com.teamconfused.planmyplate.domain.usecase.GenerateMealPlanUseCase,
-    private val mealPlanRepository: com.teamconfused.planmyplate.domain.repository.MealPlanRepository,
-    private val sessionManager: com.teamconfused.planmyplate.util.SessionManager
+    private val generateRecipeUseCase: GenerateRecipeUseCase,
+    private val generateMealPlanUseCase: GenerateMealPlanUseCase,
+    private val mealPlanRepository: MealPlanRepository,
+    private val sessionManager: SessionManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MealPlanUiState())
     val uiState: StateFlow<MealPlanUiState> = _uiState.asStateFlow()
 
-    // Replicate Recipe Lists for selection UI
     private val _allRecipesState = MutableStateFlow<RecipeUiState>(RecipeUiState.Loading)
     val allRecipesState: StateFlow<RecipeUiState> = _allRecipesState.asStateFlow()
 
@@ -142,7 +147,14 @@ class MealPlanViewModel(
 
                 val token = sessionManager.getAuthToken() ?: ""
                 val authHeader = "Bearer $token"
-                createMealPlanUseCase(authHeader, userId, recipeIds)
+                
+                val request = CreateMealPlanRequest(
+                    recipeIds = recipeIds,
+                    duration = 7,
+                    startDate = LocalDate.now().toString()
+                )
+                
+                createMealPlanUseCase(authHeader, userId, request)
                 
                 fetchWeeklyMealPlans()
                 sessionManager.setHasMealPlans(true)

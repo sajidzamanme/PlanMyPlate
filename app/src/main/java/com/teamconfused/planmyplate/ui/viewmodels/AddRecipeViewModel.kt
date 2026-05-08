@@ -4,8 +4,8 @@ import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.teamconfused.planmyplate.model.CreateRecipeRequest
-import com.teamconfused.planmyplate.model.RecipeIngredientRequest
+import com.teamconfused.planmyplate.data.model.CreateRecipeRequest
+import com.teamconfused.planmyplate.data.model.RecipeIngredientRequest
 import com.teamconfused.planmyplate.network.RecipeService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

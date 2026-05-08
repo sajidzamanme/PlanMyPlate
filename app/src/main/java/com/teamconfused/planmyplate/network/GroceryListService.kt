@@ -1,8 +1,9 @@
 package com.teamconfused.planmyplate.network
 
-import com.teamconfused.planmyplate.model.GroceryList
-import com.teamconfused.planmyplate.model.GroceryListRequest
-import com.teamconfused.planmyplate.model.PurchaseItemsRequest
+import com.teamconfused.planmyplate.data.model.GroceryListDto
+import com.teamconfused.planmyplate.data.model.GroceryListItemDto
+import com.teamconfused.planmyplate.data.model.GroceryListRequest
+import com.teamconfused.planmyplate.data.model.PurchaseItemsRequest
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
@@ -16,27 +17,27 @@ interface GroceryListService {
     suspend fun getGroceryListsForUser(
         @Header("Authorization") token: String,
         @Path("userId") userId: Int
-    ): List<GroceryList>
+    ): List<GroceryListDto>
 
     @GET("api/grocery-lists/{id}")
     suspend fun getGroceryListById(
         @Header("Authorization") token: String,
         @Path("id") id: Int
-    ): GroceryList
+    ): GroceryListDto
 
     @POST("api/grocery-lists/user/{userId}")
     suspend fun createGroceryList(
         @Header("Authorization") token: String,
         @Path("userId") userId: Int,
         @Body request: GroceryListRequest
-    ): GroceryList
+    ): GroceryListDto
 
     @PUT("api/grocery-lists/{id}")
     suspend fun updateGroceryList(
         @Header("Authorization") token: String,
         @Path("id") id: Int,
         @Body request: GroceryListRequest
-    ): GroceryList
+    ): GroceryListDto
 
     @POST("api/grocery-lists/{id}/purchase")
     suspend fun purchaseItems(
@@ -56,14 +57,13 @@ interface GroceryListService {
         @Header("Authorization") token: String,
         @Path("userId") userId: Int,
         @Path("status") status: String
-    ): List<GroceryList>
+    ): List<GroceryListDto>
 
-    // New Endpoint for updating individual grocery list items
     @PUT("api/grocery-lists/{listId}/items/{itemId}")
     suspend fun updateGroceryListItem(
         @Header("Authorization") token: String,
         @Path("listId") listId: Int,
         @Path("itemId") itemId: Int,
         @Body request: Map<String, Any>
-    ): com.teamconfused.planmyplate.model.GroceryListItem
+    ): GroceryListItemDto
 }

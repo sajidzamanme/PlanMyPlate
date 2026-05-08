@@ -1,7 +1,7 @@
 package com.teamconfused.planmyplate.domain.usecase
 
+import com.teamconfused.planmyplate.domain.model.Recipe
 import com.teamconfused.planmyplate.domain.repository.RecipeRepository
-import com.teamconfused.planmyplate.model.Recipe
 
 class FilterRecipesUseCase(
     private val repository: RecipeRepository

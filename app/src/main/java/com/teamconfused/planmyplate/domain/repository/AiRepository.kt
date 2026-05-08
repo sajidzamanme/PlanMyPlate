@@ -1,8 +1,8 @@
 package com.teamconfused.planmyplate.domain.repository
 
-import com.teamconfused.planmyplate.model.GenerateRecipeRequest
-import com.teamconfused.planmyplate.model.MealPlan
-import com.teamconfused.planmyplate.model.Recipe
+import com.teamconfused.planmyplate.data.model.GenerateRecipeRequest
+import com.teamconfused.planmyplate.domain.model.MealPlan
+import com.teamconfused.planmyplate.domain.model.Recipe
 
 interface AiRepository {
     suspend fun generateRecipe(token: String, request: GenerateRecipeRequest): Recipe

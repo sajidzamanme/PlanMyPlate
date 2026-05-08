@@ -18,7 +18,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
-import com.teamconfused.planmyplate.model.Recipe
+import com.teamconfused.planmyplate.domain.model.Recipe
+import com.teamconfused.planmyplate.domain.model.MealPlan
+import com.teamconfused.planmyplate.domain.model.AdditionalMeal
 import com.teamconfused.planmyplate.ui.components.CategorizedRecipeSection
 import com.teamconfused.planmyplate.ui.components.HorizontalRecipeCard
 import com.teamconfused.planmyplate.ui.viewmodels.MealPlanViewModel
@@ -109,7 +111,7 @@ fun MealPlanScreen(
         val currentMealType = selectedMealType ?: "Breakfast"
         LaunchedEffect(recipe.id) {
             rootNavController.navigate(
-                com.teamconfused.planmyplate.ui.navigation.Screen.RecipeDetails(
+                Screen.RecipeDetails(
                     recipeId = recipe.id ?: 0,
                     isSelectionMode = true,
                     mealType = currentMealType
@@ -185,9 +187,8 @@ fun RecipeSelectionDialog(
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
     val recommendedState by viewModel.recommendedRecipesState.collectAsState()
     val budgetState by viewModel.budgetRecipesState.collectAsState()
-    val allRecipesState by viewModel.allRecipesState.collectAsState() // Added this
+    val allRecipesState by viewModel.allRecipesState.collectAsState()
     
-    // Refresh recipes when dialog opens
     LaunchedEffect(Unit) {
         viewModel.refreshRecipes()
     }
@@ -215,7 +216,6 @@ fun RecipeSelectionDialog(
                 color = MaterialTheme.colorScheme.primary
             )
             
-            // Recommended Recipes Section
             when (recommendedState) {
                 is com.teamconfused.planmyplate.ui.viewmodels.RecipeUiState.Loading -> {
                     Box(
@@ -259,7 +259,6 @@ fun RecipeSelectionDialog(
                 }
             }
             
-            // Budget Recipes Section
             when (budgetState) {
                 is com.teamconfused.planmyplate.ui.viewmodels.RecipeUiState.Loading -> {
                     Box(
@@ -303,7 +302,6 @@ fun RecipeSelectionDialog(
                 }
             }
 
-            // All Recipes Section (including newly added ones)
             when (allRecipesState) {
                 is com.teamconfused.planmyplate.ui.viewmodels.RecipeUiState.Loading -> {
                     Box(
@@ -345,6 +343,7 @@ fun RecipeSelectionDialog(
         }
     }
 }
+
 @Composable
 fun CreateMealPlanContent(
     uiState: com.teamconfused.planmyplate.ui.viewmodels.MealPlanUiState,
@@ -427,11 +426,6 @@ fun CreateMealPlanContent(
                 enabled = !uiState.isCreatingPlan,
                 contentPadding = PaddingValues(horizontal = 8.dp)
             ) {
-//                Icon(
-//                    painter = painterResource(R.drawable.ic_ai_stars),
-//                    contentDescription = null,
-//                    modifier = Modifier.size(18.dp)
-//                )
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
                     text = "Auto Generate",
@@ -482,36 +476,22 @@ fun CreateMealPlanContent(
 
 @Composable
 fun WeeklyMealPlanView(
-    mealPlan: com.teamconfused.planmyplate.model.MealPlan,
-    additionalMeals: List<com.teamconfused.planmyplate.model.AdditionalMeal> = emptyList(),
+    mealPlan: MealPlan,
+    additionalMeals: List<AdditionalMeal> = emptyList(),
     handledMeals: Map<String, Set<String>> = emptyMap(),
     modifier: Modifier = Modifier,
     onDelete: () -> Unit,
     onCreateNew: () -> Unit,
     onRecipeClick: (Int) -> Unit = {}
 ) {
-    // Process slots to group by Date/Day
     val slots = mealPlan.slots ?: emptyList()
     val startDate = try {
         if (mealPlan.startDate != null) LocalDate.parse(mealPlan.startDate) else null
     } catch (e: Exception) { null }
     val today = LocalDate.now()
 
-    // Grouping Logic
-    // We want to map each slot to a standardized "Day Index" (1..7) relative to start date
-    // Then we can display "Day X" or the actual Date.
-    
-    // Grouping Logic
-    // We want to map each slot to a standardized "Day Index" (1..7) relative to start date
-    // Then we can display "Day X" or the actual Date.
-    
     val groupedByDayIndex = slots.mapIndexed { index, slot ->
-        // Priority: 
-        // 1. Explicit clean dayNumber/day (1-based)
-        // 2. Date calculation
-        // 3. List position inference (assuming ordered list from creation: 3 meals/day)
-        
-        val explicitDay = slot.dayNumber ?: slot.day
+        val explicitDay = slot.dayNumber
         
         val dayIndex = if (explicitDay != null && explicitDay > 0) {
             explicitDay
@@ -525,8 +505,6 @@ fun WeeklyMealPlanView(
              if (dateDerived > 0) {
                  dateDerived
              } else {
-                 // Fallback: Infer from list index
-                 // 0,1,2 -> Day 1; 3,4,5 -> Day 2; etc.
                  (index / 3) + 1
              }
         }
@@ -535,21 +513,14 @@ fun WeeklyMealPlanView(
      .mapValues { it.value.map { pair -> pair.second } }
      .toSortedMap()
 
-    // Ensure we cover days 1..7 if slots are sparse? 
-    // Or just show what we have. User requested "seven cards". 
-    // Ideally we iterate 1..7 and find meals.
-    
     val daysList = (1..7).toList()
     
-    // Calculate which day index corresponds to "Today"
     val todayIndex = if (startDate != null) {
         ChronoUnit.DAYS.between(startDate, today).toInt() + 1
     } else {
-        // Fallback: if any slot has today's date
         if (slots.any { it.date == today.toString() }) {
-             // Find that slot's day index
              val todaySlot = slots.find { it.date == today.toString() }
-             todaySlot?.dayNumber ?: todaySlot?.day ?: 0
+             todaySlot?.dayNumber ?: 0
         } else -1
     }
 
@@ -568,14 +539,11 @@ fun WeeklyMealPlanView(
 
         daysList.forEach { dayIndex ->
             val slotsForDay = groupedByDayIndex[dayIndex] ?: emptyList()
-            
-            // Determine date string
             val dateForDay = if (startDate != null) {
                 startDate.plusDays(dayIndex.toLong() - 1)
             } else null
             
             val isToday = dayIndex == todayIndex || (dateForDay != null && dateForDay == today)
-            
             val displayDate = dateForDay?.format(DateTimeFormatter.ofPattern("EEEE, MMM d")) ?: "Day $dayIndex"
 
             Card(
@@ -619,18 +587,16 @@ fun WeeklyMealPlanView(
                              color = if (isToday) MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     } else {
-                        // Show Breakfast, Lunch, Dinner in fixed order
                         val mealTypes = listOf("Breakfast", "Lunch", "Dinner")
                         
                         mealTypes.forEach { type ->
                              val slot = slotsForDay.find { it.mealType.equals(type, ignoreCase = true) }
                              val additionalForSlot = additionalMeals.filter { 
-                                 it.date == dateForDay.toString() && it.mealType.equalsIgnoreCase(type) 
+                                 it.date == dateForDay.toString() && it.mealType.equals(type, ignoreCase = true)
                              }
                              val isHandled = handledMeals[dateForDay.toString()]?.contains(type) ?: false
 
                              Column(modifier = Modifier.fillMaxWidth()) {
-                                 // 1. Show Planned Meal
                                  Row(
                                      verticalAlignment = Alignment.CenterVertically,
                                      modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp) 
@@ -701,7 +667,6 @@ fun WeeklyMealPlanView(
                                      }
                                  }
                                  
-                                 // 2. Show Additional Meals for this slot
                                  additionalForSlot.forEach { additional ->
                                      Row(
                                          verticalAlignment = Alignment.CenterVertically,
@@ -762,4 +727,3 @@ fun WeeklyMealPlanView(
         }
     }
 }
-

@@ -1,9 +1,12 @@
 package com.teamconfused.planmyplate.ui.viewmodels
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.teamconfused.planmyplate.model.SigninRequest
-import com.teamconfused.planmyplate.network.RetrofitClient
+import com.teamconfused.planmyplate.data.mapper.toDomain
+import com.teamconfused.planmyplate.data.model.SigninRequest
+import com.teamconfused.planmyplate.network.AuthService
+import com.teamconfused.planmyplate.network.UserPreferencesService
 import com.teamconfused.planmyplate.util.SessionManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,7 +23,11 @@ data class LoginUiState(
     val errorMessage: String? = null
 )
 
-class LoginViewModel(private val sessionManager: SessionManager) : ViewModel() {
+class LoginViewModel(
+    private val authService: AuthService,
+    private val userPreferencesService: UserPreferencesService,
+    private val sessionManager: SessionManager
+) : ViewModel() {
     private val _uiState = MutableStateFlow(LoginUiState())
     val uiState: StateFlow<LoginUiState> = _uiState.asStateFlow()
 
@@ -66,7 +73,7 @@ class LoginViewModel(private val sessionManager: SessionManager) : ViewModel() {
                         email = currentState.email,
                         password = currentState.password
                     )
-                    val response = RetrofitClient.authService.signin(request)
+                    val response = authService.signin(request)
                     val userId = response.getEffectiveUserId()
                     
                     var hasPreferences = false
@@ -77,7 +84,8 @@ class LoginViewModel(private val sessionManager: SessionManager) : ViewModel() {
                         try {
                             val token = response.token ?: ""
                             val authHeader = "Bearer $token"
-                            val prefs = RetrofitClient.userPreferencesService.getPreferences(authHeader, userId)
+                            val prefsResponse = userPreferencesService.getPreferences(authHeader, userId)
+                            val prefs = prefsResponse.toDomain()
                             // Save preferences locally
                             sessionManager.saveUserPreferences(prefs)
                             
@@ -88,7 +96,7 @@ class LoginViewModel(private val sessionManager: SessionManager) : ViewModel() {
                             hasPreferences = false
                         }
                     } else {
-                        android.util.Log.e("LoginViewModel", "Login successful but no userId found in response: $response")
+                        Log.e("LoginViewModel", "Login successful but no userId found in response: $response")
                     }
                     
                     _uiState.update { it.copy(isLoading = false) }
