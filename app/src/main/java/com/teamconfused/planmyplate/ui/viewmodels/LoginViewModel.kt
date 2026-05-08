@@ -74,15 +74,15 @@ class LoginViewModel(
                         password = currentState.password
                     )
                     val response = authService.signin(request)
-                    val userId = response.getEffectiveUserId()
+                    val userId = response.userId
                     
                     var hasPreferences = false
                     if (userId != null) {
                         sessionManager.saveUserId(userId)
-                        response.token?.let { sessionManager.saveAuthToken(it) }
+                        response.accessToken?.let { sessionManager.saveAuthToken(it) }
                         // Check if preferences are already set in the database
                         try {
-                            val token = response.token ?: ""
+                            val token = response.accessToken ?: ""
                             val authHeader = "Bearer $token"
                             val prefsResponse = userPreferencesService.getPreferences(authHeader, userId)
                             val prefs = prefsResponse.toDomain()

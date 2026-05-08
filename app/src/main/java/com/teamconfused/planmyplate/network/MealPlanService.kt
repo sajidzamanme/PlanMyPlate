@@ -2,7 +2,7 @@ package com.teamconfused.planmyplate.network
 
 import com.teamconfused.planmyplate.data.model.CreateMealPlanRequest
 import com.teamconfused.planmyplate.data.model.MealPlanDto
-import com.teamconfused.planmyplate.data.model.MealPlanRequest
+import com.teamconfused.planmyplate.data.model.MealPlanUpdateRequest
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
@@ -24,13 +24,6 @@ interface MealPlanService {
         @Path("id") id: Int
     ): MealPlanDto
 
-    @POST("api/meal-plans/user/{userId}")
-    suspend fun createMealPlan(
-        @Header("Authorization") token: String,
-        @Path("userId") userId: Int,
-        @Body request: MealPlanRequest
-    ): MealPlanDto
-
     @POST("api/meal-plans/user/{userId}/create")
     suspend fun createMealPlanWithRecipes(
         @Header("Authorization") token: String,
@@ -42,7 +35,7 @@ interface MealPlanService {
     suspend fun updateMealPlan(
         @Header("Authorization") token: String,
         @Path("id") id: Int,
-        @Body request: MealPlanRequest
+        @Body request: MealPlanUpdateRequest
     ): MealPlanDto
 
     @DELETE("api/meal-plans/{id}")

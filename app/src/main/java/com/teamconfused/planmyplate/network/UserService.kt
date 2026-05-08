@@ -15,12 +15,6 @@ interface UserService {
         @Header("Authorization") token: String
     ): UserDto
 
-    @GET("api/users/{userId}")
-    suspend fun getUserById(
-        @Header("Authorization") token: String,
-        @Path("userId") userId: Int
-    ): UserDto
-
     @PUT("api/users/{userId}")
     suspend fun updateUser(
         @Header("Authorization") token: String,

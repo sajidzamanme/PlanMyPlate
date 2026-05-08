@@ -1,8 +1,8 @@
 package com.teamconfused.planmyplate.network
 
-import com.teamconfused.planmyplate.data.model.IngredientDto
 import com.teamconfused.planmyplate.data.model.AllergyDto
 import com.teamconfused.planmyplate.data.model.DietDto
+import com.teamconfused.planmyplate.data.model.IngredientDto
 import com.teamconfused.planmyplate.data.model.UserPreferencesRequest
 import com.teamconfused.planmyplate.data.model.UserPreferencesResponse
 import retrofit2.http.Body

@@ -7,6 +7,7 @@ import androidx.compose.runtime.remember
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.toRoute
 import com.teamconfused.planmyplate.ui.screens.ForgotPasswordScreen
 import com.teamconfused.planmyplate.ui.screens.LoginScreen
 import com.teamconfused.planmyplate.ui.screens.PreferenceSelectionScreen
@@ -15,14 +16,12 @@ import com.teamconfused.planmyplate.ui.screens.SignupScreen
 import com.teamconfused.planmyplate.ui.screens.WelcomeScreen
 import com.teamconfused.planmyplate.ui.viewmodels.ForgotPasswordViewModel
 import com.teamconfused.planmyplate.ui.viewmodels.LoginViewModel
+import com.teamconfused.planmyplate.ui.viewmodels.MealPlanViewModel
 import com.teamconfused.planmyplate.ui.viewmodels.PreferenceSelectionViewModel
 import com.teamconfused.planmyplate.ui.viewmodels.SignupViewModel
-import com.teamconfused.planmyplate.ui.viewmodels.RecipeViewModel
-import com.teamconfused.planmyplate.ui.viewmodels.MealPlanViewModel
 import com.teamconfused.planmyplate.util.SessionManager
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
-import androidx.navigation.toRoute
 
 @Composable
 fun NavGraph(navController: NavHostController) {
@@ -87,7 +86,7 @@ fun NavGraph(navController: NavHostController) {
             val route = backStackEntry.toRoute<Screen.RecipeDetails>()
             
             val mainBackStackEntry = remember(backStackEntry) {
-                navController.getBackStackEntry(Screen.Main)
+                navController.getStackEntry(Screen.Main) ?: backStackEntry
             }
             val mealPlanViewModel: MealPlanViewModel = koinViewModel(viewModelStoreOwner = mainBackStackEntry)
             val homeViewModel: com.teamconfused.planmyplate.ui.viewmodels.HomeViewModel = koinViewModel(viewModelStoreOwner = mainBackStackEntry)
@@ -127,9 +126,12 @@ fun NavGraph(navController: NavHostController) {
 
             SignupScreen(
                 uiState = uiState,
-                onFullNameChange = viewModel::onFullNameChange,
+                onFirstNameChange = viewModel::onFirstNameChange,
+                onLastNameChange = viewModel::onLastNameChange,
                 onEmailChange = viewModel::onEmailChange,
                 onPasswordChange = viewModel::onPasswordChange,
+                onPhoneChange = viewModel::onPhoneChange,
+                onDateOfBirthChange = viewModel::onDateOfBirthChange,
                 onTermsAcceptedChange = viewModel::onTermsAcceptedChange,
                 onLoginClick = {
                     navController.navigate(Screen.Login) {
@@ -138,7 +140,6 @@ fun NavGraph(navController: NavHostController) {
                 },
                 onSignupClick = {
                     viewModel.onSignupClick {
-                        // Navigate to PreferenceSelection flow after successful signup
                         navController.navigate(Screen.PreferenceSelection) {
                             popUpTo(Screen.Welcome) { inclusive = true }
                         }
@@ -195,5 +196,13 @@ fun NavGraph(navController: NavHostController) {
                 }
             )
         }
+    }
+}
+
+private fun NavHostController.getStackEntry(route: Any): androidx.navigation.NavBackStackEntry? {
+    return try {
+        getBackStackEntry(route)
+    } catch (e: Exception) {
+        null
     }
 }

@@ -11,20 +11,22 @@ data class UserRefDto(
 @Serializable
 data class UserDto(
     @SerialName("userId") val userId: Int,
-    @SerialName("userName") val userName: String? = null,
-    val name: String,
+    val firstName: String,
+    val lastName: String,
     val email: String,
-    val password: String? = null,
+    val phone: String,
+    val dateOfBirth: String,
     val age: Int? = null,
     val weight: Float? = null,
-    val budget: Float? = null,
-    @SerialName("created_at") val createdAt: String? = null
+    val budget: Float? = null
 )
 
 @Serializable
 data class UpdateUserRequest(
-    val name: String? = null,
-    @SerialName("userName") val userName: String? = null,
+    val firstName: String? = null,
+    val lastName: String? = null,
+    val phone: String? = null,
+    val dateOfBirth: String? = null,
     val age: Int? = null,
     val weight: Float? = null,
     val budget: Float? = null
@@ -32,6 +34,7 @@ data class UpdateUserRequest(
 
 @Serializable
 data class UserPreferencesRequest(
+    val userId: Int,
     val diet: String? = null,
     val allergies: List<String>? = null,
     val dislikes: List<String>? = null,
@@ -41,8 +44,8 @@ data class UserPreferencesRequest(
 
 @Serializable
 data class UserPreferencesResponse(
-    @SerialName("prefId") val prefId: Int? = null,
-    @SerialName("userId") val userId: Int? = null,
+    @SerialName("pref_id") val prefId: Int? = null,
+    @SerialName("user_id") val userId: Int? = null,
     val diet: String? = null,
     val allergies: List<String>? = null,
     val dislikes: List<String>? = null,
@@ -54,12 +57,12 @@ data class UserPreferencesResponse(
 
 @Serializable
 data class DietDto(
-    val dietId: Int,
-    val dietName: String
+    @SerialName("diet_id") val dietId: Int,
+    @SerialName("diet_name") val dietName: String
 )
 
 @Serializable
 data class AllergyDto(
-    val allergyId: Int,
-    val allergyName: String
+    @SerialName("allergy_id") val allergyId: Int,
+    @SerialName("allergy_name") val allergyName: String
 )

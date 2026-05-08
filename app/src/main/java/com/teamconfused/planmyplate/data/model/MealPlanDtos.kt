@@ -10,30 +10,32 @@ data class MealPlanDto(
     @SerialName("startDate") val startDate: String? = null,
     val duration: Int,
     val status: String = "active",
-    val slots: List<MealSlotDto>? = null,
-    @SerialName("created_at") val createdAt: String? = null
+    val slots: List<MealSlotDto>? = null
 )
 
 @Serializable
 data class MealSlotDto(
-    @SerialName("id") val slotId: Int? = null,
+    val id: Int? = null,
+    val slotIndex: Int? = null,
     val mealType: String,
     val date: String? = null,
-    @SerialName("dayNumber") val dayNumber: Int? = null,
+    val dayNumber: Int? = null,
+    val servingsMultiplier: Int? = null,
     val recipe: RecipeResponse? = null
 )
 
 @Serializable
 data class CreateMealPlanRequest(
     val recipeIds: List<Int>,
+    val servingsMultipliers: List<Int>? = null,
     val duration: Int,
     @SerialName("startDate") val startDate: String
 )
 
 @Serializable
-data class MealPlanRequest(
-    @SerialName("startDate") val startDate: String,
-    val duration: Int
+data class MealPlanUpdateRequest(
+    val status: String? = null,
+    val duration: Int? = null
 )
 
 @Serializable

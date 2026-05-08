@@ -160,6 +160,7 @@ class PreferenceSelectionViewModel(
                                   else currentState.selectedDislikes.toList()
 
                 val request = UserPreferencesRequest(
+                    userId = userId,
                     diet = currentState.selectedDiet,
                     allergies = allergiesList,
                     dislikes = dislikesList,

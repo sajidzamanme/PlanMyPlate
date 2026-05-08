@@ -2,42 +2,35 @@ package com.teamconfused.planmyplate.data.model
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.jsonPrimitive
-import kotlinx.serialization.json.intOrNull
 
 @Serializable
 data class SignupRequest(
-    val name: String,
+    val firstName: String,
+    val lastName: String,
     val email: String,
-    val password: String
+    val password: String,
+    val phone: String,
+    val dateOfBirth: String
 )
 
 @Serializable
 data class SigninRequest(
-    val email: String,
+    val email: String, // Can be email or phone according to docs
     val password: String
 )
 
 @Serializable
 data class AuthResponse(
-    @SerialName("userId") val userId: JsonElement? = null,
-    @SerialName("id") val id: JsonElement? = null,
-    @SerialName("user_id") val userIdAlternative: JsonElement? = null,
-    val token: String? = null,
-    val message: String? = null,
-    val name: String? = null,
-    val email: String? = null
-) {
-    fun getEffectiveUserId(): Int? {
-        val element = userId ?: id ?: userIdAlternative
-        return try {
-            element?.jsonPrimitive?.intOrNull ?: element?.jsonPrimitive?.content?.toIntOrNull()
-        } catch (e: Exception) {
-            null
-        }
-    }
-}
+    @SerialName("access_token") val accessToken: String? = null,
+    @SerialName("token_type") val tokenType: String? = null,
+    val email: String? = null,
+    val firstName: String? = null,
+    val lastName: String? = null,
+    val userId: Int? = null,
+    val phone: String? = null,
+    val dateOfBirth: String? = null,
+    val message: String? = null
+)
 
 @Serializable
 data class ForgotPasswordRequest(

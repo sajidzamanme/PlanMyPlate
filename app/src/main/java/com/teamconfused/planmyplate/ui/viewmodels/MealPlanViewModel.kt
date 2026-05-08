@@ -27,6 +27,11 @@ data class MealPlanUiState(
         "Lunch" to emptyList(),
         "Dinner" to emptyList()
     ),
+    val servingsMultipliers: Map<String, List<Int>> = mapOf(
+        "Breakfast" to List(7) { 1 },
+        "Lunch" to List(7) { 1 },
+        "Dinner" to List(7) { 1 }
+    ),
     val isCreatingPlan: Boolean = false,
     val planCreated: Boolean = false,
     val isLoadingHistory: Boolean = false,
@@ -112,6 +117,16 @@ class MealPlanViewModel(
         }
     }
 
+    fun updateServingsMultiplier(mealType: String, index: Int, multiplier: Int) {
+        _uiState.update { state ->
+            val currentList = state.servingsMultipliers[mealType]?.toMutableList() ?: MutableList(7) { 1 }
+            if (index in currentList.indices) {
+                currentList[index] = multiplier
+            }
+            state.copy(servingsMultipliers = state.servingsMultipliers + (mealType to currentList))
+        }
+    }
+
     fun createMealPlan(onSuccess: () -> Unit) {
         val userId = sessionManager.getUserId()
         if (userId == -1) {
@@ -132,12 +147,27 @@ class MealPlanViewModel(
                 val breakfast = currentState.selectedRecipes["Breakfast"] ?: emptyList()
                 val lunch = currentState.selectedRecipes["Lunch"] ?: emptyList()
                 val dinner = currentState.selectedRecipes["Dinner"] ?: emptyList()
+                
+                val bMultipliers = currentState.servingsMultipliers["Breakfast"] ?: List(7) { 1 }
+                val lMultipliers = currentState.servingsMultipliers["Lunch"] ?: List(7) { 1 }
+                val dMultipliers = currentState.servingsMultipliers["Dinner"] ?: List(7) { 1 }
 
                 val recipeIds = mutableListOf<Int>()
+                val multipliers = mutableListOf<Int>()
+                
                 for (i in 0 until 7) {
-                    breakfast.getOrNull(i)?.id?.let { recipeIds.add(it) }
-                    lunch.getOrNull(i)?.id?.let { recipeIds.add(it) }
-                    dinner.getOrNull(i)?.id?.let { recipeIds.add(it) }
+                    breakfast.getOrNull(i)?.id?.let { 
+                        recipeIds.add(it)
+                        multipliers.add(bMultipliers.getOrElse(i) { 1 })
+                    }
+                    lunch.getOrNull(i)?.id?.let { 
+                        recipeIds.add(it)
+                        multipliers.add(lMultipliers.getOrElse(i) { 1 })
+                    }
+                    dinner.getOrNull(i)?.id?.let { 
+                        recipeIds.add(it)
+                        multipliers.add(dMultipliers.getOrElse(i) { 1 })
+                    }
                 }
 
                 if (recipeIds.size != 21) {
@@ -150,6 +180,7 @@ class MealPlanViewModel(
                 
                 val request = CreateMealPlanRequest(
                     recipeIds = recipeIds,
+                    servingsMultipliers = multipliers,
                     duration = 7,
                     startDate = LocalDate.now().toString()
                 )
@@ -217,6 +248,11 @@ class MealPlanViewModel(
                     "Breakfast" to emptyList(),
                     "Lunch" to emptyList(),
                     "Dinner" to emptyList()
+                ),
+                servingsMultipliers = mapOf(
+                    "Breakfast" to List(7) { 1 },
+                    "Lunch" to List(7) { 1 },
+                    "Dinner" to List(7) { 1 }
                 )
             )
         }

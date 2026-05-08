@@ -15,6 +15,8 @@ import com.teamconfused.planmyplate.data.model.AllergyDto
 import com.teamconfused.planmyplate.data.model.DietDto
 import com.teamconfused.planmyplate.data.model.UserDto
 import com.teamconfused.planmyplate.data.model.UserPreferencesResponse
+import com.teamconfused.planmyplate.data.model.ExpiryItemResponse
+import com.teamconfused.planmyplate.data.model.SoonToExpireResponse
 import com.teamconfused.planmyplate.domain.model.GroceryList
 import com.teamconfused.planmyplate.domain.model.GroceryListItem
 import com.teamconfused.planmyplate.domain.model.Ingredient
@@ -27,6 +29,8 @@ import com.teamconfused.planmyplate.domain.model.Allergy
 import com.teamconfused.planmyplate.domain.model.Diet
 import com.teamconfused.planmyplate.domain.model.User
 import com.teamconfused.planmyplate.domain.model.UserPreferences
+import com.teamconfused.planmyplate.domain.model.ExpiryItem
+import com.teamconfused.planmyplate.domain.model.SoonToExpireResult
 
 // Recipe Mappers
 fun RecipeResponse.toDomain(): Recipe {
@@ -55,13 +59,14 @@ fun RecipeIngredientResponse.toIngredientString(): String {
 fun UserDto.toDomain(): User {
     return User(
         userId = this.userId,
-        userName = this.userName,
-        name = this.name,
+        firstName = this.firstName,
+        lastName = this.lastName,
         email = this.email,
+        phone = this.phone,
+        dateOfBirth = this.dateOfBirth,
         age = this.age,
         weight = this.weight,
-        budget = this.budget,
-        createdAt = this.createdAt
+        budget = this.budget
     )
 }
 
@@ -130,14 +135,13 @@ fun MealPlanDto.toDomain(): MealPlan {
         startDate = this.startDate,
         duration = this.duration,
         status = this.status,
-        slots = this.slots?.map { it.toDomain() },
-        createdAt = this.createdAt
+        slots = this.slots?.map { it.toDomain() }
     )
 }
 
 fun MealSlotDto.toDomain(): MealSlot {
     return MealSlot(
-        slotId = this.slotId,
+        slotId = this.id,
         mealType = this.mealType,
         date = this.date,
         dayNumber = this.dayNumber,
@@ -152,8 +156,7 @@ fun GroceryListDto.toDomain(): GroceryList {
         userId = this.userId,
         dateCreated = this.dateCreated,
         status = this.status,
-        items = this.items?.map { it.toDomain() },
-        createdAt = this.createdAt
+        items = this.items?.map { it.toDomain() }
     )
 }
 
@@ -172,8 +175,7 @@ fun InventoryDto.toDomain(): Inventory {
         id = this.id,
         userId = this.user?.userId,
         lastUpdate = this.lastUpdate,
-        items = this.items?.map { it.toDomain() },
-        createdAt = this.createdAt
+        items = this.items?.map { it.toDomain() }
     )
 }
 
@@ -185,6 +187,30 @@ fun InventoryItemDto.toDomain(): InventoryItem {
         unit = this.unit,
         dateAdded = this.dateAdded,
         expiryDate = this.expiryDate,
-        ingredient = this.ingredient?.toDomain()
+        ingredient = this.ingredient?.toDomain(),
+        name = this.name
+    )
+}
+
+// Expiry Mappers
+fun ExpiryItemResponse.toDomain(): ExpiryItem {
+    return ExpiryItem(
+        itemId = this.itemId,
+        productName = this.productName,
+        expiryDate = this.expiryDate,
+        dateAdded = this.dateAdded,
+        quantity = this.quantity,
+        unit = this.unit,
+        daysUntilExpiry = this.daysUntilExpiry,
+        isExpired = this.isExpired
+    )
+}
+
+fun SoonToExpireResponse.toDomain(): SoonToExpireResult {
+    return SoonToExpireResult(
+        thresholdDays = this.thresholdDays,
+        totalCount = this.totalCount,
+        expiredCount = this.expiredCount,
+        items = this.items.map { it.toDomain() }
     )
 }
