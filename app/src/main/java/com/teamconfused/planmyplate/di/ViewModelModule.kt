@@ -8,7 +8,7 @@ val viewModelModule = module {
     viewModel { LoginViewModel(get(), get(), get()) }
     viewModel { SignupViewModel(get(), get()) }
     viewModel { ForgotPasswordViewModel(get()) }
-    viewModel { PreferenceSelectionViewModel(get(), get()) }
+    viewModel { PreferenceSelectionViewModel(get(), get(), get()) }
     viewModel { HomeViewModel(get(), get(), get()) }
     viewModel { MealPlanViewModel(get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { SettingsViewModel(get()) }

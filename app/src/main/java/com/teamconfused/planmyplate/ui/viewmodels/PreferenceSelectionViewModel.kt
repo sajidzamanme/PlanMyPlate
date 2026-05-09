@@ -3,6 +3,7 @@ package com.teamconfused.planmyplate.ui.viewmodels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.teamconfused.planmyplate.data.model.UserPreferencesRequest
+import com.teamconfused.planmyplate.network.IngredientService
 import com.teamconfused.planmyplate.network.UserPreferencesService
 import com.teamconfused.planmyplate.util.SessionManager
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,12 +22,12 @@ data class PreferenceSelectionUiState(
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
     val availableDiets: List<String> = emptyList(),
-    val availableAllergies: List<String> = emptyList(),
-    val availableDislikes: List<String> = emptyList()
+    val availableIngredients: List<String> = emptyList()
 )
 
 class PreferenceSelectionViewModel(
     private val userPreferencesService: UserPreferencesService,
+    private val ingredientService: IngredientService,
     private val sessionManager: SessionManager
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(PreferenceSelectionUiState())
@@ -43,15 +44,13 @@ class PreferenceSelectionViewModel(
             try {
                 // Parallel fetch
                 val diets = userPreferencesService.getDiets().map { it.dietName }
-                val allergies = userPreferencesService.getAllergies().map { it.allergyName }
-                val dislikes = userPreferencesService.getDislikes().map { it.name }
+                val ingredients = ingredientService.getAllIngredients().map { it.name }
 
                 _uiState.update { 
                     it.copy(
                         isLoading = false,
                         availableDiets = diets,
-                        availableAllergies = allergies,
-                        availableDislikes = dislikes
+                        availableIngredients = ingredients
                     ) 
                 }
             } catch (e: Exception) {
