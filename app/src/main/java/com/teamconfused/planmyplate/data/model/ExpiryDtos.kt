@@ -1,38 +1,39 @@
 package com.teamconfused.planmyplate.data.model
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class ExpiryItemRequest(
-    val productName: String,
-    val expiryDate: String,
-    val quantity: Float = 1.0f,
-    val unit: String = "unit"
+    @SerialName("product_name") val productName: String,
+    @SerialName("expiry_date") val expiryDate: String,
+    val quantity: Double? = null,
+    val unit: String? = null
 )
 
 @Serializable
 data class ExpiryItemResponse(
-    val itemId: Int,
-    val productName: String,
-    val expiryDate: String,
-    val dateAdded: String,
-    val quantity: Float,
-    val unit: String,
-    val daysUntilExpiry: Int,
-    val isExpired: Boolean
+    @SerialName("item_id") val itemId: Int? = null,
+    @SerialName("product_name") val productName: String? = null,
+    @SerialName("expiry_date") val expiryDate: String? = null,
+    @SerialName("date_added") val dateAdded: String? = null,
+    val quantity: Double? = null,
+    val unit: String? = null,
+    @SerialName("days_until_expiry") val daysUntilExpiry: Int? = null,
+    @SerialName("is_expired") val isExpired: Boolean? = null
 )
 
 @Serializable
 data class SoonToExpireResponse(
-    val thresholdDays: Int,
-    val totalCount: Int,
-    val expiredCount: Int,
-    val items: List<ExpiryItemResponse>
+    @SerialName("threshold_days") val thresholdDays: Int? = null,
+    @SerialName("total_count") val totalCount: Int? = null,
+    @SerialName("expired_count") val expiredCount: Int? = null,
+    val items: List<ExpiryItemResponse>? = null
 )
 
 @Serializable
 data class UpdateExpiryRequest(
-    val expiryDate: String? = null,
-    val quantity: Float? = null,
+    @SerialName("expiry_date") val expiryDate: String? = null,
+    val quantity: Double? = null,
     val unit: String? = null
 )

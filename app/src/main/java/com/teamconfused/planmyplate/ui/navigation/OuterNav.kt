@@ -8,6 +8,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
+import com.teamconfused.planmyplate.ui.screens.RecipeSelectionScreen
 import com.teamconfused.planmyplate.ui.screens.ForgotPasswordScreen
 import com.teamconfused.planmyplate.ui.screens.LoginScreen
 import com.teamconfused.planmyplate.ui.screens.PreferenceSelectionScreen
@@ -116,6 +117,30 @@ fun NavGraph(navController: NavHostController) {
                 },
                 onSkip = { id ->
                     homeViewModel.skipMeal(route.mealType, id)
+                }
+            )
+        }
+
+        composable<Screen.RecipeSelection> { backStackEntry ->
+            val route = backStackEntry.toRoute<Screen.RecipeSelection>()
+            
+            val mainBackStackEntry = remember(backStackEntry) {
+                navController.getBackStackEntry(Screen.Main) ?: backStackEntry
+            }
+            val mealPlanViewModel: MealPlanViewModel = koinViewModel(viewModelStoreOwner = mainBackStackEntry)
+            
+            RecipeSelectionScreen(
+                mealType = route.mealType,
+                viewModel = mealPlanViewModel,
+                onBackClick = { navController.popBackStack() },
+                onRecipeDetailsClick = { recipeId ->
+                    navController.navigate(
+                        Screen.RecipeDetails(
+                            recipeId = recipeId,
+                            isSelectionMode = true,
+                            mealType = route.mealType
+                        )
+                    )
                 }
             )
         }

@@ -5,21 +5,22 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class RecipeResponse(
-    @SerialName("recipeId") val id: Int? = null,
+    @SerialName("recipe_id") val id: Int? = null,
     val name: String,
     val description: String? = null,
     val calories: Int? = null,
-    val prepTime: Int? = null,
-    val cookTime: Int? = null,
+    @SerialName("prep_time") val prepTime: Int? = null,
+    @SerialName("cook_time") val cookTime: Int? = null,
     val servings: Int? = null,
     val instructions: String? = null,
-    @SerialName("recipeIngredients") val ingredients: List<RecipeIngredientResponse>? = null,
-    val imageUrl: String? = null
+    @SerialName("recipe_ingredients") val ingredients: List<RecipeIngredientResponse>? = null,
+    @SerialName("image_url") val imageUrl: String? = null
 )
 
 @Serializable
 data class RecipeIngredientResponse(
-    val quantity: Int? = null,
+    val id: Int? = null,
+    val quantity: Double? = null,
     val unit: String? = null,
     val ingredient: IngredientDto? = null
 )

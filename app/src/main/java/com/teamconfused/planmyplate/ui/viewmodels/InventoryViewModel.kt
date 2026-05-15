@@ -1,5 +1,6 @@
 package com.teamconfused.planmyplate.ui.viewmodels
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.teamconfused.planmyplate.data.mapper.toDomain
@@ -62,6 +63,7 @@ class InventoryViewModel(
                     ) 
                 }
             } catch (e: Exception) {
+                Log.e("InventoryViewModel", "Failed to fetch inventory: ${e.message}", e)
                 _uiState.update { it.copy(isLoading = false, errorMessage = e.message) }
             }
         }
@@ -69,16 +71,16 @@ class InventoryViewModel(
     
     fun updateItemQuantity(item: InventoryItem, delta: Int) {
         val inventoryId = _uiState.value.inventory?.id ?: return
-        val currentQty = item.quantity
+        val currentQty = item.quantity ?: 0.0
         val newQty = currentQty + delta
         
         if (newQty < 0) return 
 
         // Optimistic Local Update
         viewModelScope.launch {
-             val updatedItems = _uiState.value.items.map {
-                 if (it.id == item.id) it.copy(quantity = newQty) else it
-             }.filter { it.quantity > 0 } // Remove locally if 0
+              val updatedItems = _uiState.value.items.map {
+                  if (it.id == item.id) it.copy(quantity = newQty) else it
+              }.filter { (it.quantity ?: 0.0) > 0 } // Remove locally if 0
              
              _uiState.update { it.copy(items = updatedItems) }
 
@@ -86,14 +88,15 @@ class InventoryViewModel(
              // 0 -> Delete (Immediate)
              // > 0 -> Debounced Update (or Add if that's the only working endpoint)
              
-             if (newQty == 0 && item.id != null) {
+             if (newQty == 0.0 && item.id != null) {
                  try {
                      val token = sessionManager.getAuthToken() ?: return@launch
                      val authHeader = "Bearer $token"
                     inventoryService.removeItemFromInventory(authHeader, item.id)
-                 } catch (e: Exception) {
-                     fetchInventory() // Revert on failure
-                 }
+                  } catch (e: Exception) {
+                      Log.e("InventoryViewModel", "Failed to remove item from inventory: ${e.message}", e)
+                      fetchInventory() // Revert on failure
+                  }
                  return@launch
              }
 
@@ -115,11 +118,12 @@ class InventoryViewModel(
                         val authHeader = "Bearer $token"
                         inventoryService.updateInventoryItem(authHeader, item.id, req)
                      }
-                 } catch (e: Exception) {
-                     // Fallback mechanism if Update fails? 
-                     // Or just log.
-                     println("Inventory sync failed: ${e.message}")
-                 }
+                  } catch (e: Exception) {
+                      Log.e("InventoryViewModel", "Failed to update inventory item: ${e.message}", e)
+                      // Fallback mechanism if Update fails? 
+                      // Or just log.
+                      println("Inventory sync failed: ${e.message}")
+                  }
              }
         }
     }

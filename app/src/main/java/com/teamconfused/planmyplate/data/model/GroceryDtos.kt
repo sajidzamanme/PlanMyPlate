@@ -5,9 +5,9 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class GroceryListDto(
-    @SerialName("listId") val listId: Int? = null,
-    @SerialName("userId") val userId: Int? = null,
-    @SerialName("dateCreated") val dateCreated: String? = null,
+    @SerialName("list_id") val listId: Int? = null,
+    @SerialName("user_id") val userId: Int? = null,
+    @SerialName("date_created") val dateCreated: String? = null,
     val status: String = "active",
     val items: List<GroceryListItemDto>? = null,
     @SerialName("created_at") val createdAt: String? = null
@@ -16,13 +16,13 @@ data class GroceryListDto(
 @Serializable
 data class GroceryListRequest(
     val status: String = "active",
-    @SerialName("startDate") val startDate: String? = null
+    @SerialName("start_date") val startDate: String? = null
 )
 
 @Serializable
 data class PurchaseItemDetail(
-    val itemId: Int,
-    val quantity: Int
+    @SerialName("item_id") val itemId: Int,
+    val quantity: Double
 )
 
 @Serializable
@@ -34,6 +34,6 @@ data class PurchaseItemsRequest(
 data class GroceryListItemDto(
     val id: Int? = null,
     val ingredient: IngredientDto? = null,
-    val quantity: Int? = null,
+    val quantity: Double? = null,
     val unit: String? = null
 )

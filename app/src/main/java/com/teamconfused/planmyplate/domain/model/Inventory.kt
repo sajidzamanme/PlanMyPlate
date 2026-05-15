@@ -15,10 +15,10 @@ data class Inventory(
 data class InventoryItem(
     val id: Int? = null,
     val inventoryId: Int? = null,
-    val quantity: Int,
+    val quantity: Double? = null,
     val unit: String? = null,
     val dateAdded: String? = null,
-    val expiryDate: String,
+    val expiryDate: String? = null,
     val ingredient: Ingredient? = null,
     val name: String? = null
 )

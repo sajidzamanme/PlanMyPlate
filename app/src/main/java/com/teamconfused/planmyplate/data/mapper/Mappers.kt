@@ -116,7 +116,7 @@ fun IngredientDto.toDomain(): Ingredient {
     return Ingredient(
         ingId = this.ingId,
         name = this.name,
-        price = this.price
+        price = this.price?.toFloatOrNull()
     )
 }
 
@@ -211,6 +211,6 @@ fun SoonToExpireResponse.toDomain(): SoonToExpireResult {
         thresholdDays = this.thresholdDays,
         totalCount = this.totalCount,
         expiredCount = this.expiredCount,
-        items = this.items.map { it.toDomain() }
+        items = this.items?.map { it.toDomain() }
     )
 }

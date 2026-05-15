@@ -1,5 +1,6 @@
 package com.teamconfused.planmyplate.ui.viewmodels
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.teamconfused.planmyplate.data.model.CreateMealPlanRequest
@@ -95,6 +96,7 @@ class MealPlanViewModel(
                 _recommendedRecipesState.value = RecipeUiState.Success(all.shuffled().take(5))
                 _budgetRecipesState.value = RecipeUiState.Success(filterRecipesUseCase.byCalories(authHeader, 0, 400))
             } catch (e: Exception) {
+                Log.e("MealPlanViewModel", "Failed to load recipes: ${e.message}", e)
                 _allRecipesState.value = RecipeUiState.Error(e.message ?: "Failed to load recipes")
                 _recommendedRecipesState.value = RecipeUiState.Error(e.message ?: "Failed to load recommended recipes")
                 _budgetRecipesState.value = RecipeUiState.Error(e.message ?: "Failed to load budget recipes")
@@ -102,10 +104,16 @@ class MealPlanViewModel(
         }
     }
     
+    private fun recipesMatch(a: Recipe, b: Recipe): Boolean {
+        return (a.id != null && b.id != null && a.id == b.id)
+            || (a.id == null && b.id == null && a.name == b.name)
+    }
+
     fun toggleRecipe(mealType: String, recipe: Recipe) {
+        if (recipe.id == null) return
         val current = _uiState.value.selectedRecipes[mealType] ?: emptyList()
-        val updated = if (current.any { it.id == recipe.id }) {
-            current.filter { it.id != recipe.id }
+        val updated = if (current.any { recipesMatch(it, recipe) }) {
+            current.filter { !recipesMatch(it, recipe) }
         } else if (current.size < 7) {
             current + recipe
         } else {
@@ -134,20 +142,31 @@ class MealPlanViewModel(
             return
         }
 
-        val allRecipesSelected = _uiState.value.selectedRecipes.values.all { it.size == 7 }
-        if (!allRecipesSelected) {
+        val currentState = _uiState.value
+        val breakfast = currentState.selectedRecipes["Breakfast"] ?: emptyList()
+        val lunch = currentState.selectedRecipes["Lunch"] ?: emptyList()
+        val dinner = currentState.selectedRecipes["Dinner"] ?: emptyList()
+
+        if (breakfast.size != 7 || lunch.size != 7 || dinner.size != 7) {
             _uiState.update { it.copy(errorMessage = "Please select 7 recipes for each meal type") }
+            return
+        }
+
+        // Validate all selected recipes have non-null IDs
+        val invalidRecipes = mutableListOf<String>()
+        breakfast.forEachIndexed { idx, r -> if (r.id == null) invalidRecipes.add("Breakfast #${idx + 1}: ${r.name}") }
+        lunch.forEachIndexed { idx, r -> if (r.id == null) invalidRecipes.add("Lunch #${idx + 1}: ${r.name}") }
+        dinner.forEachIndexed { idx, r -> if (r.id == null) invalidRecipes.add("Dinner #${idx + 1}: ${r.name}") }
+        if (invalidRecipes.isNotEmpty()) {
+            _uiState.update {
+                it.copy(errorMessage = "Some recipes are missing IDs. Please re-select:\n${invalidRecipes.joinToString("\n")}")
+            }
             return
         }
 
         viewModelScope.launch {
             _uiState.update { it.copy(isCreatingPlan = true, errorMessage = null, planCreated = false) }
             try {
-                val currentState = _uiState.value
-                val breakfast = currentState.selectedRecipes["Breakfast"] ?: emptyList()
-                val lunch = currentState.selectedRecipes["Lunch"] ?: emptyList()
-                val dinner = currentState.selectedRecipes["Dinner"] ?: emptyList()
-                
                 val bMultipliers = currentState.servingsMultipliers["Breakfast"] ?: List(7) { 1 }
                 val lMultipliers = currentState.servingsMultipliers["Lunch"] ?: List(7) { 1 }
                 val dMultipliers = currentState.servingsMultipliers["Dinner"] ?: List(7) { 1 }
@@ -156,22 +175,25 @@ class MealPlanViewModel(
                 val multipliers = mutableListOf<Int>()
                 
                 for (i in 0 until 7) {
-                    breakfast.getOrNull(i)?.id?.let { 
-                        recipeIds.add(it)
-                        multipliers.add(bMultipliers.getOrElse(i) { 1 })
+                    val bId = breakfast[i].id ?: -1
+                    val lId = lunch[i].id ?: -1
+                    val dId = dinner[i].id ?: -1
+
+                    if (bId == -1 || lId == -1 || dId == -1) {
+                        _uiState.update { it.copy(errorMessage = "Error processing recipes — some recipes have invalid IDs.") }
+                        return@launch
                     }
-                    lunch.getOrNull(i)?.id?.let { 
-                        recipeIds.add(it)
-                        multipliers.add(lMultipliers.getOrElse(i) { 1 })
-                    }
-                    dinner.getOrNull(i)?.id?.let { 
-                        recipeIds.add(it)
-                        multipliers.add(dMultipliers.getOrElse(i) { 1 })
-                    }
+
+                    recipeIds.add(bId)
+                    multipliers.add(bMultipliers.getOrElse(i) { 1 })
+                    recipeIds.add(lId)
+                    multipliers.add(lMultipliers.getOrElse(i) { 1 })
+                    recipeIds.add(dId)
+                    multipliers.add(dMultipliers.getOrElse(i) { 1 })
                 }
 
                 if (recipeIds.size != 21) {
-                    _uiState.update { it.copy(errorMessage = "Error processing recipes.") }
+                    _uiState.update { it.copy(errorMessage = "Error processing recipes — expected 21 recipes but got ${recipeIds.size}.") }
                     return@launch
                 }
 
@@ -193,6 +215,7 @@ class MealPlanViewModel(
                 _uiState.update { it.copy(planCreated = true, isReplacingPlan = false) }
                 onSuccess()
             } catch (e: Exception) {
+                Log.e("MealPlanViewModel", "Failed to create meal plan: ${e.message}", e)
                 _uiState.update { it.copy(errorMessage = e.message ?: "Failed to create meal plan") }
             } finally {
                 _uiState.update { it.copy(isCreatingPlan = false) }
@@ -219,6 +242,7 @@ class MealPlanViewModel(
                     )
                 }
             } catch (e: Exception) {
+                Log.e("MealPlanViewModel", "Failed to fetch weekly meal plans: ${e.message}", e)
                 _uiState.update { it.copy(isLoadingHistory = false) }
             }
         }
@@ -279,6 +303,7 @@ class MealPlanViewModel(
                 _uiState.update { it.copy(planCreated = true, isReplacingPlan = false) }
                 onSuccess()
             } catch (e: Exception) {
+                Log.e("MealPlanViewModel", "Failed to generate meal plan: ${e.message}", e)
                 _uiState.update { 
                     it.copy(errorMessage = e.message ?: "Failed to generate meal plan") 
                 }

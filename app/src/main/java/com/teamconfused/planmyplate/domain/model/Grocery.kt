@@ -17,6 +17,6 @@ data class GroceryList(
 data class GroceryListItem(
     val id: Int? = null,
     val ingredient: Ingredient? = null,
-    val quantity: Int? = null,
+    val quantity: Double? = null,
     val unit: String? = null
 )

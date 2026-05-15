@@ -134,7 +134,7 @@ fun InventoryItemCard(
                     onClick = onDecrease,
                     colors = IconButtonDefaults.filledIconButtonColors(containerColor = MaterialTheme.colorScheme.errorContainer)
                 ) {
-                    if (item.quantity <= 1) {
+                    if ((item.quantity ?: 0.0) <= 1) {
                          Icon(painter = painterResource(com.teamconfused.planmyplate.R.drawable.remove_icon), contentDescription = "Remove", tint = MaterialTheme.colorScheme.error)
                     } else {
                          // Use standard Remove icon

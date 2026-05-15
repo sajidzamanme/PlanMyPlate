@@ -1,6 +1,7 @@
 package com.teamconfused.planmyplate.ui.viewmodels
 
 import android.content.Context
+import android.util.Log
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -97,6 +98,7 @@ class AddRecipeViewModel(
                     _uiState.update { it.copy(isUploadingImage = false, errorMessage = "Failed to process image") }
                 }
             } catch (e: Exception) {
+                Log.e("AddRecipeViewModel", "Image upload failed: ${e.message}", e)
                 _uiState.update { it.copy(isUploadingImage = false, errorMessage = "Upload failed: ${e.message}") }
             }
         }
@@ -114,6 +116,7 @@ class AddRecipeViewModel(
             }
             tempFile
         } catch (e: Exception) {
+            Log.e("AddRecipeViewModel", "Failed to get file from URI: ${e.message}", e)
             null
         }
     }
@@ -186,6 +189,7 @@ class AddRecipeViewModel(
                 }
                 onSuccess()
             } catch (e: Exception) {
+                Log.e("AddRecipeViewModel", "Failed to create recipe: ${e.message}", e)
                 _uiState.update {
                     it.copy(
                         isLoading = false,

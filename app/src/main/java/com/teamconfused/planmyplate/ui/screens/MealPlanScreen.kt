@@ -1,8 +1,16 @@
 package com.teamconfused.planmyplate.ui.screens
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
@@ -11,468 +19,384 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
-import coil.compose.AsyncImage
-import com.teamconfused.planmyplate.domain.model.Recipe
-import com.teamconfused.planmyplate.domain.model.MealPlan
-import com.teamconfused.planmyplate.domain.model.AdditionalMeal
-import com.teamconfused.planmyplate.ui.components.CategorizedRecipeSection
-import com.teamconfused.planmyplate.ui.components.HorizontalRecipeCard
-import com.teamconfused.planmyplate.ui.viewmodels.MealPlanViewModel
-import com.teamconfused.planmyplate.R
-import com.teamconfused.planmyplate.ui.navigation.Screen
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
-import java.time.temporal.ChronoUnit
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.navigation.NavController
+import coil.compose.AsyncImage
+import com.teamconfused.planmyplate.R
+import com.teamconfused.planmyplate.domain.model.AdditionalMeal
+import com.teamconfused.planmyplate.domain.model.MealPlan
+import com.teamconfused.planmyplate.domain.model.MealSlot
+import com.teamconfused.planmyplate.domain.model.Recipe
+import com.teamconfused.planmyplate.domain.model.recipe.MealStyle
+import com.teamconfused.planmyplate.domain.model.recipe.mealStyles
+import com.teamconfused.planmyplate.ui.navigation.Screen
+import com.teamconfused.planmyplate.ui.theme.PlanMyPlateTheme
+import com.teamconfused.planmyplate.ui.viewmodels.MealPlanUiState
+import com.teamconfused.planmyplate.ui.viewmodels.MealPlanViewModel
 import org.koin.androidx.compose.koinViewModel
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
+
+// ─── Entry point ───────────────────────────────────────────────────────────
 
 @Composable
 fun MealPlanScreen(
-    navController: NavController, 
+    navController: NavController,
     rootNavController: NavController,
-    viewModel: MealPlanViewModel = koinViewModel()
+    viewModel: MealPlanViewModel = koinViewModel(),
 ) {
-    val context = LocalContext.current
-    
     val uiState by viewModel.uiState.collectAsState()
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    // Refresh data whenever the screen becomes visible (ON_START)
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_START) {
-                viewModel.refreshAll()
-            }
+            if (event == Lifecycle.Event.ON_START) viewModel.refreshAll()
         }
         lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
-        }
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
-    
-    var selectedMealType by remember { mutableStateOf<String?>(null) }
-    var recipeToShowDetails by remember { mutableStateOf<Recipe?>(null) }
-    
-    val allRecipesSelected = uiState.selectedRecipes.values.all { it.size == 7 }
-    
-    Scaffold(
-        contentWindowInsets = WindowInsets(0, 0, 0, 0)
-    ) { padding ->
+
+    Scaffold(contentWindowInsets = WindowInsets(0)) { padding ->
         if (uiState.activeMealPlan != null && !uiState.isCreatingPlan) {
             WeeklyMealPlanView(
-                mealPlan = uiState.activeMealPlan!!,
-                additionalMeals = uiState.additionalMeals,
-                handledMeals = uiState.handledMeals,
-                modifier = Modifier.padding(padding),
-                onDelete = { /* Implement delete/reset logic if needed */ },
-                onCreateNew = { viewModel.startNewPlan() },
-                onRecipeClick = { recipeId ->
-                    rootNavController.navigate(Screen.RecipeDetails(recipeId, readOnly = true))
-                }
+                mealPlan         = uiState.activeMealPlan!!,
+                additionalMeals  = uiState.additionalMeals,
+                handledMeals     = uiState.handledMeals,
+                modifier         = Modifier.padding(padding),
+                onCreateNew      = { viewModel.startNewPlan() },
+                onRecipeClick    = { id ->
+                    rootNavController.navigate(Screen.RecipeDetails(id, readOnly = true))
+                },
             )
         } else {
             CreateMealPlanContent(
-                uiState = uiState,
-                viewModel = viewModel,
-                navController = navController,
-                padding = padding,
-                allRecipesSelected = allRecipesSelected,
-                selectedMealType = selectedMealType,
-                onMealTypeClick = { selectedMealType = it },
-                onRecipeClick = { recipeToShowDetails = it }
+                uiState          = uiState,
+                onGenerateAi     = {
+                    viewModel.generateMealPlan {
+                        navController.navigate("home") { popUpTo("home") { inclusive = true } }
+                    }
+                },
+                onUseSelections  = {
+                    viewModel.createMealPlan {
+                        navController.navigate("home") { popUpTo("home") { inclusive = true } }
+                    }
+                },
+                onMealTypeClick  = { type ->
+                    rootNavController.navigate(Screen.RecipeSelection(mealType = type))
+                },
+                padding          = padding,
             )
-        }
-    }
-    
-    selectedMealType?.let { mealType ->
-        RecipeSelectionDialog(
-            mealType = mealType,
-            selectedRecipes = uiState.selectedRecipes[mealType] ?: emptyList(),
-            onDismiss = { selectedMealType = null },
-            onRecipeToggle = { recipe ->
-                viewModel.toggleRecipe(mealType, recipe)
-            },
-            onRecipeLongClick = { recipe ->
-                recipeToShowDetails = recipe
-            },
-            viewModel = viewModel
-        )
-    }
-    
-    recipeToShowDetails?.let { recipe ->
-        val currentMealType = selectedMealType ?: "Breakfast"
-        LaunchedEffect(recipe.id) {
-            rootNavController.navigate(
-                Screen.RecipeDetails(
-                    recipeId = recipe.id ?: 0,
-                    isSelectionMode = true,
-                    mealType = currentMealType
-                )
-            )
-            recipeToShowDetails = null
         }
     }
 }
 
-@Composable
-fun MealTypeCard(mealType: String, selectedCount: Int, selectedRecipesList: List<Recipe>, onClick: () -> Unit, onRecipeClick: (Recipe) -> Unit = {}) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        onClick = onClick,
-        colors = CardDefaults.cardColors(
-            containerColor = if (selectedCount == 7) 
-                MaterialTheme.colorScheme.primaryContainer 
-            else 
-                MaterialTheme.colorScheme.surface
-        ),
-        shape = RoundedCornerShape(16.dp)
-    ) {
-        Column(modifier = Modifier.padding(20.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Text(
-                        text = mealType,
-                        style = MaterialTheme.typography.titleLarge
-                    )
-                    Text(
-                        text = "$selectedCount/7 recipes selected",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                Icon(
-                    painter = painterResource(R.drawable.add_icon),
-                    contentDescription = "Select $mealType recipes",
-                    tint = MaterialTheme.colorScheme.primary
-                )
-            }
-            
-            if (selectedRecipesList.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(12.dp))
-                selectedRecipesList.forEach { recipe ->
-                    HorizontalRecipeCard(
-                        recipe = recipe,
-                        onClick = { onRecipeClick(recipe) },
-                        onLongClick = { onRecipeClick(recipe) }
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
-            }
-        }
-    }
-}
+// ─── Create Plan ──────────────────────────────────────────────────────────
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RecipeSelectionDialog(
-    mealType: String,
-    selectedRecipes: List<Recipe>,
-    onDismiss: () -> Unit,
-    onRecipeToggle: (Recipe) -> Unit,
-    onRecipeLongClick: (Recipe) -> Unit,
-    viewModel: MealPlanViewModel
+private fun CreateMealPlanContent(
+    uiState: MealPlanUiState,
+    onGenerateAi: () -> Unit,
+    onUseSelections: () -> Unit,
+    onMealTypeClick: (String) -> Unit,
+    padding: PaddingValues,
 ) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
-    val recommendedState by viewModel.recommendedRecipesState.collectAsState()
-    val budgetState by viewModel.budgetRecipesState.collectAsState()
-    val allRecipesState by viewModel.allRecipesState.collectAsState()
-    
-    LaunchedEffect(Unit) {
-        viewModel.refreshRecipes()
-    }
-    
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState
-    ) {
+    val allSelected = uiState.selectedRecipes.values.all { it.size == 7 }
+
+    Box(modifier = Modifier.fillMaxSize().padding(padding)) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp)
-                .padding(bottom = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .verticalScroll(rememberScrollState()),
         ) {
-            Text(
-                text = "Select $mealType Recipes",
-                style = MaterialTheme.typography.headlineMedium
-            )
-            
-            Text(
-                text = "${selectedRecipes.size}/7 selected",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.primary
-            )
-            
-            when (recommendedState) {
-                is com.teamconfused.planmyplate.ui.viewmodels.RecipeUiState.Loading -> {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 32.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
-                    }
-                }
-                is com.teamconfused.planmyplate.ui.viewmodels.RecipeUiState.Success -> {
-                    val recipes = (recommendedState as com.teamconfused.planmyplate.ui.viewmodels.RecipeUiState.Success).recipes
-                    if (recipes.isNotEmpty()) {
-                        CategorizedRecipeSection(
-                            title = "Recommended",
-                            recipes = recipes,
-                            onRecipeClick = { onRecipeToggle(it) },
-                            onRecipeLongClick = { onRecipeLongClick(it) },
-                            onSeeAllClick = { },
-                            selectedRecipes = selectedRecipes
-                        )
-                    }
-                }
-                is com.teamconfused.planmyplate.ui.viewmodels.RecipeUiState.Error -> {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = "Failed to load recommended recipes",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.error
-                        )
-                        TextButton(onClick = { viewModel.retryFetchRecipes() }) {
-                            Text("Retry")
-                        }
-                    }
-                }
-            }
-            
-            when (budgetState) {
-                is com.teamconfused.planmyplate.ui.viewmodels.RecipeUiState.Loading -> {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 32.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
-                    }
-                }
-                is com.teamconfused.planmyplate.ui.viewmodels.RecipeUiState.Success -> {
-                    val recipes = (budgetState as com.teamconfused.planmyplate.ui.viewmodels.RecipeUiState.Success).recipes
-                    if (recipes.isNotEmpty()) {
-                        CategorizedRecipeSection(
-                            title = "Budget Options",
-                            recipes = recipes,
-                            onRecipeClick = { onRecipeToggle(it) },
-                            onRecipeLongClick = { onRecipeLongClick(it) },
-                            onSeeAllClick = { },
-                            selectedRecipes = selectedRecipes
-                        )
-                    }
-                }
-                is com.teamconfused.planmyplate.ui.viewmodels.RecipeUiState.Error -> {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = "Failed to load budget recipes",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.error
-                        )
-                        TextButton(onClick = { viewModel.retryFetchRecipes() }) {
-                            Text("Retry")
-                        }
-                    }
-                }
+            // ── Top bar ──
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.surface)
+                    .padding(horizontal = 20.dp, vertical = 24.dp),
+            ) {
+                Text(
+                    text = "Plan your week",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = "Select 7 recipes for each meal type",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
 
-            when (allRecipesState) {
-                is com.teamconfused.planmyplate.ui.viewmodels.RecipeUiState.Loading -> {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 32.dp),
-                        contentAlignment = Alignment.Center
+            HorizontalDivider(thickness = 0.5.dp, color = MaterialTheme.colorScheme.outlineVariant)
+
+            // ── Meal type cards ──
+            Column(
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 20.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                listOf("Breakfast", "Lunch", "Dinner").forEach { type ->
+                    MealTypeRow(
+                        mealType  = type,
+                        selected  = uiState.selectedRecipes[type] ?: emptyList(),
+                        totalSlots = 7,
+                        onClick   = { onMealTypeClick(type) },
+                    )
+                }
+
+                // Error
+                uiState.errorMessage?.let { msg ->
+                    Spacer(Modifier.height(4.dp))
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.errorContainer,
+                        modifier = Modifier.fillMaxWidth(),
                     ) {
-                        CircularProgressIndicator()
-                    }
-                }
-                is com.teamconfused.planmyplate.ui.viewmodels.RecipeUiState.Success -> {
-                    val recipes = (allRecipesState as com.teamconfused.planmyplate.ui.viewmodels.RecipeUiState.Success).recipes
-                    if (recipes.isNotEmpty()) {
-                        CategorizedRecipeSection(
-                            title = "All Recipes",
-                            recipes = recipes,
-                            onRecipeClick = { onRecipeToggle(it) },
-                            onRecipeLongClick = { onRecipeLongClick(it) },
-                            onSeeAllClick = { },
-                            selectedRecipes = selectedRecipes
-                        )
-                    } else {
                         Text(
-                            text = "No recipes found. Try adding some in Settings!",
-                            style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.padding(vertical = 16.dp)
+                            text = msg,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                            modifier = Modifier.padding(14.dp),
                         )
                     }
                 }
-                is com.teamconfused.planmyplate.ui.viewmodels.RecipeUiState.Error -> {
+
+                Spacer(Modifier.height(8.dp))
+
+                // ── AI generate button ──
+                Button(
+                    onClick = onGenerateAi,
+                    enabled  = !uiState.isCreatingPlan,
+                    modifier = Modifier.fillMaxWidth().height(52.dp),
+                    shape    = RoundedCornerShape(14.dp),
+                    colors   = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                    ),
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_ai_stars),
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                    )
+                    Spacer(Modifier.width(8.dp))
                     Text(
-                        text = "Failed to load all recipes",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.error
+                        "Generate with AI",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                }
+
+                // ── Manual plan button ──
+                OutlinedButton(
+                    onClick  = onUseSelections,
+                    enabled  = allSelected && !uiState.isCreatingPlan,
+                    modifier = Modifier.fillMaxWidth().height(52.dp),
+                    shape    = RoundedCornerShape(14.dp),
+                ) {
+                    Text(
+                        "Use my selections",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Medium,
+                    )
+                }
+
+                if (!allSelected) {
+                    Text(
+                        text = "Fill all 7 slots per meal to use your own selections",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 2.dp),
                     )
                 }
             }
         }
+
+        // ── Generating overlay ──
+        if (uiState.isCreatingPlan) {
+            Surface(
+                modifier = Modifier.fillMaxSize(),
+                color = MaterialTheme.colorScheme.scrim.copy(alpha = 0.45f),
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Surface(
+                        shape  = RoundedCornerShape(20.dp),
+                        color  = MaterialTheme.colorScheme.surface,
+                        tonalElevation = 6.dp,
+                        modifier = Modifier.padding(32.dp),
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(32.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(16.dp),
+                        ) {
+                            CircularProgressIndicator(
+                                strokeCap = StrokeCap.Round,
+                                color = MaterialTheme.colorScheme.primary,
+                            )
+                            Text(
+                                "Building your plan…",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+                }
+            }
+        }
     }
 }
+
+// ─── Meal type row card ────────────────────────────────────────────────────
 
 @Composable
-fun CreateMealPlanContent(
-    uiState: com.teamconfused.planmyplate.ui.viewmodels.MealPlanUiState,
-    viewModel: MealPlanViewModel,
-    navController: NavController,
-    padding: PaddingValues,
-    allRecipesSelected: Boolean,
-    selectedMealType: String?,
-    onMealTypeClick: (String) -> Unit,
-    onRecipeClick: (Recipe) -> Unit
+private fun MealTypeRow(
+    mealType: String,
+    selected: List<Recipe>,
+    totalSlots: Int,
+    onClick: () -> Unit,
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(padding)
-            .verticalScroll(rememberScrollState())
-            .padding(20.dp),
-        verticalArrangement = Arrangement.spacedBy(24.dp)
+    val style   = mealStyles[mealType]!!
+    val filled  = selected.size
+    val progress by animateFloatAsState(
+        targetValue = filled.toFloat() / totalSlots,
+        animationSpec = tween(400),
+        label = "progress_$mealType",
+    )
+    val complete = filled == totalSlots
+    val accentAnim by animateColorAsState(
+        targetValue = if (complete) style.accent else MaterialTheme.colorScheme.outline,
+        label = "accent_$mealType",
+    )
+
+    Surface(
+        onClick   = onClick,
+        shape     = RoundedCornerShape(16.dp),
+        color     = if (complete) style.surface else MaterialTheme.colorScheme.surface,
+        border    = BorderStroke(
+            width = if (complete) 1.5.dp else 0.5.dp,
+            color = if (complete) style.accent.copy(alpha = 0.4f)
+            else MaterialTheme.colorScheme.outlineVariant,
+        ),
+        modifier  = Modifier.fillMaxWidth(),
     ) {
-        Text(
-            text = "Create Weekly Meal Plan",
-            style = MaterialTheme.typography.headlineMedium
-        )
-        
-        Text(
-            text = "Select 7 recipes for each meal slot",
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        
-        MealTypeCard(
-            mealType = "Breakfast",
-            selectedCount = uiState.selectedRecipes["Breakfast"]?.size ?: 0,
-            selectedRecipesList = uiState.selectedRecipes["Breakfast"] ?: emptyList(),
-            onClick = { onMealTypeClick("Breakfast") },
-            onRecipeClick = onRecipeClick
-        )
-        
-        MealTypeCard(
-            mealType = "Lunch",
-            selectedCount = uiState.selectedRecipes["Lunch"]?.size ?: 0,
-            selectedRecipesList = uiState.selectedRecipes["Lunch"] ?: emptyList(),
-            onClick = { onMealTypeClick("Lunch") },
-            onRecipeClick = onRecipeClick
-        )
-        
-        MealTypeCard(
-            mealType = "Dinner",
-            selectedCount = uiState.selectedRecipes["Dinner"]?.size ?: 0,
-            selectedRecipesList = uiState.selectedRecipes["Dinner"] ?: emptyList(),
-            onClick = { onMealTypeClick("Dinner") },
-            onRecipeClick = onRecipeClick
-        )
-        
-        uiState.errorMessage?.let { errorMsg ->
-            Text(
-                text = errorMsg,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.error,
-                modifier = Modifier.padding(vertical = 8.dp)
-            )
-        }
-        
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Button(
-                onClick = {
-                    viewModel.generateMealPlan {
-                        navController.navigate("home") {
-                            popUpTo("home") { inclusive = true }
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    // Emoji badge
+                    Surface(
+                        shape = RoundedCornerShape(10.dp),
+                        color = style.surface,
+                        modifier = Modifier.size(40.dp),
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Text(style.emoji, fontSize = 20.sp)
                         }
                     }
-                },
-                modifier = Modifier
-                    .weight(1f)
-                    .height(56.dp),
-                shape = RoundedCornerShape(12.dp),
-                enabled = !uiState.isCreatingPlan,
-                contentPadding = PaddingValues(horizontal = 8.dp)
-            ) {
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    text = "Auto Generate",
-                    style = MaterialTheme.typography.labelLarge,
-                    maxLines = 1
-                )
+                    Column {
+                        Text(
+                            mealType,
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                        Text(
+                            if (complete) "All set!" else "$filled / $totalSlots selected",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = if (complete) style.accent else MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontWeight = if (complete) FontWeight.Medium else FontWeight.Normal,
+                        )
+                    }
+                }
+                // Chevron / check
+                if (complete) {
+                    Surface(shape = CircleShape, color = style.accent.copy(alpha = 0.12f)) {
+                        Icon(
+                            painter = painterResource(R.drawable.check_icon),
+                            contentDescription = "Complete",
+                            tint = style.accent,
+                            modifier = Modifier.padding(6.dp).size(14.dp),
+                        )
+                    }
+                } else {
+                    Icon(
+                        painter = painterResource(R.drawable.add_icon),
+                        contentDescription = "Add $mealType",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
             }
 
-            Button(
-                onClick = {
-                    viewModel.createMealPlan {
-                        navController.navigate("home") {
-                            popUpTo("home") { inclusive = true }
+            Spacer(Modifier.height(12.dp))
+
+            // Progress track
+            LinearProgressIndicator(
+                progress = { progress },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(3.dp)
+                    .clip(CircleShape),
+                color      = accentAnim,
+                trackColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
+                strokeCap  = StrokeCap.Round,
+            )
+
+            // Recipe thumbnails
+            if (selected.isNotEmpty()) {
+                Spacer(Modifier.height(10.dp))
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    items(selected) { recipe ->
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.width(52.dp),
+                        ) {
+                            AsyncImage(
+                                model = recipe.imageUrl,
+                                contentDescription = recipe.name,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .size(44.dp)
+                                    .clip(RoundedCornerShape(10.dp)),
+                            )
+                            Spacer(Modifier.height(3.dp))
+                            Text(
+                                recipe.name,
+                                style = MaterialTheme.typography.labelSmall,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
                         }
                     }
-                },
-                modifier = Modifier
-                    .weight(1f)
-                    .height(56.dp),
-                shape = RoundedCornerShape(12.dp),
-                enabled = allRecipesSelected && !uiState.isCreatingPlan,
-                contentPadding = PaddingValues(horizontal = 8.dp)
-            ) {
-                Text(
-                    text = "Create Manual",
-                    style = MaterialTheme.typography.labelLarge,
-                    maxLines = 1
-                )
+                }
             }
         }
     }
-    
-    if (uiState.isCreatingPlan) {
-        AlertDialog(
-            onDismissRequest = {},
-            title = { Text("Creating Your Plan") },
-            text = { 
-                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-                    CircularProgressIndicator()
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text("Our AI is crafting a balanced meal plan just for you...")
-                }
-            },
-            confirmButton = {}
-        )
-    }
 }
+
+// ─── Weekly plan view ─────────────────────────────────────────────────────
 
 @Composable
 fun WeeklyMealPlanView(
@@ -480,250 +404,421 @@ fun WeeklyMealPlanView(
     additionalMeals: List<AdditionalMeal> = emptyList(),
     handledMeals: Map<String, Set<String>> = emptyMap(),
     modifier: Modifier = Modifier,
-    onDelete: () -> Unit,
+    onDelete: () -> Unit = {},
     onCreateNew: () -> Unit,
-    onRecipeClick: (Int) -> Unit = {}
+    onRecipeClick: (Int) -> Unit = {},
 ) {
-    val slots = mealPlan.slots ?: emptyList()
-    val startDate = try {
-        if (mealPlan.startDate != null) LocalDate.parse(mealPlan.startDate) else null
-    } catch (e: Exception) { null }
-    val today = LocalDate.now()
+    val slots     = mealPlan.slots ?: emptyList()
+    val startDate = runCatching { mealPlan.startDate?.let { LocalDate.parse(it) } }.getOrNull()
+    val today     = LocalDate.now()
 
-    val groupedByDayIndex = slots.mapIndexed { index, slot ->
-        val explicitDay = slot.dayNumber
-        
-        val dayIndex = if (explicitDay != null && explicitDay > 0) {
-            explicitDay
-        } else {
-             val dateDerived = if (slot.date != null && startDate != null) {
-                 try {
-                     ChronoUnit.DAYS.between(startDate, LocalDate.parse(slot.date)).toInt() + 1
-                 } catch (e: Exception) { 0 }
-             } else 0
-             
-             if (dateDerived > 0) {
-                 dateDerived
-             } else {
-                 (index / 3) + 1
-             }
-        }
+    val groupedByDay = slots.mapIndexed { index, slot ->
+        val dayIndex = slot.dayNumber?.takeIf { it > 0 }
+            ?: slot.date?.let { d -> startDate?.let { s ->
+                runCatching { ChronoUnit.DAYS.between(s, LocalDate.parse(d)).toInt() + 1 }.getOrNull()
+            }}?.takeIf { it > 0 }
+            ?: ((index / 3) + 1)
         dayIndex to slot
     }.groupBy { it.first }
-     .mapValues { it.value.map { pair -> pair.second } }
-     .toSortedMap()
+        .mapValues { it.value.map { p -> p.second } }
+        .toSortedMap()
 
-    val daysList = (1..7).toList()
-    
-    val todayIndex = if (startDate != null) {
-        ChronoUnit.DAYS.between(startDate, today).toInt() + 1
-    } else {
-        if (slots.any { it.date == today.toString() }) {
-             val todaySlot = slots.find { it.date == today.toString() }
-             todaySlot?.dayNumber ?: 0
-        } else -1
-    }
+    val todayIndex = startDate?.let { ChronoUnit.DAYS.between(it, today).toInt() + 1 } ?: -1
 
     Column(
         modifier = modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(20.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
+            .verticalScroll(rememberScrollState()),
     ) {
-        Text(
-            text = "Your Weekly Plan",
-            style = MaterialTheme.typography.headlineMedium,
-            color = MaterialTheme.colorScheme.onSurface
-        )
+        // ── Top bar ──
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.surface)
+                .padding(horizontal = 20.dp, vertical = 24.dp),
+        ) {
+            Text(
+                "Weekly plan",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Spacer(Modifier.height(2.dp))
+            Text(
+                startDate?.let {
+                    val end = it.plusDays(6)
+                    val fmt = DateTimeFormatter.ofPattern("MMM d")
+                    "${it.format(fmt)} – ${end.format(fmt)}"
+                } ?: "This week",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
 
-        daysList.forEach { dayIndex ->
-            val slotsForDay = groupedByDayIndex[dayIndex] ?: emptyList()
-            val dateForDay = if (startDate != null) {
-                startDate.plusDays(dayIndex.toLong() - 1)
-            } else null
-            
-            val isToday = dayIndex == todayIndex || (dateForDay != null && dateForDay == today)
-            val displayDate = dateForDay?.format(DateTimeFormatter.ofPattern("EEEE, MMM d")) ?: "Day $dayIndex"
+        HorizontalDivider(thickness = 0.5.dp, color = MaterialTheme.colorScheme.outlineVariant)
 
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = if (isToday) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = if (isToday) 6.dp else 2.dp),
-                border = if (isToday) androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null
+        // ── Day cards ──
+        Column(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            (1..7).forEach { dayIndex ->
+                val slotsForDay = groupedByDay[dayIndex] ?: emptyList()
+                val dateForDay  = startDate?.plusDays(dayIndex.toLong() - 1)
+                val isToday     = dayIndex == todayIndex || dateForDay == today
+                val displayDate = dateForDay
+                    ?.format(DateTimeFormatter.ofPattern("EEE, MMM d"))
+                    ?: "Day $dayIndex"
+
+                DayCard(
+                    displayDate     = displayDate,
+                    isToday         = isToday,
+                    slotsForDay     = slotsForDay,
+                    dateForDay      = dateForDay,
+                    additionalMeals = additionalMeals,
+                    handledMeals    = handledMeals,
+                    onRecipeClick   = onRecipeClick,
+                )
+            }
+
+            Spacer(Modifier.height(4.dp))
+
+            OutlinedButton(
+                onClick  = onCreateNew,
+                modifier = Modifier.fillMaxWidth().height(48.dp),
+                shape    = RoundedCornerShape(14.dp),
             ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                Text(
+                    "Replace plan",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Medium,
+                )
+            }
+        }
+    }
+}
+
+// ─── Day card ─────────────────────────────────────────────────────────────
+
+@Composable
+private fun DayCard(
+    displayDate: String,
+    isToday: Boolean,
+    slotsForDay: List<MealSlot>,
+    dateForDay: LocalDate?,
+    additionalMeals: List<AdditionalMeal>,
+    handledMeals: Map<String, Set<String>>,
+    onRecipeClick: (Int) -> Unit,
+) {
+    Surface(
+        shape  = RoundedCornerShape(16.dp),
+        color  = if (isToday) MaterialTheme.colorScheme.primaryContainer
+        else MaterialTheme.colorScheme.surface,
+        border = if (isToday) androidx.compose.foundation.BorderStroke(
+            1.5.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+        ) else androidx.compose.foundation.BorderStroke(
+            0.5.dp, MaterialTheme.colorScheme.outlineVariant,
+        ),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(modifier = Modifier.padding(14.dp)) {
+            // Day header
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    displayDate,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = if (isToday) MaterialTheme.colorScheme.onPrimaryContainer
+                    else MaterialTheme.colorScheme.onSurface,
+                )
+                if (isToday) {
+                    Surface(
+                        shape = RoundedCornerShape(6.dp),
+                        color = MaterialTheme.colorScheme.primary,
                     ) {
                         Text(
-                            text = displayDate,
-                            style = MaterialTheme.typography.titleMedium,
-                            color = if (isToday) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
+                            "Today",
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onPrimary,
                         )
-                        if (isToday) {
-                            Badge(containerColor = MaterialTheme.colorScheme.primary) {
-                                Text("Today", modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp))
-                            }
-                        }
                     }
+                }
+            }
 
-                    HorizontalDivider(
-                        color = if (isToday) MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.2f) else MaterialTheme.colorScheme.outlineVariant
+            if (slotsForDay.isEmpty()) {
+                Spacer(Modifier.height(10.dp))
+                Text(
+                    "No meals planned",
+                    style = MaterialTheme.typography.bodySmall,
+                    fontStyle = FontStyle.Italic,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                )
+            } else {
+                Spacer(Modifier.height(10.dp))
+                listOf("Breakfast", "Lunch", "Dinner").forEach { type ->
+                    val slot       = slotsForDay.find { it.mealType.equals(type, ignoreCase = true) }
+                    val extras     = additionalMeals.filter {
+                        it.date == dateForDay?.toString() && it.mealType.equals(type, ignoreCase = true)
+                    }
+                    val isHandled  = handledMeals[dateForDay?.toString()]?.contains(type) == true
+                    val mealStyle  = mealStyles[type]!!
+
+                    // Planned slot row
+                    MealSlotRow(
+                        type      = type,
+                        style     = mealStyle,
+                        recipe    = slot?.recipe,
+                        isHandled = isHandled,
+                        isToday   = isToday,
+                        onRecipeClick = onRecipeClick,
                     )
 
-                    if (slotsForDay.isEmpty()) {
-                        Text(
-                            text = "No meals planned.",
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
-                             color = if (isToday) MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant
+                    // Extra meals
+                    extras.forEach { extra ->
+                        ExtraSlotRow(
+                            recipe = extra.recipe,
+                            style  = mealStyle,
+                            onRecipeClick = onRecipeClick,
                         )
-                    } else {
-                        val mealTypes = listOf("Breakfast", "Lunch", "Dinner")
-                        
-                        mealTypes.forEach { type ->
-                             val slot = slotsForDay.find { it.mealType.equals(type, ignoreCase = true) }
-                             val additionalForSlot = additionalMeals.filter { 
-                                 it.date == dateForDay.toString() && it.mealType.equals(type, ignoreCase = true)
-                             }
-                             val isHandled = handledMeals[dateForDay.toString()]?.contains(type) ?: false
-
-                             Column(modifier = Modifier.fillMaxWidth()) {
-                                 Row(
-                                     verticalAlignment = Alignment.CenterVertically,
-                                     modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp) 
-                                 ) {
-                                     Text(
-                                         text = type,
-                                         style = MaterialTheme.typography.labelLarge,
-                                         fontWeight = androidx.compose.ui.text.font.FontWeight.ExtraBold,
-                                         modifier = Modifier.width(95.dp),
-                                         color = if (isToday) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.primary
-                                     )
-                                     
-                                     if (slot?.recipe != null) {
-                                         val recipe = slot.recipe
-                                         Row(
-                                             verticalAlignment = Alignment.CenterVertically,
-                                             horizontalArrangement = Arrangement.spacedBy(16.dp),
-                                             modifier = Modifier
-                                                 .weight(1f)
-                                                 .clip(RoundedCornerShape(8.dp))
-                                                 .clickable { recipe.id?.let { onRecipeClick(it) } }
-                                                 .padding(4.dp)
-                                         ) {
-                                             Box {
-                                                 AsyncImage(
-                                                     model = recipe.imageUrl,
-                                                     contentDescription = null,
-                                                     modifier = Modifier
-                                                         .size(48.dp)
-                                                         .clip(RoundedCornerShape(10.dp))
-                                                         .alpha(if (isHandled) 0.5f else 1.0f),
-                                                     contentScale = ContentScale.Crop
-                                                 )
-                                                 if (isHandled) {
-                                                     Icon(
-                                                         painter = painterResource(com.teamconfused.planmyplate.R.drawable.check_icon),
-                                                         contentDescription = null,
-                                                         tint = MaterialTheme.colorScheme.primary,
-                                                         modifier = Modifier.align(Alignment.Center).size(24.dp)
-                                                     )
-                                                 }
-                                             }
-                                             Text(
-                                                 text = recipe.name,
-                                                 style = MaterialTheme.typography.bodyLarge,
-                                                 fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
-                                                 color = if (isToday) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
-                                                 maxLines = 2,
-                                                 lineHeight = 20.sp,
-                                                 overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                                                 textDecoration = if (isHandled) androidx.compose.ui.text.style.TextDecoration.LineThrough else null
-                                             )
-                                         }
-                                     } else {
-                                         Surface(
-                                             color = if (isToday) MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.05f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                                             shape = RoundedCornerShape(8.dp),
-                                             modifier = Modifier.fillMaxWidth()
-                                         ) {
-                                             Text(
-                                                 text = "Not planned", 
-                                                 style = MaterialTheme.typography.bodyMedium,
-                                                 fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
-                                                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                                                 color = if (isToday) MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.5f) else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                                             )
-                                         }
-                                     }
-                                 }
-                                 
-                                 additionalForSlot.forEach { additional ->
-                                     Row(
-                                         verticalAlignment = Alignment.CenterVertically,
-                                         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
-                                     ) {
-                                         Text(
-                                             text = "Additional",
-                                             style = MaterialTheme.typography.labelLarge,
-                                             fontWeight = androidx.compose.ui.text.font.FontWeight.ExtraBold,
-                                             modifier = Modifier.width(95.dp),
-                                             color = MaterialTheme.colorScheme.secondary
-                                         )
-                                         
-                                         Row(
-                                             verticalAlignment = Alignment.CenterVertically,
-                                             horizontalArrangement = Arrangement.spacedBy(16.dp),
-                                             modifier = Modifier
-                                                 .weight(1f)
-                                                 .clip(RoundedCornerShape(8.dp))
-                                                 .clickable { onRecipeClick(additional.recipeId) }
-                                                 .padding(4.dp)
-                                         ) {
-                                             AsyncImage(
-                                                 model = additional.recipe.imageUrl,
-                                                 contentDescription = null,
-                                                 modifier = Modifier
-                                                     .size(48.dp)
-                                                     .clip(RoundedCornerShape(10.dp)),
-                                                 contentScale = ContentScale.Crop
-                                             )
-                                             Text(
-                                                 text = additional.recipe.name,
-                                                 style = MaterialTheme.typography.bodyLarge,
-                                                 fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
-                                                 color = MaterialTheme.colorScheme.onSurface,
-                                                 maxLines = 2,
-                                                 lineHeight = 20.sp,
-                                                 overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-                                             )
-                                         }
-                                     }
-                                 }
-                             }
-                        }
                     }
                 }
             }
         }
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        OutlinedButton(
-            onClick = onCreateNew,
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp)
+    }
+}
+
+// ─── Meal slot row ────────────────────────────────────────────────────────
+
+@Composable
+private fun MealSlotRow(
+    type: String,
+    style: MealStyle,
+    recipe: Recipe?,
+    isHandled: Boolean,
+    isToday: Boolean,
+    onRecipeClick: (Int) -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        // Meal type chip
+        Surface(
+            shape = RoundedCornerShape(6.dp),
+            color = style.accent.copy(alpha = 0.10f),
+            modifier = Modifier.width(78.dp),
         ) {
-            Text("Create New Plan (Replace)")
+            Text(
+                text = type,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = style.accent,
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                maxLines = 1,
+            )
         }
+
+        if (recipe != null) {
+            Row(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(10.dp))
+                    .clickable { recipe.id?.let { onRecipeClick(it) } }
+                    .padding(horizontal = 6.dp, vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                // Thumbnail with done overlay
+                Box(modifier = Modifier.size(40.dp)) {
+                    AsyncImage(
+                        model = recipe.imageUrl,
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(RoundedCornerShape(8.dp))
+                            .alpha(if (isHandled) 0.45f else 1f),
+                    )
+                    if (isHandled) {
+                        Surface(
+                            modifier = Modifier.align(Alignment.Center).size(18.dp),
+                            shape = CircleShape,
+                            color = MaterialTheme.colorScheme.primary,
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.check_icon),
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.padding(3.dp),
+                            )
+                        }
+                    }
+                }
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        recipe.name,
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Medium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        color = if (isToday) MaterialTheme.colorScheme.onPrimaryContainer
+                        else MaterialTheme.colorScheme.onSurface,
+                        textDecoration = if (isHandled) TextDecoration.LineThrough else null,
+                    )
+                    Text(
+                        "${recipe.calories} kcal",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+        } else {
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f))
+                    .padding(horizontal = 10.dp, vertical = 8.dp),
+            ) {
+                Text(
+                    "Not planned",
+                    style = MaterialTheme.typography.bodySmall,
+                    fontStyle = FontStyle.Italic,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                )
+            }
+        }
+    }
+}
+
+// ─── Extra slot row ───────────────────────────────────────────────────────
+
+@Composable
+private fun ExtraSlotRow(
+    recipe: Recipe,
+    style: MealStyle,
+    onRecipeClick: (Int) -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Surface(
+            shape = RoundedCornerShape(6.dp),
+            color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f),
+            modifier = Modifier.width(78.dp),
+        ) {
+            Text(
+                "Extra",
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.secondary,
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+            )
+        }
+
+        Row(
+            modifier = Modifier
+                .weight(1f)
+                .clip(RoundedCornerShape(10.dp))
+                .clickable { onRecipeClick(recipe.id ?: return@clickable) }
+                .padding(horizontal = 6.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            AsyncImage(
+                model = recipe.imageUrl,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(RoundedCornerShape(8.dp)),
+            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    recipe.name,
+                    style = MaterialTheme.typography.bodySmall,
+                    fontWeight = FontWeight.Medium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Text(
+                    "${recipe.calories} kcal",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun CreateMealPlanPreview() {
+    val mockRecipe = Recipe(
+        id = 1,
+        name = "Spicy Chicken Pasta",
+        description = "A delicious spicy pasta with chicken.",
+        calories = 650,
+        imageUrl = null
+    )
+    val mockUiState = MealPlanUiState(
+        selectedRecipes = mapOf(
+            "Breakfast" to listOf(mockRecipe, mockRecipe),
+            "Lunch" to emptyList(),
+            "Dinner" to emptyList()
+        )
+    )
+    PlanMyPlateTheme {
+        CreateMealPlanContent(
+            uiState = mockUiState,
+            onGenerateAi = {},
+            onUseSelections = {},
+            onMealTypeClick = {},
+            padding = PaddingValues(0.dp)
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun WeeklyMealPlanPreview() {
+    val mockRecipe = Recipe(
+        id = 1,
+        name = "Spicy Chicken Pasta",
+        description = "A delicious spicy pasta with chicken.",
+        calories = 650,
+        imageUrl = null
+    )
+    val mockMealPlan = MealPlan(
+        mpId = 1,
+        startDate = LocalDate.now().toString(),
+        duration = 7,
+        slots = (1..7).flatMap { day ->
+            listOf(
+                MealSlot(slotId = day * 3, mealType = "Breakfast", dayNumber = day, recipe = mockRecipe),
+                MealSlot(slotId = day * 3 + 1, mealType = "Lunch", dayNumber = day, recipe = mockRecipe),
+                MealSlot(slotId = day * 3 + 2, mealType = "Dinner", dayNumber = day, recipe = mockRecipe)
+            )
+        }
+    )
+    PlanMyPlateTheme {
+        WeeklyMealPlanView(
+            mealPlan = mockMealPlan,
+            onCreateNew = {}
+        )
     }
 }

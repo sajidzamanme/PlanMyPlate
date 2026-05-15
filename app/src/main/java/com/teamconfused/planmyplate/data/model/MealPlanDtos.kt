@@ -5,9 +5,9 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class MealPlanDto(
-    @SerialName("mpId") val mpId: Int? = null,
-    @SerialName("userId") val userId: Int? = null,
-    @SerialName("startDate") val startDate: String? = null,
+    @SerialName("mp_id") val mpId: Int? = null,
+    @SerialName("user_id") val userId: Int? = null,
+    @SerialName("start_date") val startDate: String? = null,
     val duration: Int,
     val status: String = "active",
     val slots: List<MealSlotDto>? = null
@@ -16,11 +16,11 @@ data class MealPlanDto(
 @Serializable
 data class MealSlotDto(
     val id: Int? = null,
-    val slotIndex: Int? = null,
-    val mealType: String,
+    @SerialName("slot_index") val slotIndex: Int? = null,
+    @SerialName("meal_type") val mealType: String,
     val date: String? = null,
-    val dayNumber: Int? = null,
-    val servingsMultiplier: Int? = null,
+    @SerialName("day_number") val dayNumber: Int? = null,
+    @SerialName("servings_multiplier") val servingsMultiplier: Int? = null,
     val recipe: RecipeResponse? = null
 )
 
@@ -29,7 +29,7 @@ data class CreateMealPlanRequest(
     val recipeIds: List<Int>,
     val servingsMultipliers: List<Int>? = null,
     val duration: Int,
-    @SerialName("startDate") val startDate: String
+    @SerialName("start_date") val startDate: String
 )
 
 @Serializable

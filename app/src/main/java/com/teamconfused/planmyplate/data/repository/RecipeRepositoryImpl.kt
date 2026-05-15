@@ -1,5 +1,6 @@
 package com.teamconfused.planmyplate.data.repository
 
+import android.util.Log
 import com.teamconfused.planmyplate.data.mapper.toDomain
 import com.teamconfused.planmyplate.data.model.CreateRecipeRequest
 import com.teamconfused.planmyplate.data.model.RecipeRequest
@@ -12,34 +13,74 @@ class RecipeRepositoryImpl(
     private val api: RecipeService
 ) : RecipeRepository {
     override suspend fun getAllRecipes(token: String): List<Recipe> {
-        return api.getAllRecipes(token).map { it.toDomain() }
+        return try {
+            api.getAllRecipes(token).map { it.toDomain() }
+        } catch (e: Exception) {
+            Log.e("RecipeRepositoryImpl", "Operation failed: ${e.message}", e)
+            throw e
+        }
     }
 
     override suspend fun getRecipeById(token: String, id: Int): Recipe {
-        return api.getRecipeById(token, id).toDomain()
+        return try {
+            api.getRecipeById(token, id).toDomain()
+        } catch (e: Exception) {
+            Log.e("RecipeRepositoryImpl", "Operation failed: ${e.message}", e)
+            throw e
+        }
     }
 
     override suspend fun createRecipe(token: String, request: CreateRecipeRequest): Recipe {
-        return api.createRecipe(token, request).toDomain()
+        return try {
+            api.createRecipe(token, request).toDomain()
+        } catch (e: Exception) {
+            Log.e("RecipeRepositoryImpl", "Operation failed: ${e.message}", e)
+            throw e
+        }
     }
 
     override suspend fun updateRecipe(token: String, id: Int, request: RecipeRequest): Recipe {
-        return api.updateRecipe(token, id, request).toDomain()
+        return try {
+            api.updateRecipe(token, id, request).toDomain()
+        } catch (e: Exception) {
+            Log.e("RecipeRepositoryImpl", "Operation failed: ${e.message}", e)
+            throw e
+        }
     }
 
     override suspend fun deleteRecipe(token: String, id: Int) {
-        api.deleteRecipe(token, id)
+        try {
+            api.deleteRecipe(token, id)
+        } catch (e: Exception) {
+            Log.e("RecipeRepositoryImpl", "Operation failed: ${e.message}", e)
+            throw e
+        }
     }
 
     override suspend fun searchRecipes(token: String, query: String): List<Recipe> {
-        return api.searchRecipesByName(token, query).map { it.toDomain() }
+        return try {
+            api.searchRecipesByName(token, query).map { it.toDomain() }
+        } catch (e: Exception) {
+            Log.e("RecipeRepositoryImpl", "Operation failed: ${e.message}", e)
+            throw e
+        }
     }
 
     override suspend fun getRecipesByCalories(token: String, min: Int, max: Int): List<Recipe> {
-        return api.getRecipesByCalories(token, min, max).map { it.toDomain() }
+        return try {
+            api.getRecipesByCalories(token, min, max).map { it.toDomain() }
+        } catch (e: Exception) {
+            Log.e("RecipeRepositoryImpl", "Operation failed: ${e.message}", e)
+            throw e
+        }
     }
 
     override suspend fun uploadImage(token: String, file: MultipartBody.Part): String {
-        return api.uploadImage(token, file).url
+        return try {
+            api.uploadImage(token, file).url
+        } catch (e: Exception) {
+            Log.e("RecipeRepositoryImpl", "Operation failed: ${e.message}", e)
+            throw e
+        }
     }
 }

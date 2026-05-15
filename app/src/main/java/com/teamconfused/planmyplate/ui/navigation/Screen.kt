@@ -30,4 +30,9 @@ sealed class Screen {
         val readOnly: Boolean = false,
         val fromDashboard: Boolean = false
     ) : Screen()
+
+    @Serializable
+    data class RecipeSelection(
+        val mealType: String
+    ) : Screen()
 }

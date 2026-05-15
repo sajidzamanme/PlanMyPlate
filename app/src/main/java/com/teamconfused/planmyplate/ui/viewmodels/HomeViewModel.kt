@@ -92,6 +92,7 @@ class HomeViewModel(
                     )
                 }
             } catch (e: Exception) {
+                Log.e("HomeViewModel", "Failed to fetch today's meals: ${e.message}", e)
                 _uiState.update {
                     it.copy(
                         isLoading = false,

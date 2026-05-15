@@ -1,5 +1,6 @@
 package com.teamconfused.planmyplate.ui.viewmodels
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.teamconfused.planmyplate.data.model.ForgotPasswordRequest
@@ -78,6 +79,7 @@ class ForgotPasswordViewModel(
                     ) 
                 }
             } catch (e: Exception) {
+                Log.e("ForgotPasswordViewModel", "Failed to send reset code: ${e.message}", e)
                 _uiState.update { 
                     it.copy(
                         error = e.localizedMessage ?: "Failed to send reset code",
@@ -129,6 +131,7 @@ class ForgotPasswordViewModel(
                 authService.resetPassword(request)
                 _uiState.update { it.copy(step = ForgotPasswordStep.SUCCESS, error = null, isLoading = false) }
             } catch (e: Exception) {
+                Log.e("ForgotPasswordViewModel", "Failed to reset password: ${e.message}", e)
                 _uiState.update { 
                     it.copy(
                         error = e.localizedMessage ?: "Failed to reset password",

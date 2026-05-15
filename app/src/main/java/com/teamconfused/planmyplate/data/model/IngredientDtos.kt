@@ -5,9 +5,9 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class IngredientDto(
-    @SerialName("ingId") val ingId: Int? = null,
+    @SerialName("ing_id") val ingId: Int? = null,
     val name: String,
-    val price: Float? = null
+    val price: String? = null
 )
 
 @Serializable
@@ -18,6 +18,6 @@ data class IngredientRequest(
 
 @Serializable
 data class IngredientRefDto(
-    @SerialName("ingId") val ingId: Int,
+    @SerialName("ing_id") val ingId: Int,
     val name: String? = null
 )

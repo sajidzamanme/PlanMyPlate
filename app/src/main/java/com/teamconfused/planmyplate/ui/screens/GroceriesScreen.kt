@@ -105,8 +105,8 @@ fun GroceriesScreen(navController: NavController) {
                                item = item,
                                isChecked = uiState.checkedItems.contains(item.id ?: 0),
                                onToggle = { viewModel.toggleItemCheck(item.id ?: 0) },
-                               onIncrease = { viewModel.updateListQuantity(item, 1) },
-                               onDecrease = { viewModel.updateListQuantity(item, -1) }
+                               onIncrease = { viewModel.updateListQuantity(item, 1.0) },
+                               onDecrease = { viewModel.updateListQuantity(item, -1.0) }
                            )
                        }
                     }

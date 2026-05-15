@@ -137,6 +137,7 @@ class SignupViewModel(
                     _uiState.update { it.copy(isLoading = false) }
                     onSignupSuccess()
                 } catch (e: Exception) {
+                    Log.e("SignupViewModel", "Signup failed: ${e.message}", e)
                     _uiState.update { 
                         it.copy(
                             isLoading = false, 

@@ -5,30 +5,30 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class InventoryDto(
-    @SerialName("invId") val id: Int? = null,
+    @SerialName("inv_id") val id: Int? = null,
     val user: UserRefDto? = null,
-    @SerialName("lastUpdate") val lastUpdate: String? = null,
+    @SerialName("last_update") val lastUpdate: String? = null,
     val items: List<InventoryItemDto>? = null,
     @SerialName("created_at") val createdAt: String? = null
 )
 
 @Serializable
 data class InventoryItemDto(
-    @SerialName("itemId") val id: Int? = null,
-    val inventoryId: Int? = null,
-    val quantity: Int,
+    @SerialName("item_id") val id: Int? = null,
+    @SerialName("inventory_id") val inventoryId: Int? = null,
+    val quantity: Double? = null,
     val unit: String? = null,
-    @SerialName("dateAdded") val dateAdded: String? = null,
-    @SerialName("expiryDate") val expiryDate: String,
+    @SerialName("date_added") val dateAdded: String? = null,
+    @SerialName("expiry_date") val expiryDate: String? = null,
     val ingredient: IngredientRefDto? = null,
     val name: String? = null
 )
 
 @Serializable
 data class InventoryItemRequest(
-    val quantity: Int,
+    val quantity: Double? = null,
     val unit: String? = null,
-    @SerialName("dateAdded") val dateAdded: String? = null,
-    @SerialName("expiryDate") val expiryDate: String,
-    val ingredient: IngredientRefDto
+    @SerialName("date_added") val dateAdded: String? = null,
+    @SerialName("expiry_date") val expiryDate: String? = null,
+    val ingredient: IngredientRefDto? = null
 )

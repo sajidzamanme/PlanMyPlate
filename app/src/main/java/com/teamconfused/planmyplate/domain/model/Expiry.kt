@@ -4,20 +4,20 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class ExpiryItem(
-    val itemId: Int,
-    val productName: String,
-    val expiryDate: String,
-    val dateAdded: String,
-    val quantity: Float,
-    val unit: String,
-    val daysUntilExpiry: Int,
-    val isExpired: Boolean
+    val itemId: Int? = null,
+    val productName: String? = null,
+    val expiryDate: String? = null,
+    val dateAdded: String? = null,
+    val quantity: Double? = null,
+    val unit: String? = null,
+    val daysUntilExpiry: Int? = null,
+    val isExpired: Boolean? = null
 )
 
 @Serializable
 data class SoonToExpireResult(
-    val thresholdDays: Int,
-    val totalCount: Int,
-    val expiredCount: Int,
-    val items: List<ExpiryItem>
+    val thresholdDays: Int? = null,
+    val totalCount: Int? = null,
+    val expiredCount: Int? = null,
+    val items: List<ExpiryItem>? = null
 )

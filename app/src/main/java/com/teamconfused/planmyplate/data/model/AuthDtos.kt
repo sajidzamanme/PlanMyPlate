@@ -26,9 +26,9 @@ data class AuthResponse(
     val email: String? = null,
     val firstName: String? = null,
     val lastName: String? = null,
-    val userId: Int? = null,
+    @SerialName("user_id") val userId: Int? = null,
     val phone: String? = null,
-    val dateOfBirth: String? = null,
+    @SerialName("date_of_birth") val dateOfBirth: String? = null,
     val message: String? = null
 )
 
@@ -39,7 +39,7 @@ data class ForgotPasswordRequest(
 
 @Serializable
 data class ForgotPasswordResponse(
-    val message: String,
+    val message: String? = null,
     val token: String? = null
 )
 
@@ -51,7 +51,7 @@ data class ResetPasswordRequest(
 
 @Serializable
 data class ResetPasswordResponse(
-    val message: String
+    val message: String? = null
 )
 
 @Serializable

@@ -5,17 +5,17 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class UserRefDto(
-    @SerialName("userId") val userId: Int
+    @SerialName("user_id") val userId: Int? = null
 )
 
 @Serializable
 data class UserDto(
-    @SerialName("userId") val userId: Int,
-    val firstName: String,
-    val lastName: String,
-    val email: String,
-    val phone: String,
-    val dateOfBirth: String,
+    @SerialName("user_id") val userId: Int? = null,
+    val firstName: String? = null,
+    val lastName: String? = null,
+    val email: String? = null,
+    val phone: String? = null,
+    @SerialName("date_of_birth") val dateOfBirth: String? = null,
     val age: Int? = null,
     val weight: Float? = null,
     val budget: Float? = null
@@ -57,12 +57,12 @@ data class UserPreferencesResponse(
 
 @Serializable
 data class DietDto(
-    @SerialName("diet_id") val dietId: Int,
-    @SerialName("diet_name") val dietName: String
+    @SerialName("diet_id") val dietId: Int? = null,
+    @SerialName("diet_name") val dietName: String? = null
 )
 
 @Serializable
 data class AllergyDto(
-    @SerialName("allergy_id") val allergyId: Int,
-    @SerialName("allergy_name") val allergyName: String
+    @SerialName("allergy_id") val allergyId: Int? = null,
+    @SerialName("allergy_name") val allergyName: String? = null
 )

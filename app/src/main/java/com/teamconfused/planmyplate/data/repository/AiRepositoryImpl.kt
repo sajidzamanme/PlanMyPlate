@@ -20,7 +20,7 @@ class AiRepositoryImpl(
             Log.d(TAG, "AI Recipe response received: $response")
             response.toDomain()
         } catch (e: Exception) {
-            Log.e(TAG, "AI Recipe generation failed: ${e.message}", e)
+            Log.e("AiRepositoryImpl", "Operation failed: ${e.message}", e)
             throw e
         }
     }
@@ -32,7 +32,7 @@ class AiRepositoryImpl(
             Log.d(TAG, "AI Meal Plan response received: $response")
             response.toDomain()
         } catch (e: Exception) {
-            Log.e(TAG, "AI Meal Plan generation failed: ${e.message}", e)
+            Log.e("AiRepositoryImpl", "Operation failed: ${e.message}", e)
             throw e
         }
     }

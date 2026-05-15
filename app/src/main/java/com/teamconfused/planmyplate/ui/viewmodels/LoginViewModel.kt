@@ -92,6 +92,7 @@ class LoginViewModel(
                             // Basic check: if diet or servings are set, we assume preferences exist
                             hasPreferences = prefs.diet != null || prefs.servings != null
                         } catch (e: Exception) {
+                            Log.e("LoginViewModel", "Failed to fetch user preferences: ${e.message}", e)
                             // If it fails (e.g. 404), assume preferences are not set
                             hasPreferences = false
                         }
@@ -102,6 +103,7 @@ class LoginViewModel(
                     _uiState.update { it.copy(isLoading = false) }
                     onLoginSuccess(hasPreferences)
                 } catch (e: Exception) {
+                    Log.e("LoginViewModel", "Login failed: ${e.message}", e)
                     _uiState.update { 
                         it.copy(
                             isLoading = false, 

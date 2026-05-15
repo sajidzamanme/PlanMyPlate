@@ -4,12 +4,12 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class User(
-    val userId: Int,
-    val firstName: String,
-    val lastName: String,
-    val email: String,
-    val phone: String,
-    val dateOfBirth: String,
+    val userId: Int? = null,
+    val firstName: String? = null,
+    val lastName: String? = null,
+    val email: String? = null,
+    val phone: String? = null,
+    val dateOfBirth: String? = null,
     val age: Int? = null,
     val weight: Float? = null,
     val budget: Float? = null
@@ -30,12 +30,12 @@ data class UserPreferences(
 
 @Serializable
 data class Diet(
-    val dietId: Int,
-    val dietName: String
+    val dietId: Int? = null,
+    val dietName: String? = null
 )
 
 @Serializable
 data class Allergy(
-    val allergyId: Int,
-    val allergyName: String
+    val allergyId: Int? = null,
+    val allergyName: String? = null
 )

@@ -1,5 +1,6 @@
 package com.teamconfused.planmyplate.data.repository
 
+import android.util.Log
 import com.teamconfused.planmyplate.data.mapper.toDomain
 import com.teamconfused.planmyplate.data.model.CreateMealPlanRequest
 import com.teamconfused.planmyplate.domain.model.MealPlan
@@ -10,7 +11,12 @@ class MealPlanRepositoryImpl(
     private val api: MealPlanService
 ) : MealPlanRepository {
     override suspend fun getWeeklyMealPlans(token: String, userId: Int): List<MealPlan> {
-        return api.getWeeklyMealPlans(token, userId).map { it.toDomain() }
+        return try {
+            api.getWeeklyMealPlans(token, userId).map { it.toDomain() }
+        } catch (e: Exception) {
+            Log.e("MealPlanRepositoryImpl", "Operation failed: ${e.message}", e)
+            throw e
+        }
     }
 
     override suspend fun createMealPlanWithRecipes(
@@ -18,6 +24,11 @@ class MealPlanRepositoryImpl(
         userId: Int,
         request: CreateMealPlanRequest
     ): MealPlan {
-        return api.createMealPlanWithRecipes(token, userId, request).toDomain()
+        return try {
+            api.createMealPlanWithRecipes(token, userId, request).toDomain()
+        } catch (e: Exception) {
+            Log.e("MealPlanRepositoryImpl", "Operation failed: ${e.message}", e)
+            throw e
+        }
     }
 }

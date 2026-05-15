@@ -1,5 +1,6 @@
 package com.teamconfused.planmyplate.ui.viewmodels
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.teamconfused.planmyplate.data.model.UserPreferencesRequest
@@ -43,8 +44,8 @@ class PreferenceSelectionViewModel(
             _uiState.update { it.copy(isLoading = true) }
             try {
                 // Parallel fetch
-                val diets = userPreferencesService.getDiets().map { it.dietName }
-                val ingredients = ingredientService.getAllIngredients().map { it.name }
+                val diets = userPreferencesService.getDiets().mapNotNull { it.dietName }
+                val ingredients = ingredientService.getAllIngredients().mapNotNull { it.name }
 
                 _uiState.update { 
                     it.copy(
@@ -54,6 +55,7 @@ class PreferenceSelectionViewModel(
                     ) 
                 }
             } catch (e: Exception) {
+                Log.e("PreferenceSelectionViewModel", "Failed to load reference data: ${e.message}", e)
                  _uiState.update { 
                     it.copy(
                         isLoading = false, 
@@ -127,6 +129,7 @@ class PreferenceSelectionViewModel(
                     isLoading = false
                 )}
             } catch (e: Exception) {
+                Log.e("PreferenceSelectionViewModel", "Failed to load existing preferences: ${e.message}", e)
                 // If it's a 404, we just stop loading; it's okay for new users
                 _uiState.update { it.copy(isLoading = false) }
             }
@@ -172,6 +175,7 @@ class PreferenceSelectionViewModel(
                 _uiState.update { it.copy(isLoading = false) }
                 onComplete()
             } catch (e: Exception) {
+                Log.e("PreferenceSelectionViewModel", "Failed to save preferences: ${e.message}", e)
                 _uiState.update { 
                     it.copy(
                         isLoading = false, 
@@ -190,6 +194,7 @@ class PreferenceSelectionViewModel(
             // Check if the returned response has actual data.
             response.diet != null || response.servings != null
         } catch (e: Exception) {
+            Log.e("PreferenceSelectionViewModel", "Failed to check if preferences are set: ${e.message}", e)
             // If 404 is thrown, it usually means preferences don't exist
             false
         }
