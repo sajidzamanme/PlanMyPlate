@@ -33,7 +33,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.navigation.NavController
+
 import coil.compose.AsyncImage
 import com.teamconfused.planmyplate.R
 import com.teamconfused.planmyplate.domain.model.AdditionalMeal
@@ -42,7 +42,7 @@ import com.teamconfused.planmyplate.domain.model.MealSlot
 import com.teamconfused.planmyplate.domain.model.Recipe
 import com.teamconfused.planmyplate.domain.model.recipe.MealStyle
 import com.teamconfused.planmyplate.domain.model.recipe.mealStyles
-import com.teamconfused.planmyplate.ui.navigation.Screen
+
 import com.teamconfused.planmyplate.ui.theme.PlanMyPlateTheme
 import com.teamconfused.planmyplate.ui.viewmodels.MealPlanUiState
 import com.teamconfused.planmyplate.ui.viewmodels.MealPlanViewModel
@@ -55,9 +55,10 @@ import java.time.temporal.ChronoUnit
 
 @Composable
 fun MealPlanScreen(
-    navController: NavController,
-    rootNavController: NavController,
     viewModel: MealPlanViewModel = koinViewModel(),
+    onNavigateToHome: () -> Unit,
+    onNavigateToRecipeDetails: (recipeId: Int) -> Unit,
+    onNavigateToRecipeSelection: (mealType: String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -79,7 +80,7 @@ fun MealPlanScreen(
                 modifier         = Modifier.padding(padding),
                 onCreateNew      = { viewModel.startNewPlan() },
                 onRecipeClick    = { id ->
-                    rootNavController.navigate(Screen.RecipeDetails(id, readOnly = true))
+                    onNavigateToRecipeDetails(id)
                 },
             )
         } else {
@@ -87,16 +88,16 @@ fun MealPlanScreen(
                 uiState          = uiState,
                 onGenerateAi     = {
                     viewModel.generateMealPlan {
-                        navController.navigate("home") { popUpTo("home") { inclusive = true } }
+                        onNavigateToHome()
                     }
                 },
                 onUseSelections  = {
                     viewModel.createMealPlan {
-                        navController.navigate("home") { popUpTo("home") { inclusive = true } }
+                        onNavigateToHome()
                     }
                 },
                 onMealTypeClick  = { type ->
-                    rootNavController.navigate(Screen.RecipeSelection(mealType = type))
+                    onNavigateToRecipeSelection(type)
                 },
                 padding          = padding,
             )

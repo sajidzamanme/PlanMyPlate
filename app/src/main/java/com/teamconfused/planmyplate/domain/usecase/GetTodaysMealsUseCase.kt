@@ -77,9 +77,9 @@ class GetTodaysMealsUseCase(
         val todayMealsList = if (todayKey != null) slotsByDate[todayKey]?.map { it.first } ?: emptyList() else emptyList()
         val upcomingMealsList = if (nextDayKey != null) slotsByDate[nextDayKey]?.map { it.first } ?: emptyList() else emptyList()
 
-        val todayBreakfast = todayMealsList.find { it.mealType == "Breakfast" }?.recipe
-        val todayLunch = todayMealsList.find { it.mealType == "Lunch" }?.recipe
-        val todayDinner = todayMealsList.find { it.mealType == "Dinner" }?.recipe
+        val todayBreakfast = todayMealsList.find { it.mealType.equals("Breakfast", ignoreCase = true) }?.recipe
+        val todayLunch = todayMealsList.find { it.mealType.equals("Lunch", ignoreCase = true) }?.recipe
+        val todayDinner = todayMealsList.find { it.mealType.equals("Dinner", ignoreCase = true) }?.recipe
         
         val upcomingRecipes = upcomingMealsList.mapNotNull { it.recipe }
         

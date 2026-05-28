@@ -21,7 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
+
 import coil.compose.AsyncImage
 import com.teamconfused.planmyplate.R
 import com.teamconfused.planmyplate.domain.model.Recipe
@@ -31,12 +31,12 @@ import org.koin.androidx.compose.koinViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RecipeDetailsScreen(
-    navController: NavController,
     recipeId: Int,
     isInitiallyAdded: Boolean = false,
     showControls: Boolean = true,
     fromDashboard: Boolean = false,
     mealType: String? = null,
+    onNavigateBack: () -> Unit,
     onToggleRecipe: (Recipe) -> Unit = {},
     onCooked: (String?, Int, Int?) -> Unit = { _, _, _ -> },
     onSkip: (Int?) -> Unit = {}
@@ -75,7 +75,7 @@ fun RecipeDetailsScreen(
                             OutlinedButton(
                                 onClick = {
                                     onSkip(currentRecipe.recipeId)
-                                    navController.popBackStack()
+                                    onNavigateBack()
                                 },
                                 modifier = Modifier.weight(1f),
                                 shape = RoundedCornerShape(12.dp),
@@ -87,7 +87,7 @@ fun RecipeDetailsScreen(
                             Button(
                                 onClick = {
                                     onCooked(mealType, currentRecipe.calories ?: 0, currentRecipe.recipeId)
-                                    navController.popBackStack()
+                                    onNavigateBack()
                                 },
                                 modifier = Modifier.weight(1f),
                                 shape = RoundedCornerShape(12.dp),
@@ -113,7 +113,7 @@ fun RecipeDetailsScreen(
                             horizontalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
                             OutlinedButton(
-                                onClick = { navController.popBackStack() },
+                                onClick = onNavigateBack,
                                 modifier = Modifier.weight(1f),
                                 shape = RoundedCornerShape(12.dp),
                                 contentPadding = PaddingValues(16.dp)
@@ -285,7 +285,7 @@ fun RecipeDetailsScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     IconButton(
-                        onClick = { navController.popBackStack() },
+                        onClick = onNavigateBack,
                         modifier = Modifier.background(
                             Color.Black.copy(alpha = 0.3f),
                             CircleShape

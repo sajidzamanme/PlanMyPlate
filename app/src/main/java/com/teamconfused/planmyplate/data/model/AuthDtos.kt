@@ -5,12 +5,12 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class SignupRequest(
-    val firstName: String,
-    val lastName: String,
+    @SerialName("first_name") val firstName: String,
+    @SerialName("last_name") val lastName: String,
     val email: String,
     val password: String,
     val phone: String,
-    val dateOfBirth: String
+    @SerialName("date_of_birth") val dateOfBirth: String
 )
 
 @Serializable
@@ -24,11 +24,11 @@ data class AuthResponse(
     @SerialName("access_token") val accessToken: String? = null,
     @SerialName("token_type") val tokenType: String? = null,
     val email: String? = null,
-    val firstName: String? = null,
-    val lastName: String? = null,
-    val userId: Int? = null,
+    @SerialName("first_name") val firstName: String? = null,
+    @SerialName("last_name") val lastName: String? = null,
+    @SerialName("user_id") val userId: Int? = null,
     val phone: String? = null,
-    val dateOfBirth: String? = null,
+    @SerialName("date_of_birth") val dateOfBirth: String? = null,
     val message: String? = null
 )
 
@@ -44,8 +44,8 @@ data class ForgotPasswordResponse(
 
 @Serializable
 data class ResetPasswordRequest(
-    val resetToken: String,
-    val newPassword: String
+    @SerialName("reset_token") val resetToken: String,
+    @SerialName("new_password") val newPassword: String
 )
 
 @Serializable

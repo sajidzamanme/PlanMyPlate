@@ -1,19 +1,20 @@
 package com.teamconfused.planmyplate.data.model
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class RecipeResponse(
-    val recipeId: Int? = null,
+    @SerialName("recipe_id") val recipeId: Int? = null,
     val name: String,
     val description: String? = null,
     val calories: Int? = null,
-    val prepTime: Int? = null,
-    val cookTime: Int? = null,
+    @SerialName("prep_time") val prepTime: Int? = null,
+    @SerialName("cook_time") val cookTime: Int? = null,
     val servings: Int? = null,
     val instructions: String? = null,
-    val recipeIngredients: List<RecipeIngredientResponse>? = null,
-    val imageUrl: String? = null
+    @SerialName("recipe_ingredients") val recipeIngredients: List<RecipeIngredientResponse>? = null,
+    @SerialName("image_url") val imageUrl: String? = null
 )
 
 @Serializable
@@ -29,17 +30,17 @@ data class CreateRecipeRequest(
     val name: String,
     val description: String? = null,
     val calories: Int? = null,
-    val prepTime: Int? = null,
-    val cookTime: Int? = null,
+    @SerialName("prep_time") val prepTime: Int? = null,
+    @SerialName("cook_time") val cookTime: Int? = null,
     val servings: Int? = null,
     val instructions: String? = null,
-    val imageUrl: String? = null,
+    @SerialName("image_url") val imageUrl: String? = null,
     val ingredients: List<RecipeIngredientRequest>? = null
 )
 
 @Serializable
 data class RecipeIngredientRequest(
-    val ingId: Int,
+    @SerialName("ing_id") val ingId: Int,
     val quantity: Int,
     val unit: String
 )
@@ -52,20 +53,20 @@ data class ImageUploadResponse(
 
 @Serializable
 data class GenerateRecipeRequest(
-    val availableIngredients: List<String> = emptyList(),
-    val maxCalories: Int? = null,
-    val cuisineType: String? = null,
+    @SerialName("available_ingredients") val availableIngredients: List<String> = emptyList(),
+    @SerialName("max_calories") val maxCalories: Int? = null,
+    @SerialName("cuisine_type") val cuisineType: String? = null,
     val allergies: List<String> = emptyList(),
-    val dietaryPreference: String? = null,
+    @SerialName("dietary_preference") val dietaryPreference: String? = null,
     val mood: String? = null,
     val servings: Int = 2,
-    val maxCookingTime: Int? = null
+    @SerialName("max_cooking_time") val maxCookingTime: Int? = null
 )
 
 @Serializable
 data class AdditionalMeal(
-    val recipeId: Int,
+    @SerialName("recipe_id") val recipeId: Int,
     val recipe: RecipeResponse,
     val date: String,
-    val mealType: String
+    @SerialName("meal_type") val mealType: String
 )

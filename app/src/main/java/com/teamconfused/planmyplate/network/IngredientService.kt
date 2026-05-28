@@ -11,13 +11,13 @@ import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface IngredientService {
-    @GET("api/ingredients")
+    @GET("api/ingredients/")
     suspend fun getAllIngredients(): List<IngredientDto>
 
     @GET("api/ingredients/{id}")
     suspend fun getIngredientById(@Path("id") id: Int): IngredientDto
 
-    @POST("api/ingredients")
+    @POST("api/ingredients/")
     suspend fun createIngredient(@Body request: IngredientRequest): IngredientDto
 
     @PUT("api/ingredients/{id}")

@@ -17,7 +17,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
 import com.teamconfused.planmyplate.domain.model.Recipe
 import com.teamconfused.planmyplate.ui.components.HorizontalRecipeCard
 import com.teamconfused.planmyplate.ui.viewmodels.HomeViewModel
@@ -26,20 +25,19 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
-import androidx.navigation.NavGraph.Companion.findStartDestination
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    navController: NavController, 
-    rootNavController: NavController,
-    homeViewModel: HomeViewModel = koinViewModel()
+    viewModel: HomeViewModel = koinViewModel(),
+    onNavigateToMealPlan: () -> Unit,
+    onNavigateToRecipeDetails: (recipeId: Int, fromDashboard: Boolean, mealType: String?) -> Unit
 ) {
     val context = LocalContext.current
     val sessionManager: SessionManager = koinInject()
     val hasMealPlans = sessionManager.hasMealPlans()
     
-    val uiState by homeViewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
     
     var recipeToShowDetails by remember { mutableStateOf<Recipe?>(null) }
     var mealTypeToShowDetails by remember { mutableStateOf<String?>(null) }
@@ -47,7 +45,7 @@ fun HomeScreen(
 
     // Initial load on first composition
     LaunchedEffect(Unit) {
-        homeViewModel.fetchTodaysMeals()
+        viewModel.fetchTodaysMeals()
     }
     
     // Sync refresh state with loading state
@@ -57,8 +55,8 @@ fun HomeScreen(
         }
     }
     
-    val isGenerating by homeViewModel.isGenerating.collectAsState()
-    val generatedRecipe by homeViewModel.generatedRecipe.collectAsState()
+    val isGenerating by viewModel.isGenerating.collectAsState()
+    val generatedRecipe by viewModel.generatedRecipe.collectAsState()
     var showGenerateDialog by remember { mutableStateOf(false) }
     var generatingMealType by remember { mutableStateOf<String?>("Dinner") }
 
@@ -70,7 +68,7 @@ fun HomeScreen(
                 containerColor = MaterialTheme.colorScheme.primary
             ) {
                 Icon(
-                    painter = androidx.compose.ui.res.painterResource(com.teamconfused.planmyplate.R.drawable.ic_ai_stars), // Assuming icon exists or use default
+                    painter = androidx.compose.ui.res.painterResource(com.teamconfused.planmyplate.R.drawable.ic_ai_stars),
                     contentDescription = "AI Actions"
                 )
             }
@@ -80,22 +78,22 @@ fun HomeScreen(
             isRefreshing = isRefreshing,
             onRefresh = {
                 isRefreshing = true
-                homeViewModel.fetchTodaysMeals()
+                viewModel.fetchTodaysMeals()
             },
             modifier = Modifier.padding(paddingValues)
         ) {
             if (hasMealPlans) {
                 DashboardWithMeals(
-                    navController = navController, 
                     uiState = uiState, 
-                    onRetry = { homeViewModel.retry() },
+                    onRetry = { viewModel.retry() },
                     onRecipeClick = { recipe, type -> 
                         recipeToShowDetails = recipe 
                         mealTypeToShowDetails = type
-                    }
+                    },
+                    onNavigateToMealPlan = onNavigateToMealPlan
                 )
             } else {
-                EmptyDashboard(navController)
+                EmptyDashboard(onNavigateToMealPlan = onNavigateToMealPlan)
             }
         }
     }
@@ -104,10 +102,9 @@ fun HomeScreen(
         RecipeGenerationDialog(
             onDismiss = { showGenerateDialog = false },
             onGenerate = { ingredients, mood ->
-                // For now we default to "Dinner" or could add a selector in the dialog
                 val type = "Dinner" 
                 generatingMealType = type
-                homeViewModel.generateRecipe(ingredients, type, mapOf("mood" to mood))
+                viewModel.generateRecipe(ingredients, type, mapOf("mood" to mood))
                 showGenerateDialog = false
             }
         )
@@ -132,25 +129,21 @@ fun HomeScreen(
     // Show Generated Recipe
     generatedRecipe?.let { recipe ->
         LaunchedEffect(recipe.recipeId) {
-            rootNavController.navigate(
-                com.teamconfused.planmyplate.ui.navigation.Screen.RecipeDetails(
-                    recipeId = recipe.recipeId ?: 0,
-                    fromDashboard = true,
-                    mealType = generatingMealType
-                )
+            onNavigateToRecipeDetails(
+                recipe.recipeId ?: 0,
+                true,
+                generatingMealType
             )
-            homeViewModel.clearGeneratedRecipe()
+            viewModel.clearGeneratedRecipe()
         }
     }
 
     recipeToShowDetails?.let { recipe ->
         LaunchedEffect(recipe.recipeId) {
-            rootNavController.navigate(
-                com.teamconfused.planmyplate.ui.navigation.Screen.RecipeDetails(
-                    recipeId = recipe.recipeId ?: 0,
-                    fromDashboard = true,
-                    mealType = mealTypeToShowDetails
-                )
+            onNavigateToRecipeDetails(
+                recipe.recipeId ?: 0,
+                true,
+                mealTypeToShowDetails
             )
             recipeToShowDetails = null
             mealTypeToShowDetails = null
@@ -207,10 +200,10 @@ fun RecipeGenerationDialog(
 
 @Composable
 fun DashboardWithMeals(
-    navController: NavController,
     uiState: com.teamconfused.planmyplate.ui.viewmodels.HomeUiState,
     onRetry: () -> Unit,
-    onRecipeClick: (Recipe, String?) -> Unit
+    onRecipeClick: (Recipe, String?) -> Unit,
+    onNavigateToMealPlan: () -> Unit
 ) {
     val currentDate = LocalDate.now()
     val formatter = DateTimeFormatter.ofPattern("EEEE, MMMM d")
@@ -256,8 +249,6 @@ fun DashboardWithMeals(
     }
     
     val todayCalories = uiState.todayCalories
-    val weeklyCalories = 9800 // TODO: Calculate from actual weekly data
-    val weeklyGoal = 14000
     
     Column(
         modifier = Modifier
@@ -372,15 +363,7 @@ fun DashboardWithMeals(
         }
         
         FilledTonalButton(
-            onClick = { 
-                navController.navigate("meal_plan") {
-                    popUpTo(navController.graph.findStartDestination().id) {
-                        saveState = true
-                    }
-                    launchSingleTop = true
-                    restoreState = true
-                }
-            },
+            onClick = onNavigateToMealPlan,
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp)
         ) {
@@ -438,7 +421,7 @@ fun UpcomingMealSection(label: String, recipes: List<Recipe>, onRecipeClick: (Re
 }
 
 @Composable
-fun EmptyDashboard(navController: NavController) {
+fun EmptyDashboard(onNavigateToMealPlan: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -458,15 +441,7 @@ fun EmptyDashboard(navController: NavController) {
             modifier = Modifier.padding(bottom = 32.dp)
         )
         FilledTonalButton(
-            onClick = { 
-                navController.navigate("meal_plan") {
-                    popUpTo(navController.graph.findStartDestination().id) {
-                        saveState = true
-                    }
-                    launchSingleTop = true
-                    restoreState = true
-                }
-            },
+            onClick = onNavigateToMealPlan,
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp)
         ) {

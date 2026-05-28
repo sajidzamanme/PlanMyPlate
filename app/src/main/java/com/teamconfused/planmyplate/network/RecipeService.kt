@@ -16,7 +16,7 @@ import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface RecipeService {
-    @GET("api/recipes")
+    @GET("api/recipes/")
     suspend fun getAllRecipes(@Header("Authorization") token: String): List<RecipeResponse>
 
     @GET("api/recipes/{id}")
@@ -32,7 +32,7 @@ interface RecipeService {
         @Part file: MultipartBody.Part
     ): ImageUploadResponse
 
-    @POST("api/recipes")
+    @POST("api/recipes/")
     suspend fun createRecipe(
         @Header("Authorization") token: String,
         @Body request: CreateRecipeRequest

@@ -12,7 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
+
 import com.teamconfused.planmyplate.domain.model.InventoryItem
 import com.teamconfused.planmyplate.ui.viewmodels.InventoryViewModel
 
@@ -20,7 +20,7 @@ import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun InventoryScreen(navController: NavController) {
+fun InventoryScreen(onNavigateBack: () -> Unit) {
     val context = LocalContext.current
     
     val viewModel: InventoryViewModel = koinViewModel()
@@ -59,7 +59,7 @@ fun InventoryScreen(navController: NavController) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    IconButton(onClick = { navController.popBackStack() }) {
+                    IconButton(onClick = onNavigateBack) {
                         Icon(painter = androidx.compose.ui.res.painterResource(com.teamconfused.planmyplate.R.drawable.arrow_back_icon), contentDescription = "Back")
                     }
                     Text(
