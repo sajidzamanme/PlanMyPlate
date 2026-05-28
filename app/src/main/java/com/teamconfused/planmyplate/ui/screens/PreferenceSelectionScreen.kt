@@ -106,12 +106,12 @@ fun PreferenceSelectionScreen(
                     onDietSelected = onDietSelected
                 )
                 1 -> MultiSelectStep(
-                    options = uiState.availableAllergies,
+                    options = uiState.availableIngredients,
                     selectedOptions = uiState.selectedAllergies,
                     onOptionToggled = onAllergyToggled
                 )
                 2 -> MultiSelectStep(
-                    options = uiState.availableDislikes,
+                    options = uiState.availableIngredients,
                     selectedOptions = uiState.selectedDislikes,
                     onOptionToggled = onDislikeToggled
                 )
@@ -318,8 +318,7 @@ fun PreferenceSelection_BudgetStep_Preview() {
             uiState = PreferenceSelectionUiState(
                 currentStep = 4,
                 availableDiets = listOf("Classic", "Vegetarian"),
-                availableAllergies = listOf("Peanuts", "Shellfish"),
-                availableDislikes = listOf("Mushrooms"),
+                availableIngredients = listOf("Peanuts", "Shellfish", "Mushrooms"),
                 selectedDiet = "Classic",
                 selectedAllergies = emptySet(),
                 selectedDislikes = emptySet(),

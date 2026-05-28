@@ -22,7 +22,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavController
+
 import coil.compose.AsyncImage
 import com.teamconfused.planmyplate.ui.viewmodels.AddRecipeViewModel
 import com.teamconfused.planmyplate.ui.viewmodels.RecipeIngredientInput
@@ -31,8 +31,8 @@ import com.teamconfused.planmyplate.R
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddRecipeScreen(
-    navController: NavController,
-    viewModel: AddRecipeViewModel
+    viewModel: AddRecipeViewModel,
+    onNavigateBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
@@ -45,7 +45,7 @@ fun AddRecipeScreen(
 
     LaunchedEffect(uiState.successMessage) {
         if (uiState.successMessage != null) {
-            navController.popBackStack()
+            onNavigateBack()
         }
     }
 
@@ -54,7 +54,7 @@ fun AddRecipeScreen(
             TopAppBar(
                 title = { Text("Add New Recipe") },
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
+                    IconButton(onClick = onNavigateBack) {
                         Icon(painter = painterResource(R.drawable.arrow_back_icon), "Back")
                     }
                 }
@@ -236,7 +236,7 @@ fun AddRecipeScreen(
 
             // Submit Button
             Button(
-                onClick = { viewModel.createRecipe { navController.popBackStack() } },
+                onClick = { viewModel.createRecipe { onNavigateBack() } },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !uiState.isLoading && uiState.name.isNotBlank()
             ) {

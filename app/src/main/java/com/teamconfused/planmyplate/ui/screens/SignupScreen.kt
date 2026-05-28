@@ -2,37 +2,13 @@ package com.teamconfused.planmyplate.ui.screens
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -55,9 +31,12 @@ import com.teamconfused.planmyplate.ui.viewmodels.SignupUiState
 @Composable
 fun SignupScreen(
     uiState: SignupUiState,
-    onFullNameChange: (String) -> Unit,
+    onFirstNameChange: (String) -> Unit,
+    onLastNameChange: (String) -> Unit,
     onEmailChange: (String) -> Unit,
     onPasswordChange: (String) -> Unit,
+    onPhoneChange: (String) -> Unit,
+    onDateOfBirthChange: (String) -> Unit,
     onTermsAcceptedChange: (Boolean) -> Unit,
     onLoginClick: () -> Unit = {},
     onSignupClick: () -> Unit = {},
@@ -88,7 +67,8 @@ fun SignupScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(horizontal = 24.dp),
+                .padding(horizontal = 24.dp)
+                .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.Start
         ) {
             Text(
@@ -102,27 +82,35 @@ fun SignupScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Full Name
-            InputLabel(text = "Full Name")
-            OutlinedTextField(
-                value = uiState.fullName,
-                onValueChange = onFullNameChange,
-                modifier = Modifier.fillMaxWidth(),
-                shape = MaterialTheme.shapes.large,
-                singleLine = true,
-                isError = uiState.fullNameError != null,
-                supportingText = {
-                     if (uiState.fullNameError != null) {
-                         Text(text = uiState.fullNameError, color = MaterialTheme.colorScheme.error)
-                     }
-                },
-                keyboardOptions = KeyboardOptions(
-                    capitalization = KeyboardCapitalization.Words,
-                    imeAction = ImeAction.Next
-                )
-            )
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                Column(modifier = Modifier.weight(1f)) {
+                    InputLabel(text = "First Name")
+                    OutlinedTextField(
+                        value = uiState.firstName,
+                        onValueChange = onFirstNameChange,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = MaterialTheme.shapes.large,
+                        singleLine = true,
+                        isError = uiState.firstNameError != null,
+                        supportingText = { uiState.firstNameError?.let { Text(it) } },
+                        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words, imeAction = ImeAction.Next)
+                    )
+                }
+                Column(modifier = Modifier.weight(1f)) {
+                    InputLabel(text = "Last Name")
+                    OutlinedTextField(
+                        value = uiState.lastName,
+                        onValueChange = onLastNameChange,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = MaterialTheme.shapes.large,
+                        singleLine = true,
+                        isError = uiState.lastNameError != null,
+                        supportingText = { uiState.lastNameError?.let { Text(it) } },
+                        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words, imeAction = ImeAction.Next)
+                    )
+                }
+            }
 
-            // Email Address
             InputLabel(text = "Email Address")
             OutlinedTextField(
                 value = uiState.email,
@@ -131,18 +119,32 @@ fun SignupScreen(
                 shape = MaterialTheme.shapes.large,
                 singleLine = true,
                 isError = uiState.emailError != null,
-                 supportingText = {
-                     if (uiState.emailError != null) {
-                         Text(text = uiState.emailError, color = MaterialTheme.colorScheme.error)
-                     }
-                },
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Email,
-                    imeAction = ImeAction.Next
-                )
+                supportingText = { uiState.emailError?.let { Text(it) } },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next)
             )
 
-            // Password
+            InputLabel(text = "Phone Number")
+            OutlinedTextField(
+                value = uiState.phone,
+                onValueChange = onPhoneChange,
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.large,
+                singleLine = true,
+                isError = uiState.phoneError != null,
+                supportingText = { uiState.phoneError?.let { Text(it) } },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone, imeAction = ImeAction.Next)
+            )
+
+            InputLabel(text = "Date of Birth (YYYY-MM-DD)")
+            OutlinedTextField(
+                value = uiState.dateOfBirth,
+                onValueChange = onDateOfBirthChange,
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.large,
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
+            )
+
             InputLabel(text = "Password")
             OutlinedTextField(
                 value = uiState.password,
@@ -151,132 +153,53 @@ fun SignupScreen(
                 shape = MaterialTheme.shapes.large,
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 isError = uiState.passwordError != null,
-                supportingText = {
-                    if (uiState.passwordError != null) {
-                        Text(text = uiState.passwordError, color = MaterialTheme.colorScheme.error)
-                    }
-                },
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Password,
-                    imeAction = ImeAction.Done
-                ),
+                supportingText = { uiState.passwordError?.let { Text(it) } },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
                 singleLine = true
             )
 
-            // Terms
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Checkbox(
-                    checked = uiState.isTermsAccepted,
-                    onCheckedChange = onTermsAcceptedChange
-                )
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                Checkbox(checked = uiState.isTermsAccepted, onCheckedChange = onTermsAcceptedChange)
                 Text(
                     text = "I agree to PlanMyPlate's Terms & Conditions",
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.clickable { onTermsAcceptedChange(!uiState.isTermsAccepted) }
                 )
             }
-            if (uiState.termsError != null) {
-                Text(
-                    text = uiState.termsError,
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall
-                )
-            }
+            uiState.termsError?.let { Text(text = it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Create Account Button
             Button(
                 onClick = onSignupClick,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
+                modifier = Modifier.fillMaxWidth().height(56.dp),
                 shape = RoundedCornerShape(12.dp),
                 enabled = uiState.isTermsAccepted && !uiState.isLoading
             ) {
                 if (uiState.isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        strokeWidth = 2.dp
-                    )
+                    CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 2.dp)
                 } else {
                     Text("Create an Account", fontSize = 16.sp)
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-            // OR Divider
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                HorizontalDivider(modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.outlineVariant)
-                Text(
-                    text = "Or",
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                HorizontalDivider(modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.outlineVariant)
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Google Button
-            OutlinedButton(
-                onClick = { /* Handle Google */ },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(12.dp),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
-            ) {
-                Text("Sign Up with Google", color = MaterialTheme.colorScheme.onSurface)
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Facebook Button
-            Button(
-                onClick = { /* Handle Facebook */ },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1877F2))
-            ) {
-                Text("Sign Up with Facebook", color = Color.White)
-            }
-
-            Spacer(modifier = Modifier.weight(1f))
-
-            // Footer
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    "Already a member? ",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodySmall
-                )
+                Text("Already a member? ", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
                 Text(
                     text = "Login",
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        fontWeight = FontWeight.Bold,
-                    ),
+                    style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
                     modifier = Modifier.clickable { onLoginClick() },
                     color = MaterialTheme.colorScheme.primary
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }
@@ -287,9 +210,12 @@ fun SignupScreenPreview() {
     PlanMyPlateTheme {
         SignupScreen(
             uiState = SignupUiState(),
-            onFullNameChange = {},
+            onFirstNameChange = {},
+            onLastNameChange = {},
             onEmailChange = {},
             onPasswordChange = {},
+            onPhoneChange = {},
+            onDateOfBirthChange = {},
             onTermsAcceptedChange = {},
             onLoginClick = {},
             onSignupClick = {},

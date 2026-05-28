@@ -1,12 +1,12 @@
 package com.teamconfused.planmyplate.network
 
-import com.teamconfused.planmyplate.model.AuthResponse
-import com.teamconfused.planmyplate.model.ForgotPasswordRequest
-import com.teamconfused.planmyplate.model.ForgotPasswordResponse
-import com.teamconfused.planmyplate.model.ResetPasswordRequest
-import com.teamconfused.planmyplate.model.ResetPasswordResponse
-import com.teamconfused.planmyplate.model.SigninRequest
-import com.teamconfused.planmyplate.model.SignupRequest
+import com.teamconfused.planmyplate.data.model.AuthResponse
+import com.teamconfused.planmyplate.data.model.ForgotPasswordRequest
+import com.teamconfused.planmyplate.data.model.ForgotPasswordResponse
+import com.teamconfused.planmyplate.data.model.ResetPasswordRequest
+import com.teamconfused.planmyplate.data.model.ResetPasswordResponse
+import com.teamconfused.planmyplate.data.model.SigninRequest
+import com.teamconfused.planmyplate.data.model.SignupRequest
 import retrofit2.http.Body
 import retrofit2.http.POST
 

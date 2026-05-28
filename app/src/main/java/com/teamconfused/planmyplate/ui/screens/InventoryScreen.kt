@@ -12,15 +12,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
-import com.teamconfused.planmyplate.model.InventoryItem
+
+import com.teamconfused.planmyplate.domain.model.InventoryItem
 import com.teamconfused.planmyplate.ui.viewmodels.InventoryViewModel
 
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun InventoryScreen(navController: NavController) {
+fun InventoryScreen(onNavigateBack: () -> Unit) {
     val context = LocalContext.current
     
     val viewModel: InventoryViewModel = koinViewModel()
@@ -59,7 +59,7 @@ fun InventoryScreen(navController: NavController) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    IconButton(onClick = { navController.popBackStack() }) {
+                    IconButton(onClick = onNavigateBack) {
                         Icon(painter = androidx.compose.ui.res.painterResource(com.teamconfused.planmyplate.R.drawable.arrow_back_icon), contentDescription = "Back")
                     }
                     Text(
@@ -117,7 +117,7 @@ fun InventoryItemCard(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = item.name ?: item.ingredient?.name ?: "Item #${item.ingredient?.ingId ?: "Unknown"}",
+                    text = item.ingredient?.name ?: "Item #${item.ingredient?.ingId ?: "Unknown"}",
                     style = MaterialTheme.typography.titleMedium,
                     maxLines = 1,
                     overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
@@ -134,7 +134,7 @@ fun InventoryItemCard(
                     onClick = onDecrease,
                     colors = IconButtonDefaults.filledIconButtonColors(containerColor = MaterialTheme.colorScheme.errorContainer)
                 ) {
-                    if (item.quantity <= 1) {
+                    if ((item.quantity ?: 0.0) <= 1) {
                          Icon(painter = painterResource(com.teamconfused.planmyplate.R.drawable.remove_icon), contentDescription = "Remove", tint = MaterialTheme.colorScheme.error)
                     } else {
                          // Use standard Remove icon

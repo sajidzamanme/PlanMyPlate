@@ -3,9 +3,10 @@ package com.teamconfused.planmyplate.ui.viewmodels
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.teamconfused.planmyplate.domain.model.AdditionalMeal
+import com.teamconfused.planmyplate.domain.model.Recipe
 import com.teamconfused.planmyplate.domain.usecase.GenerateRecipeUseCase
 import com.teamconfused.planmyplate.domain.usecase.GetTodaysMealsUseCase
-import com.teamconfused.planmyplate.model.Recipe
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -23,7 +24,7 @@ data class HomeUiState(
     val errorMessage: String? = null,
     val consumedCalories: Int = 0,
     val handledMealTypes: Set<String> = emptySet(),
-    val additionalMeals: List<com.teamconfused.planmyplate.model.AdditionalMeal> = emptyList()
+    val additionalMeals: List<AdditionalMeal> = emptyList()
 ) {
     val todayCalories: Int
         get() = (if (!handledMealTypes.contains("Breakfast")) todayBreakfast?.calories ?: 0 else 0) + 
@@ -91,6 +92,7 @@ class HomeViewModel(
                     )
                 }
             } catch (e: Exception) {
+                Log.e("HomeViewModel", "Failed to fetch today's meals: ${e.message}", e)
                 _uiState.update {
                     it.copy(
                         isLoading = false,
@@ -140,8 +142,8 @@ class HomeViewModel(
                 Log.d("HomeViewModel", "AI Recipe generated successfully: ${recipe.name}")
                 
                 val today = java.time.LocalDate.now().toString()
-                val newAdditionalMeal = com.teamconfused.planmyplate.model.AdditionalMeal(
-                    recipeId = recipe.id ?: (System.currentTimeMillis() % Int.MAX_VALUE).toInt(),
+                val newAdditionalMeal = AdditionalMeal(
+                    recipeId = recipe.recipeId ?: (System.currentTimeMillis() % Int.MAX_VALUE).toInt(),
                     recipe = recipe,
                     date = today,
                     mealType = mealType
@@ -227,4 +229,3 @@ class HomeViewModel(
         _generatedRecipe.value = null
     }
 }
-

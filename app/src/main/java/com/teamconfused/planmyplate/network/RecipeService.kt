@@ -1,10 +1,8 @@
 package com.teamconfused.planmyplate.network
 
-import com.teamconfused.planmyplate.model.CreateRecipeRequest
-import com.teamconfused.planmyplate.model.ImageUploadResponse
-import com.teamconfused.planmyplate.model.RecipeIngredientRequest
-import com.teamconfused.planmyplate.model.RecipeRequest
-import com.teamconfused.planmyplate.model.RecipeResponse
+import com.teamconfused.planmyplate.data.model.CreateRecipeRequest
+import com.teamconfused.planmyplate.data.model.ImageUploadResponse
+import com.teamconfused.planmyplate.data.model.RecipeResponse
 import okhttp3.MultipartBody
 import retrofit2.http.Body
 import retrofit2.http.DELETE
@@ -18,7 +16,7 @@ import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface RecipeService {
-    @GET("api/recipes")
+    @GET("api/recipes/")
     suspend fun getAllRecipes(@Header("Authorization") token: String): List<RecipeResponse>
 
     @GET("api/recipes/{id}")
@@ -34,7 +32,7 @@ interface RecipeService {
         @Part file: MultipartBody.Part
     ): ImageUploadResponse
 
-    @POST("api/recipes")
+    @POST("api/recipes/")
     suspend fun createRecipe(
         @Header("Authorization") token: String,
         @Body request: CreateRecipeRequest
@@ -44,7 +42,7 @@ interface RecipeService {
     suspend fun updateRecipe(
         @Header("Authorization") token: String,
         @Path("id") id: Int,
-        @Body request: RecipeRequest
+        @Body request: CreateRecipeRequest
     ): RecipeResponse
 
     @DELETE("api/recipes/{id}")

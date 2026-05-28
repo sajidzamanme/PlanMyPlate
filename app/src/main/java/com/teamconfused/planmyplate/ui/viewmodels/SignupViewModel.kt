@@ -1,9 +1,10 @@
 package com.teamconfused.planmyplate.ui.viewmodels
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.teamconfused.planmyplate.model.SignupRequest
-import com.teamconfused.planmyplate.network.RetrofitClient
+import com.teamconfused.planmyplate.data.model.SignupRequest
+import com.teamconfused.planmyplate.network.AuthService
 import com.teamconfused.planmyplate.util.SessionManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -12,24 +13,36 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 data class SignupUiState(
-    val fullName: String = "",
+    val firstName: String = "",
+    val lastName: String = "",
     val email: String = "",
     val password: String = "",
+    val phone: String = "",
+    val dateOfBirth: String = "1998-01-01",
     val isTermsAccepted: Boolean = false,
-    val fullNameError: String? = null,
+    val firstNameError: String? = null,
+    val lastNameError: String? = null,
     val emailError: String? = null,
     val passwordError: String? = null,
+    val phoneError: String? = null,
     val termsError: String? = null,
     val isLoading: Boolean = false,
     val errorMessage: String? = null
 )
 
-class SignupViewModel(private val sessionManager: SessionManager) : ViewModel() {
+class SignupViewModel(
+    private val authService: AuthService,
+    private val sessionManager: SessionManager
+) : ViewModel() {
     private val _uiState = MutableStateFlow(SignupUiState())
     val uiState: StateFlow<SignupUiState> = _uiState.asStateFlow()
 
-    fun onFullNameChange(name: String) {
-        _uiState.update { it.copy(fullName = name, fullNameError = null) }
+    fun onFirstNameChange(name: String) {
+        _uiState.update { it.copy(firstName = name, firstNameError = null) }
+    }
+
+    fun onLastNameChange(name: String) {
+        _uiState.update { it.copy(lastName = name, lastNameError = null) }
     }
 
     fun onEmailChange(email: String) {
@@ -40,6 +53,14 @@ class SignupViewModel(private val sessionManager: SessionManager) : ViewModel() 
         _uiState.update { it.copy(password = password, passwordError = null) }
     }
 
+    fun onPhoneChange(phone: String) {
+        _uiState.update { it.copy(phone = phone, phoneError = null) }
+    }
+
+    fun onDateOfBirthChange(dob: String) {
+        _uiState.update { it.copy(dateOfBirth = dob) }
+    }
+
     fun onTermsAcceptedChange(accepted: Boolean) {
         _uiState.update { it.copy(isTermsAccepted = accepted, termsError = null) }
     }
@@ -48,8 +69,13 @@ class SignupViewModel(private val sessionManager: SessionManager) : ViewModel() 
         val currentState = _uiState.value
         var isValid = true
 
-        if (currentState.fullName.isBlank()) {
-            _uiState.update { it.copy(fullNameError = "Full Name is required") }
+        if (currentState.firstName.isBlank()) {
+            _uiState.update { it.copy(firstNameError = "First Name is required") }
+            isValid = false
+        }
+        
+        if (currentState.lastName.isBlank()) {
+            _uiState.update { it.copy(lastNameError = "Last Name is required") }
             isValid = false
         }
 
@@ -64,8 +90,13 @@ class SignupViewModel(private val sessionManager: SessionManager) : ViewModel() 
         if (currentState.password.isBlank()) {
             _uiState.update { it.copy(passwordError = "Password is required") }
             isValid = false
-        } else if (currentState.password.length < 6) {
-            _uiState.update { it.copy(passwordError = "Password must be at least 6 characters") }
+        } else if (currentState.password.length < 8) {
+            _uiState.update { it.copy(passwordError = "Password must be at least 8 characters") }
+            isValid = false
+        }
+
+        if (currentState.phone.isBlank()) {
+            _uiState.update { it.copy(phoneError = "Phone is required") }
             isValid = false
         }
 
@@ -76,7 +107,7 @@ class SignupViewModel(private val sessionManager: SessionManager) : ViewModel() 
 
         if (isValid) {
             // Admin bypass
-            if (currentState.fullName == "admin" && currentState.email == "admin@email.com" && currentState.password == "12345678") {
+            if (currentState.firstName == "admin" && currentState.email == "admin@email.com" && currentState.password == "12345678") {
                 sessionManager.saveUserId(0)
                 sessionManager.saveAuthToken("admin-bypass-token")
                 _uiState.update { it.copy(isLoading = false) }
@@ -88,21 +119,25 @@ class SignupViewModel(private val sessionManager: SessionManager) : ViewModel() 
                 _uiState.update { it.copy(isLoading = true, errorMessage = null) }
                 try {
                     val request = SignupRequest(
-                        name = currentState.fullName,
+                        firstName = currentState.firstName,
+                        lastName = currentState.lastName,
                         email = currentState.email,
-                        password = currentState.password
+                        password = currentState.password,
+                        phone = currentState.phone,
+                        dateOfBirth = currentState.dateOfBirth
                     )
-                    val response = RetrofitClient.authService.signup(request)
-                    val userId = response.getEffectiveUserId()
+                    val response = authService.signup(request)
+                    val userId = response.userId
                     if (userId != null) {
                         sessionManager.saveUserId(userId)
-                        response.token?.let { sessionManager.saveAuthToken(it) }
+                        response.accessToken?.let { sessionManager.saveAuthToken(it) }
                     } else {
-                        android.util.Log.e("SignupViewModel", "Signup successful but no userId found in response: $response")
+                        Log.e("SignupViewModel", "Signup successful but no userId found in response: $response")
                     }
                     _uiState.update { it.copy(isLoading = false) }
                     onSignupSuccess()
                 } catch (e: Exception) {
+                    Log.e("SignupViewModel", "Signup failed: ${e.message}", e)
                     _uiState.update { 
                         it.copy(
                             isLoading = false, 

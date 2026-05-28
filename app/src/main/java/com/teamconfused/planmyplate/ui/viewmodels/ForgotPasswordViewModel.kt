@@ -1,11 +1,11 @@
 package com.teamconfused.planmyplate.ui.viewmodels
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.teamconfused.planmyplate.model.ForgotPasswordRequest
-import com.teamconfused.planmyplate.model.ResetPasswordRequest
+import com.teamconfused.planmyplate.data.model.ForgotPasswordRequest
+import com.teamconfused.planmyplate.data.model.ResetPasswordRequest
 import com.teamconfused.planmyplate.network.AuthService
-import com.teamconfused.planmyplate.network.RetrofitClient
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -74,11 +74,11 @@ class ForgotPasswordViewModel(
                     it.copy(
                         step = ForgotPasswordStep.VERIFICATION_CODE, 
                         error = null,
-                        resetToken = response.token,
                         isLoading = false
                     ) 
                 }
             } catch (e: Exception) {
+                Log.e("ForgotPasswordViewModel", "Failed to send reset code: ${e.message}", e)
                 _uiState.update { 
                     it.copy(
                         error = e.localizedMessage ?: "Failed to send reset code",
@@ -130,6 +130,7 @@ class ForgotPasswordViewModel(
                 authService.resetPassword(request)
                 _uiState.update { it.copy(step = ForgotPasswordStep.SUCCESS, error = null, isLoading = false) }
             } catch (e: Exception) {
+                Log.e("ForgotPasswordViewModel", "Failed to reset password: ${e.message}", e)
                 _uiState.update { 
                     it.copy(
                         error = e.localizedMessage ?: "Failed to reset password",

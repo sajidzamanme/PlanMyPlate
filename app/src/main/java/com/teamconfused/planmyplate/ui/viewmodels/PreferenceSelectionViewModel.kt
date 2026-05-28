@@ -1,9 +1,11 @@
 package com.teamconfused.planmyplate.ui.viewmodels
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.teamconfused.planmyplate.model.UserPreferencesRequest
-import com.teamconfused.planmyplate.network.RetrofitClient
+import com.teamconfused.planmyplate.data.model.UserPreferencesRequest
+import com.teamconfused.planmyplate.network.IngredientService
+import com.teamconfused.planmyplate.network.UserPreferencesService
 import com.teamconfused.planmyplate.util.SessionManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,11 +23,14 @@ data class PreferenceSelectionUiState(
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
     val availableDiets: List<String> = emptyList(),
-    val availableAllergies: List<String> = emptyList(),
-    val availableDislikes: List<String> = emptyList()
+    val availableIngredients: List<String> = emptyList()
 )
 
-class PreferenceSelectionViewModel(private val sessionManager: SessionManager) : ViewModel() {
+class PreferenceSelectionViewModel(
+    private val userPreferencesService: UserPreferencesService,
+    private val ingredientService: IngredientService,
+    private val sessionManager: SessionManager
+) : ViewModel() {
     private val _uiState = MutableStateFlow(PreferenceSelectionUiState())
     val uiState: StateFlow<PreferenceSelectionUiState> = _uiState.asStateFlow()
 
@@ -39,19 +44,18 @@ class PreferenceSelectionViewModel(private val sessionManager: SessionManager) :
             _uiState.update { it.copy(isLoading = true) }
             try {
                 // Parallel fetch
-                val diets = RetrofitClient.userPreferencesService.getDiets().map { it.dietName }
-                val allergies = RetrofitClient.userPreferencesService.getAllergies().map { it.allergyName }
-                val dislikes = RetrofitClient.userPreferencesService.getDislikes().map { it.name }
+                val diets = userPreferencesService.getDiets().mapNotNull { it.dietName }
+                val ingredients = ingredientService.getAllIngredients().mapNotNull { it.name }
 
                 _uiState.update { 
                     it.copy(
                         isLoading = false,
                         availableDiets = diets,
-                        availableAllergies = allergies,
-                        availableDislikes = dislikes
+                        availableIngredients = ingredients
                     ) 
                 }
             } catch (e: Exception) {
+                Log.e("PreferenceSelectionViewModel", "Failed to load reference data: ${e.message}", e)
                  _uiState.update { 
                     it.copy(
                         isLoading = false, 
@@ -114,17 +118,18 @@ class PreferenceSelectionViewModel(private val sessionManager: SessionManager) :
             try {
                 val token = sessionManager.getAuthToken() ?: return@launch
                 val authHeader = "Bearer $token"
-                val prefs = RetrofitClient.userPreferencesService.getPreferences(authHeader, userId)
+                val response = userPreferencesService.getPreferences(authHeader, userId)
                 
                 _uiState.update { it.copy(
-                    selectedDiet = prefs.diet,
-                    selectedAllergies = prefs.allergies?.toSet() ?: emptySet(),
-                    selectedDislikes = prefs.dislikes?.toSet() ?: emptySet(),
-                    selectedServings = prefs.servings,
-                    selectedBudget = prefs.budget ?: 50f,
+                    selectedDiet = response.diet,
+                    selectedAllergies = response.allergies?.toSet() ?: emptySet(),
+                    selectedDislikes = response.dislikes?.toSet() ?: emptySet(),
+                    selectedServings = response.servings,
+                    selectedBudget = response.budget ?: 50f,
                     isLoading = false
                 )}
             } catch (e: Exception) {
+                Log.e("PreferenceSelectionViewModel", "Failed to load existing preferences: ${e.message}", e)
                 // If it's a 404, we just stop loading; it's okay for new users
                 _uiState.update { it.copy(isLoading = false) }
             }
@@ -157,6 +162,7 @@ class PreferenceSelectionViewModel(private val sessionManager: SessionManager) :
                                   else currentState.selectedDislikes.toList()
 
                 val request = UserPreferencesRequest(
+                    userId = userId,
                     diet = currentState.selectedDiet,
                     allergies = allergiesList,
                     dislikes = dislikesList,
@@ -165,10 +171,11 @@ class PreferenceSelectionViewModel(private val sessionManager: SessionManager) :
                 )
                 val token = sessionManager.getAuthToken() ?: return@launch
                 val authHeader = "Bearer $token"
-                RetrofitClient.userPreferencesService.setPreferences(authHeader, userId, request)
+                userPreferencesService.setPreferences(authHeader, userId, request)
                 _uiState.update { it.copy(isLoading = false) }
                 onComplete()
             } catch (e: Exception) {
+                Log.e("PreferenceSelectionViewModel", "Failed to save preferences: ${e.message}", e)
                 _uiState.update { 
                     it.copy(
                         isLoading = false, 
@@ -183,10 +190,11 @@ class PreferenceSelectionViewModel(private val sessionManager: SessionManager) :
         return try {
             val token = sessionManager.getAuthToken() ?: return false
             val authHeader = "Bearer $token"
-            val response = RetrofitClient.userPreferencesService.getPreferences(authHeader, id)
+            val response = userPreferencesService.getPreferences(authHeader, id)
             // Check if the returned response has actual data.
             response.diet != null || response.servings != null
         } catch (e: Exception) {
+            Log.e("PreferenceSelectionViewModel", "Failed to check if preferences are set: ${e.message}", e)
             // If 404 is thrown, it usually means preferences don't exist
             false
         }

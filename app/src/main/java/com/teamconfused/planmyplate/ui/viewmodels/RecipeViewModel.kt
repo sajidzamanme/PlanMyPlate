@@ -1,10 +1,13 @@
 package com.teamconfused.planmyplate.ui.viewmodels
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.teamconfused.planmyplate.domain.model.Recipe
 import com.teamconfused.planmyplate.domain.usecase.FilterRecipesUseCase
 import com.teamconfused.planmyplate.domain.usecase.GetAllRecipesUseCase
-import com.teamconfused.planmyplate.model.Recipe
+import com.teamconfused.planmyplate.domain.usecase.GetRecipeUseCase
+import com.teamconfused.planmyplate.util.SessionManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,8 +22,8 @@ sealed class RecipeUiState {
 class RecipeViewModel(
     private val getAllRecipesUseCase: GetAllRecipesUseCase,
     private val filterRecipesUseCase: FilterRecipesUseCase,
-    private val getRecipeUseCase: com.teamconfused.planmyplate.domain.usecase.GetRecipeUseCase,
-    private val sessionManager: com.teamconfused.planmyplate.util.SessionManager
+    private val getRecipeUseCase: GetRecipeUseCase,
+    private val sessionManager: SessionManager
 ) : ViewModel() {
 
     private val _allRecipesState = MutableStateFlow<RecipeUiState>(RecipeUiState.Loading)
@@ -50,6 +53,7 @@ class RecipeViewModel(
                 val recipes = getAllRecipesUseCase(authHeader)
                 _allRecipesState.value = RecipeUiState.Success(recipes)
             } catch (e: Exception) {
+                Log.e("RecipeViewModel", "Failed to fetch recipes: ${e.message}", e)
                 _allRecipesState.value = RecipeUiState.Error(e.message ?: "Failed to fetch recipes")
             }
         }
@@ -65,6 +69,7 @@ class RecipeViewModel(
                 // Simple recommendation logic: take 5 random
                 _recommendedRecipesState.value = RecipeUiState.Success(all.shuffled().take(5))
             } catch (e: Exception) {
+                Log.e("RecipeViewModel", "Failed to fetch recommended recipes: ${e.message}", e)
                  _recommendedRecipesState.value = RecipeUiState.Error(e.message ?: "Failed")
             }
         }
@@ -79,6 +84,7 @@ class RecipeViewModel(
                 val budget = filterRecipesUseCase.byCalories(authHeader, 0, 400)
                 _budgetRecipesState.value = RecipeUiState.Success(budget)
             } catch (e: Exception) {
+                Log.e("RecipeViewModel", "Failed to fetch budget recipes: ${e.message}", e)
                  _budgetRecipesState.value = RecipeUiState.Error(e.message ?: "Failed")
             }
         }
@@ -93,7 +99,7 @@ class RecipeViewModel(
                 val recipe = getRecipeUseCase(authHeader, id)
                 _selectedRecipeState.value = recipe
             } catch (e: Exception) {
-                // Handle error
+                Log.e("RecipeViewModel", "Failed to get recipe by ID: ${e.message}", e)
             } finally {
                 _isDetailsLoading.value = false
             }

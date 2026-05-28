@@ -20,5 +20,5 @@ val appModule = module {
     single { RetrofitClient.groceryListService }
     single { RetrofitClient.inventoryService }
     single { RetrofitClient.aiService }
-    // Add other services as needed
+    single { RetrofitClient.expiryService }
 }

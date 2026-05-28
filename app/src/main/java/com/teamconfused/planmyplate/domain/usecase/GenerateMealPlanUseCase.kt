@@ -1,7 +1,7 @@
 package com.teamconfused.planmyplate.domain.usecase
 
+import com.teamconfused.planmyplate.domain.model.MealPlan
 import com.teamconfused.planmyplate.domain.repository.AiRepository
-import com.teamconfused.planmyplate.model.MealPlan
 
 class GenerateMealPlanUseCase(
     private val aiRepository: AiRepository

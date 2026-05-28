@@ -1,8 +1,7 @@
 package com.teamconfused.planmyplate.domain.usecase
 
+import com.teamconfused.planmyplate.domain.model.Recipe
 import com.teamconfused.planmyplate.domain.repository.MealPlanRepository
-import com.teamconfused.planmyplate.model.Recipe
-import com.teamconfused.planmyplate.model.toRecipe
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 
@@ -34,7 +33,6 @@ class GetTodaysMealsUseCase(
         // Logic to categorize meals
         val enrichedSlots = activePlan.slots.mapIndexed { index, slot ->
             val dayIndex = if (slot.dayNumber != null && slot.dayNumber > 0) slot.dayNumber
-                           else if (slot.day != null && slot.day > 0) slot.day
                            else {
                                val derived = if (slot.date != null && activePlan.startDate != null) {
                                    try {
@@ -79,11 +77,11 @@ class GetTodaysMealsUseCase(
         val todayMealsList = if (todayKey != null) slotsByDate[todayKey]?.map { it.first } ?: emptyList() else emptyList()
         val upcomingMealsList = if (nextDayKey != null) slotsByDate[nextDayKey]?.map { it.first } ?: emptyList() else emptyList()
 
-        val todayBreakfast = todayMealsList.find { it.mealType == "Breakfast" }?.recipe?.toRecipe()
-        val todayLunch = todayMealsList.find { it.mealType == "Lunch" }?.recipe?.toRecipe()
-        val todayDinner = todayMealsList.find { it.mealType == "Dinner" }?.recipe?.toRecipe()
+        val todayBreakfast = todayMealsList.find { it.mealType.equals("Breakfast", ignoreCase = true) }?.recipe
+        val todayLunch = todayMealsList.find { it.mealType.equals("Lunch", ignoreCase = true) }?.recipe
+        val todayDinner = todayMealsList.find { it.mealType.equals("Dinner", ignoreCase = true) }?.recipe
         
-        val upcomingRecipes = upcomingMealsList.mapNotNull { it.recipe?.toRecipe() }
+        val upcomingRecipes = upcomingMealsList.mapNotNull { it.recipe }
         
         val upcomingMsg = if (nextDayKey == null && todayKey != null) "No upcoming meals (End of Plan)" else null
         val upcomingLabel = if (nextDayKey != null) "Tomorrow" else null

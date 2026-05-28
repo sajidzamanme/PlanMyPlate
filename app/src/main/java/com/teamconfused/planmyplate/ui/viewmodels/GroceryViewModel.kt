@@ -1,8 +1,13 @@
 package com.teamconfused.planmyplate.ui.viewmodels
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.teamconfused.planmyplate.model.*
+import com.teamconfused.planmyplate.data.mapper.toDomain
+import com.teamconfused.planmyplate.data.model.PurchaseItemDetail
+import com.teamconfused.planmyplate.data.model.PurchaseItemsRequest
+import com.teamconfused.planmyplate.domain.model.GroceryList
+import com.teamconfused.planmyplate.domain.model.GroceryListItem
 import com.teamconfused.planmyplate.network.GroceryListService
 import com.teamconfused.planmyplate.network.InventoryService
 import com.teamconfused.planmyplate.network.MealPlanService
@@ -47,7 +52,8 @@ class GroceryViewModel(
                 val authHeader = "Bearer $token"
                 
                 // 1. Fetch all lists
-                val lists = groceryListService.getGroceryListsForUser(authHeader, userId)
+                val listDtos = groceryListService.getGroceryListsForUser(authHeader, userId)
+                val lists = listDtos.map { it.toDomain() }
                 
                 // 3. Process Active Grocery List
                 val activeList = lists.find { it.status == "active" } ?: lists.firstOrNull()
@@ -62,6 +68,7 @@ class GroceryViewModel(
                     ) 
                 }
             } catch (e: Exception) {
+                Log.e("GroceryViewModel", "Failed to fetch grocery lists: ${e.message}", e)
                 _uiState.update { it.copy(isLoading = false, errorMessage = e.message) }
             }
         }
@@ -80,9 +87,9 @@ class GroceryViewModel(
         }
     }
 
-    fun updateListQuantity(item: GroceryListItem, delta: Int) {
-        val currentQty = item.quantity ?: 1
-        val newQty = (currentQty + delta).coerceAtLeast(1)
+    fun updateListQuantity(item: GroceryListItem, delta: Double) {
+        val currentQty = item.quantity ?: 1.0
+        val newQty = (currentQty + delta).coerceAtLeast(0.0)
         
         if (newQty == currentQty) return
 
@@ -108,6 +115,7 @@ class GroceryViewModel(
                     groceryListService.updateGroceryListItem(authHeader, listId, itemId, req)
                 }
             } catch (e: Exception) {
+                Log.e("GroceryViewModel", "Failed to update grocery list item quantity: ${e.message}", e)
                 // Ignore 404 if endpoint doesn't exist yet, or handle error
                 println("Failed to sync quantity: ${e.message}")
             }
@@ -126,7 +134,7 @@ class GroceryViewModel(
                 val itemId = item.id ?: return@mapNotNull null
                 PurchaseItemDetail(
                     itemId = itemId,
-                    quantity = item.quantity ?: 1
+                    quantity = item.quantity ?: 1.0
                 )
             }
 
@@ -154,6 +162,7 @@ class GroceryViewModel(
                     _uiState.update { it.copy(isLoading = false, errorMessage = "Purchase failed") }
                 }
             } catch (e: Exception) {
+                Log.e("GroceryViewModel", "Failed to purchase selected items: ${e.message}", e)
                 _uiState.update { it.copy(isLoading = false, errorMessage = e.message) }
             }
         }

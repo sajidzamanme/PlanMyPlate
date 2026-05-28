@@ -1,11 +1,11 @@
 package com.teamconfused.planmyplate.data.repository
 
 import android.util.Log
+import com.teamconfused.planmyplate.data.mapper.toDomain
+import com.teamconfused.planmyplate.data.model.GenerateRecipeRequest
+import com.teamconfused.planmyplate.domain.model.MealPlan
+import com.teamconfused.planmyplate.domain.model.Recipe
 import com.teamconfused.planmyplate.domain.repository.AiRepository
-import com.teamconfused.planmyplate.model.GenerateRecipeRequest
-import com.teamconfused.planmyplate.model.MealPlan
-import com.teamconfused.planmyplate.model.Recipe
-import com.teamconfused.planmyplate.model.toRecipe
 import com.teamconfused.planmyplate.network.AiService
 
 class AiRepositoryImpl(
@@ -18,9 +18,9 @@ class AiRepositoryImpl(
         return try {
             val response = api.generateRecipe(token, request)
             Log.d(TAG, "AI Recipe response received: $response")
-            response.toRecipe()
+            response.toDomain()
         } catch (e: Exception) {
-            Log.e(TAG, "AI Recipe generation failed: ${e.message}", e)
+            Log.e("AiRepositoryImpl", "Operation failed: ${e.message}", e)
             throw e
         }
     }
@@ -30,9 +30,9 @@ class AiRepositoryImpl(
         return try {
             val response = api.generateMealPlan(token, userId, startDate)
             Log.d(TAG, "AI Meal Plan response received: $response")
-            response
+            response.toDomain()
         } catch (e: Exception) {
-            Log.e(TAG, "AI Meal Plan generation failed: ${e.message}", e)
+            Log.e("AiRepositoryImpl", "Operation failed: ${e.message}", e)
             throw e
         }
     }
