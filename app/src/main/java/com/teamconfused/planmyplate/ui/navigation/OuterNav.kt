@@ -95,7 +95,7 @@ fun NavGraph(navController: NavHostController) {
             
             val currentMealType = route.mealType ?: "Breakfast"
             val isAdded = if (route.isSelectionMode) {
-                uiState.selectedRecipes[currentMealType]?.any { it.id == route.recipeId } == true
+                uiState.selectedRecipes[currentMealType]?.any { it.recipeId == route.recipeId } == true
             } else {
                 true 
             }

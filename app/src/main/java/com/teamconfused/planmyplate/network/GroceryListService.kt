@@ -2,7 +2,6 @@ package com.teamconfused.planmyplate.network
 
 import com.teamconfused.planmyplate.data.model.GroceryListDto
 import com.teamconfused.planmyplate.data.model.GroceryListItemDto
-import com.teamconfused.planmyplate.data.model.GroceryListRequest
 import com.teamconfused.planmyplate.data.model.PurchaseItemsRequest
 import retrofit2.http.Body
 import retrofit2.http.DELETE
@@ -29,14 +28,14 @@ interface GroceryListService {
     suspend fun createGroceryList(
         @Header("Authorization") token: String,
         @Path("userId") userId: Int,
-        @Body request: GroceryListRequest
+        @Body request: Map<String, String>
     ): GroceryListDto
 
     @PUT("api/grocery-lists/{id}")
     suspend fun updateGroceryList(
         @Header("Authorization") token: String,
         @Path("id") id: Int,
-        @Body request: GroceryListRequest
+        @Body request: Map<String, String>
     ): GroceryListDto
 
     @POST("api/grocery-lists/{id}/purchase")

@@ -67,7 +67,7 @@ fun RecipeSelectionScreen(
         if (s is RecipeUiState.Loading || s is RecipeUiState.Error) viewModel.refreshRecipes()
     }
 
-    fun RecipeUiState.recipes() = (this as? RecipeUiState.Success)?.recipes?.filter { it.id != null } ?: emptyList()
+    fun RecipeUiState.recipes() = (this as? RecipeUiState.Success)?.recipes?.filter { it.recipeId != null } ?: emptyList()
 
     val baseRecipes = when (activeFilter) {
         "Recommended" -> recommendedState.recipes()
@@ -455,18 +455,18 @@ private fun RecipeGrid(
                 ) {
                     items(
                         items = recipes,
-                        key   = { it.id ?: it.name.hashCode() },
+                        key   = { it.recipeId ?: it.name.hashCode() },
                     ) { recipe ->
                         val isSelected = selected.any { s ->
-                            (s.id != null && recipe.id != null && s.id == recipe.id)
-                                    || (s.id == null && recipe.id == null && s.name == recipe.name)
+                            (s.recipeId != null && recipe.recipeId != null && s.recipeId == recipe.recipeId)
+                                    || (s.recipeId == null && recipe.recipeId == null && s.name == recipe.name)
                         }
                         RecipeCard(
                             recipe         = recipe,
                             isSelected     = isSelected,
                             accent         = accent,
                             onToggle       = { onToggle(recipe) },
-                            onDetailsClick = { recipe.id?.let { onDetailsClick(it) } },
+                            onDetailsClick = { recipe.recipeId?.let { onDetailsClick(it) } },
                         )
                     }
                 }

@@ -74,7 +74,6 @@ class ForgotPasswordViewModel(
                     it.copy(
                         step = ForgotPasswordStep.VERIFICATION_CODE, 
                         error = null,
-                        resetToken = response.token,
                         isLoading = false
                     ) 
                 }

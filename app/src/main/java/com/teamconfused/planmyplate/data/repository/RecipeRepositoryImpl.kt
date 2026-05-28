@@ -3,7 +3,6 @@ package com.teamconfused.planmyplate.data.repository
 import android.util.Log
 import com.teamconfused.planmyplate.data.mapper.toDomain
 import com.teamconfused.planmyplate.data.model.CreateRecipeRequest
-import com.teamconfused.planmyplate.data.model.RecipeRequest
 import com.teamconfused.planmyplate.domain.model.Recipe
 import com.teamconfused.planmyplate.domain.repository.RecipeRepository
 import com.teamconfused.planmyplate.network.RecipeService
@@ -39,7 +38,7 @@ class RecipeRepositoryImpl(
         }
     }
 
-    override suspend fun updateRecipe(token: String, id: Int, request: RecipeRequest): Recipe {
+    override suspend fun updateRecipe(token: String, id: Int, request: CreateRecipeRequest): Recipe {
         return try {
             api.updateRecipe(token, id, request).toDomain()
         } catch (e: Exception) {

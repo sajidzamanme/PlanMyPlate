@@ -1,27 +1,19 @@
 package com.teamconfused.planmyplate.data.model
 
-import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class GroceryListDto(
-    @SerialName("list_id") val listId: Int? = null,
-    @SerialName("user_id") val userId: Int? = null,
-    @SerialName("date_created") val dateCreated: String? = null,
+    val listId: Int? = null,
+    val userId: Int? = null,
+    val dateCreated: String? = null,
     val status: String = "active",
-    val items: List<GroceryListItemDto>? = null,
-    @SerialName("created_at") val createdAt: String? = null
-)
-
-@Serializable
-data class GroceryListRequest(
-    val status: String = "active",
-    @SerialName("start_date") val startDate: String? = null
+    val items: List<GroceryListItemDto>? = null
 )
 
 @Serializable
 data class PurchaseItemDetail(
-    @SerialName("item_id") val itemId: Int,
+    val itemId: Int,
     val quantity: Double
 )
 

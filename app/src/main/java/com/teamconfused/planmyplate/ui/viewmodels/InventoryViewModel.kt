@@ -4,7 +4,6 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.teamconfused.planmyplate.data.mapper.toDomain
-import com.teamconfused.planmyplate.data.model.IngredientRefDto
 import com.teamconfused.planmyplate.data.model.InventoryItemRequest
 import com.teamconfused.planmyplate.domain.model.Inventory
 import com.teamconfused.planmyplate.domain.model.InventoryItem
@@ -52,7 +51,7 @@ class InventoryViewModel(
                 val inventory = inventoryDto.toDomain()
                 
                 // Then fetch items for that inventory
-                val itemDtos = inventory.id?.let { inventoryService.getInventoryItems(authHeader, it) } ?: emptyList()
+                val itemDtos = inventory.invId?.let { inventoryService.getInventoryItems(authHeader, it) } ?: emptyList()
                 val items = itemDtos.map { it.toDomain() }
                 
                 _uiState.update { 
@@ -70,7 +69,7 @@ class InventoryViewModel(
     }
     
     fun updateItemQuantity(item: InventoryItem, delta: Int) {
-        val inventoryId = _uiState.value.inventory?.id ?: return
+        val inventoryId = _uiState.value.inventory?.invId ?: return
         val currentQty = item.quantity ?: 0.0
         val newQty = currentQty + delta
         
@@ -79,7 +78,7 @@ class InventoryViewModel(
         // Optimistic Local Update
         viewModelScope.launch {
               val updatedItems = _uiState.value.items.map {
-                  if (it.id == item.id) it.copy(quantity = newQty) else it
+                  if (it.itemId == item.itemId) it.copy(quantity = newQty) else it
               }.filter { (it.quantity ?: 0.0) > 0 } // Remove locally if 0
              
              _uiState.update { it.copy(items = updatedItems) }
@@ -88,11 +87,11 @@ class InventoryViewModel(
              // 0 -> Delete (Immediate)
              // > 0 -> Debounced Update (or Add if that's the only working endpoint)
              
-             if (newQty == 0.0 && item.id != null) {
-                 try {
-                     val token = sessionManager.getAuthToken() ?: return@launch
-                     val authHeader = "Bearer $token"
-                    inventoryService.removeItemFromInventory(authHeader, item.id)
+              if (newQty == 0.0 && item.itemId != null) {
+                  try {
+                      val token = sessionManager.getAuthToken() ?: return@launch
+                      val authHeader = "Bearer $token"
+                     inventoryService.removeItemFromInventory(authHeader, item.itemId)
                   } catch (e: Exception) {
                       Log.e("InventoryViewModel", "Failed to remove item from inventory: ${e.message}", e)
                       fetchInventory() // Revert on failure
@@ -105,18 +104,17 @@ class InventoryViewModel(
              updateJob = launch {
                  kotlinx.coroutines.delay(500)
                  try {
-                     if (delta != 0 && item.id != null) {
-                        // Use new UPDATE endpoint (requires backend impl)
-                         val req = InventoryItemRequest(
-                              quantity = newQty,
-                              unit = item.unit,
-                              dateAdded = item.dateAdded,
-                              expiryDate = item.expiryDate,
-                              ingredient = IngredientRefDto(ingId = item.ingredient?.ingId ?: 0)
-                          )
-                        val token = sessionManager.getAuthToken() ?: return@launch
-                        val authHeader = "Bearer $token"
-                        inventoryService.updateInventoryItem(authHeader, item.id, req)
+                      if (delta != 0 && item.itemId != null) {
+                         // Use new UPDATE endpoint (requires backend impl)
+                          val req = InventoryItemRequest(
+                               quantity = newQty,
+                               unit = item.unit,
+                               expiryDate = item.expiryDate,
+                               ingId = item.ingredient?.ingId
+                           )
+                         val token = sessionManager.getAuthToken() ?: return@launch
+                         val authHeader = "Bearer $token"
+                         inventoryService.updateInventoryItem(authHeader, item.itemId, req)
                      }
                   } catch (e: Exception) {
                       Log.e("InventoryViewModel", "Failed to update inventory item: ${e.message}", e)

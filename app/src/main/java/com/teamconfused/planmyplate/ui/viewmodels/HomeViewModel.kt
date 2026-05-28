@@ -143,7 +143,7 @@ class HomeViewModel(
                 
                 val today = java.time.LocalDate.now().toString()
                 val newAdditionalMeal = AdditionalMeal(
-                    recipeId = recipe.id ?: (System.currentTimeMillis() % Int.MAX_VALUE).toInt(),
+                    recipeId = recipe.recipeId ?: (System.currentTimeMillis() % Int.MAX_VALUE).toInt(),
                     recipe = recipe,
                     date = today,
                     mealType = mealType

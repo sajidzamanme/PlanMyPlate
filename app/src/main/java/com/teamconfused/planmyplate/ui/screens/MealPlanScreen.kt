@@ -631,7 +631,7 @@ private fun MealSlotRow(
                 modifier = Modifier
                     .weight(1f)
                     .clip(RoundedCornerShape(10.dp))
-                    .clickable { recipe.id?.let { onRecipeClick(it) } }
+                    .clickable { recipe.recipeId?.let { onRecipeClick(it) } }
                     .padding(horizontal = 6.dp, vertical = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -733,7 +733,7 @@ private fun ExtraSlotRow(
             modifier = Modifier
                 .weight(1f)
                 .clip(RoundedCornerShape(10.dp))
-                .clickable { onRecipeClick(recipe.id ?: return@clickable) }
+                .clickable { onRecipeClick(recipe.recipeId ?: return@clickable) }
                 .padding(horizontal = 6.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -769,7 +769,7 @@ private fun ExtraSlotRow(
 @Composable
 private fun CreateMealPlanPreview() {
     val mockRecipe = Recipe(
-        id = 1,
+        recipeId = 1,
         name = "Spicy Chicken Pasta",
         description = "A delicious spicy pasta with chicken.",
         calories = 650,
@@ -797,7 +797,7 @@ private fun CreateMealPlanPreview() {
 @Composable
 private fun WeeklyMealPlanPreview() {
     val mockRecipe = Recipe(
-        id = 1,
+        recipeId = 1,
         name = "Spicy Chicken Pasta",
         description = "A delicious spicy pasta with chicken.",
         calories = 650,

@@ -131,10 +131,10 @@ fun HomeScreen(
 
     // Show Generated Recipe
     generatedRecipe?.let { recipe ->
-        LaunchedEffect(recipe.id) {
+        LaunchedEffect(recipe.recipeId) {
             rootNavController.navigate(
                 com.teamconfused.planmyplate.ui.navigation.Screen.RecipeDetails(
-                    recipeId = recipe.id ?: 0,
+                    recipeId = recipe.recipeId ?: 0,
                     fromDashboard = true,
                     mealType = generatingMealType
                 )
@@ -144,10 +144,10 @@ fun HomeScreen(
     }
 
     recipeToShowDetails?.let { recipe ->
-        LaunchedEffect(recipe.id) {
+        LaunchedEffect(recipe.recipeId) {
             rootNavController.navigate(
                 com.teamconfused.planmyplate.ui.navigation.Screen.RecipeDetails(
-                    recipeId = recipe.id ?: 0,
+                    recipeId = recipe.recipeId ?: 0,
                     fromDashboard = true,
                     mealType = mealTypeToShowDetails
                 )

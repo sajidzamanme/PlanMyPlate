@@ -2,7 +2,6 @@ package com.teamconfused.planmyplate.network
 
 import com.teamconfused.planmyplate.data.model.CreateRecipeRequest
 import com.teamconfused.planmyplate.data.model.ImageUploadResponse
-import com.teamconfused.planmyplate.data.model.RecipeRequest
 import com.teamconfused.planmyplate.data.model.RecipeResponse
 import okhttp3.MultipartBody
 import retrofit2.http.Body
@@ -43,7 +42,7 @@ interface RecipeService {
     suspend fun updateRecipe(
         @Header("Authorization") token: String,
         @Path("id") id: Int,
-        @Body request: RecipeRequest
+        @Body request: CreateRecipeRequest
     ): RecipeResponse
 
     @DELETE("api/recipes/{id}")

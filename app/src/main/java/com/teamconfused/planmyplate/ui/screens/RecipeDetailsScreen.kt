@@ -74,7 +74,7 @@ fun RecipeDetailsScreen(
                         ) {
                             OutlinedButton(
                                 onClick = {
-                                    onSkip(currentRecipe.id)
+                                    onSkip(currentRecipe.recipeId)
                                     navController.popBackStack()
                                 },
                                 modifier = Modifier.weight(1f),
@@ -86,7 +86,7 @@ fun RecipeDetailsScreen(
 
                             Button(
                                 onClick = {
-                                    onCooked(mealType, currentRecipe.calories ?: 0, currentRecipe.id)
+                                    onCooked(mealType, currentRecipe.calories ?: 0, currentRecipe.recipeId)
                                     navController.popBackStack()
                                 },
                                 modifier = Modifier.weight(1f),

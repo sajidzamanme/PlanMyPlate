@@ -15,7 +15,7 @@ data class SignupRequest(
 
 @Serializable
 data class SigninRequest(
-    val email: String, // Can be email or phone according to docs
+    val email: String,
     val password: String
 )
 
@@ -26,9 +26,9 @@ data class AuthResponse(
     val email: String? = null,
     val firstName: String? = null,
     val lastName: String? = null,
-    @SerialName("user_id") val userId: Int? = null,
+    val userId: Int? = null,
     val phone: String? = null,
-    @SerialName("date_of_birth") val dateOfBirth: String? = null,
+    val dateOfBirth: String? = null,
     val message: String? = null
 )
 
@@ -39,8 +39,7 @@ data class ForgotPasswordRequest(
 
 @Serializable
 data class ForgotPasswordResponse(
-    val message: String? = null,
-    val token: String? = null
+    val message: String? = null
 )
 
 @Serializable
@@ -52,15 +51,4 @@ data class ResetPasswordRequest(
 @Serializable
 data class ResetPasswordResponse(
     val message: String? = null
-)
-
-@Serializable
-data class UserPreferencesDto(
-    val diet: String? = null,
-    val allergies: String? = null,
-    val dislikes: String? = null,
-    val servings: Int? = null,
-    val budget: Float? = null,
-    val age: Int? = null,
-    val weight: Float? = null
 )

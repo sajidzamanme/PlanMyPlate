@@ -117,7 +117,7 @@ fun InventoryItemCard(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = item.name ?: item.ingredient?.name ?: "Item #${item.ingredient?.ingId ?: "Unknown"}",
+                    text = item.ingredient?.name ?: "Item #${item.ingredient?.ingId ?: "Unknown"}",
                     style = MaterialTheme.typography.titleMedium,
                     maxLines = 1,
                     overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis

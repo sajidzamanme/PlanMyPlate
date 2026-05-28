@@ -1,6 +1,5 @@
 package com.teamconfused.planmyplate.data.mapper
 
-import com.teamconfused.planmyplate.data.model.UserPreferencesDto
 import com.teamconfused.planmyplate.data.model.GroceryListDto
 import com.teamconfused.planmyplate.data.model.GroceryListItemDto
 import com.teamconfused.planmyplate.data.model.IngredientDto
@@ -35,7 +34,7 @@ import com.teamconfused.planmyplate.domain.model.SoonToExpireResult
 // Recipe Mappers
 fun RecipeResponse.toDomain(): Recipe {
     return Recipe(
-        id = this.id,
+        recipeId = this.recipeId,
         name = this.name,
         description = this.description ?: "",
         calories = this.calories ?: 0,
@@ -43,7 +42,7 @@ fun RecipeResponse.toDomain(): Recipe {
         cookTime = this.cookTime,
         servings = this.servings,
         instructions = this.instructions,
-        ingredients = this.ingredients?.map { it.toIngredientString() },
+        ingredients = this.recipeIngredients?.map { it.toIngredientString() },
         imageUrl = this.imageUrl
     )
 }
@@ -67,19 +66,6 @@ fun UserDto.toDomain(): User {
         age = this.age,
         weight = this.weight,
         budget = this.budget
-    )
-}
-
-fun UserPreferencesDto.toDomain(userId: Int? = null): UserPreferences {
-    return UserPreferences(
-        userId = userId,
-        diet = this.diet,
-        allergies = this.allergies?.split(",")?.map { it.trim() }?.filter { it.isNotEmpty() },
-        dislikes = this.dislikes?.split(",")?.map { it.trim() }?.filter { it.isNotEmpty() },
-        servings = this.servings,
-        budget = this.budget,
-        age = this.age,
-        weight = this.weight
     )
 }
 
@@ -116,7 +102,7 @@ fun IngredientDto.toDomain(): Ingredient {
     return Ingredient(
         ingId = this.ingId,
         name = this.name,
-        price = this.price?.toFloatOrNull()
+        price = this.price?.toFloat()
     )
 }
 
@@ -143,7 +129,6 @@ fun MealSlotDto.toDomain(): MealSlot {
     return MealSlot(
         slotId = this.id,
         mealType = this.mealType,
-        date = this.date,
         dayNumber = this.dayNumber,
         recipe = this.recipe?.toDomain()
     )
@@ -172,8 +157,8 @@ fun GroceryListItemDto.toDomain(): GroceryListItem {
 // Inventory Mappers
 fun InventoryDto.toDomain(): Inventory {
     return Inventory(
-        id = this.id,
-        userId = this.user?.userId,
+        invId = this.invId,
+        userId = this.userId,
         lastUpdate = this.lastUpdate,
         items = this.items?.map { it.toDomain() }
     )
@@ -181,14 +166,12 @@ fun InventoryDto.toDomain(): Inventory {
 
 fun InventoryItemDto.toDomain(): InventoryItem {
     return InventoryItem(
-        id = this.id,
-        inventoryId = this.inventoryId,
+        itemId = this.itemId,
         quantity = this.quantity,
         unit = this.unit,
         dateAdded = this.dateAdded,
         expiryDate = this.expiryDate,
-        ingredient = this.ingredient?.toDomain(),
-        name = this.name
+        ingredient = this.ingredient?.toDomain()
     )
 }
 

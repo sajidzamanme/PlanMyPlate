@@ -105,12 +105,12 @@ class MealPlanViewModel(
     }
     
     private fun recipesMatch(a: Recipe, b: Recipe): Boolean {
-        return (a.id != null && b.id != null && a.id == b.id)
-            || (a.id == null && b.id == null && a.name == b.name)
+        return (a.recipeId != null && b.recipeId != null && a.recipeId == b.recipeId)
+            || (a.recipeId == null && b.recipeId == null && a.name == b.name)
     }
 
     fun toggleRecipe(mealType: String, recipe: Recipe) {
-        if (recipe.id == null) return
+        if (recipe.recipeId == null) return
         val current = _uiState.value.selectedRecipes[mealType] ?: emptyList()
         val updated = if (current.any { recipesMatch(it, recipe) }) {
             current.filter { !recipesMatch(it, recipe) }
@@ -154,9 +154,9 @@ class MealPlanViewModel(
 
         // Validate all selected recipes have non-null IDs
         val invalidRecipes = mutableListOf<String>()
-        breakfast.forEachIndexed { idx, r -> if (r.id == null) invalidRecipes.add("Breakfast #${idx + 1}: ${r.name}") }
-        lunch.forEachIndexed { idx, r -> if (r.id == null) invalidRecipes.add("Lunch #${idx + 1}: ${r.name}") }
-        dinner.forEachIndexed { idx, r -> if (r.id == null) invalidRecipes.add("Dinner #${idx + 1}: ${r.name}") }
+        breakfast.forEachIndexed { idx, r -> if (r.recipeId == null) invalidRecipes.add("Breakfast #${idx + 1}: ${r.name}") }
+        lunch.forEachIndexed { idx, r -> if (r.recipeId == null) invalidRecipes.add("Lunch #${idx + 1}: ${r.name}") }
+        dinner.forEachIndexed { idx, r -> if (r.recipeId == null) invalidRecipes.add("Dinner #${idx + 1}: ${r.name}") }
         if (invalidRecipes.isNotEmpty()) {
             _uiState.update {
                 it.copy(errorMessage = "Some recipes are missing IDs. Please re-select:\n${invalidRecipes.joinToString("\n")}")
@@ -175,9 +175,9 @@ class MealPlanViewModel(
                 val multipliers = mutableListOf<Int>()
                 
                 for (i in 0 until 7) {
-                    val bId = breakfast[i].id ?: -1
-                    val lId = lunch[i].id ?: -1
-                    val dId = dinner[i].id ?: -1
+                    val bId = breakfast[i].recipeId ?: -1
+                    val lId = lunch[i].recipeId ?: -1
+                    val dId = dinner[i].recipeId ?: -1
 
                     if (bId == -1 || lId == -1 || dId == -1) {
                         _uiState.update { it.copy(errorMessage = "Error processing recipes — some recipes have invalid IDs.") }
